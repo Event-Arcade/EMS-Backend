@@ -1,0 +1,6 @@
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.csproj.AssemblyReference.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.AssemblyInfoInputs.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.AssemblyInfo.cs
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.csproj.CoreCompileInputs.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.DB\obj\Debug\net8.0\EMS.DB.sourcelink.json

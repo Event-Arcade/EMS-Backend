@@ -3,11 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EMS.BACKEND.API", "EMS.BACKEND.API\EMS.BACKEND.API.csproj", "{47732427-DF27-4D24-83CF-CE2B0FFE14DB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EMS.CORE", "EMS.CORE\EMS.CORE.csproj", "{FCFB0631-95A8-4DD2-A116-FF894D425439}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EMS.DB", "EMS.DB\EMS.DB.csproj", "{2D5D44DD-5A44-4E78-98FB-30A1CC41EA5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EMS.BACKEND.API", "EMS.BACKEND.API\EMS.BACKEND.API.csproj", "{47732427-DF27-4D24-83CF-CE2B0FFE14DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +15,6 @@ Global
 		{47732427-DF27-4D24-83CF-CE2B0FFE14DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47732427-DF27-4D24-83CF-CE2B0FFE14DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47732427-DF27-4D24-83CF-CE2B0FFE14DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FCFB0631-95A8-4DD2-A116-FF894D425439}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FCFB0631-95A8-4DD2-A116-FF894D425439}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FCFB0631-95A8-4DD2-A116-FF894D425439}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FCFB0631-95A8-4DD2-A116-FF894D425439}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2D5D44DD-5A44-4E78-98FB-30A1CC41EA5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2D5D44DD-5A44-4E78-98FB-30A1CC41EA5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2D5D44DD-5A44-4E78-98FB-30A1CC41EA5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2D5D44DD-5A44-4E78-98FB-30A1CC41EA5C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

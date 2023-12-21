@@ -1,0 +1,13 @@
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\bin\Debug\net8.0\EMS.CORE.deps.json
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\bin\Debug\net8.0\EMS.CORE.dll
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\bin\Debug\net8.0\EMS.CORE.pdb
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.csproj.AssemblyReference.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.AssemblyInfoInputs.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.AssemblyInfo.cs
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.csproj.CoreCompileInputs.cache
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.sourcelink.json
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.dll
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\refint\EMS.CORE.dll
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\EMS.CORE.pdb
+C:\Users\bhanu\Desktop\5th sem\EE5454 Software Group Project\EMS-Backend\EMS.BACKEND.API\EMS.CORE\obj\Debug\net8.0\ref\EMS.CORE.dll

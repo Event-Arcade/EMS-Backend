@@ -1,8 +1,18 @@
 {
   "version": 2,
-  "dgSpecHash": "eUPbINwN2c6PXYZ+V2BCsiSP/1Ljc5S32gPv9oZPJqzEnlRte+281GTfDlnm+lE8PBLypf5X/JHF8XX95XA2IA==",
+  "dgSpecHash": "NT3728SCVaZZS327FKE88/U6hW0qSJ1LPq0LHcCLAe55UG5RTy4WCETiYcuz2Y+FiES6X063hWwz06CKPN93UA==",
   "success": true,
   "projectFilePath": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.CORE\\EMS.CORE.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.cryptography.internal\\8.0.0\\microsoft.aspnetcore.cryptography.internal.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.cryptography.keyderivation\\8.0.0\\microsoft.aspnetcore.cryptography.keyderivation.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\8.0.0\\microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.identity.core\\8.0.0\\microsoft.extensions.identity.core.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.logging\\8.0.0\\microsoft.extensions.logging.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.options\\8.0.0\\microsoft.extensions.options.8.0.0.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

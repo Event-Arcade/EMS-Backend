@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "6UYU0hV2L60KJ4NhmOQ4HdYtYJXHXbqAC8WHPPrj5zA=",
+  "Source": "EMS.BACKEND.API",
+  "BasePath": "_content/EMS.BACKEND.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
