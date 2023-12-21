@@ -15,7 +15,7 @@ var configuration = builder.Configuration;
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:default"]));
 
 //Identity
-builder.Services.AddIdentity<Vendor, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddIdentity<Client, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllers();
