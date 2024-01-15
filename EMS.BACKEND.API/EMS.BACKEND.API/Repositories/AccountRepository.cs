@@ -30,7 +30,7 @@ namespace EMS.BACKEND.API.Repositories
                 Latitude = userDTO.Latitude,
             };
             var user = await userManager.FindByEmailAsync(newUser.Email);
-            if (user is not null) 
+            if (user is not null)
                 return new GeneralResponse(false, "User registered already");
 
             var createUser = await userManager.CreateAsync(newUser!, userDTO.Password);
@@ -55,9 +55,35 @@ namespace EMS.BACKEND.API.Repositories
                 return new LoginResponse(false, null!, "Invalid email/password");
 
             var getUserRole = await userManager.GetRolesAsync(getUser);
-            var userSession = new UserSession(getUser.Id, getUser.FirstName,getUser.LastName, getUser.Email, getUserRole.First());
+            var userSession = new UserSession(getUser.Id, getUser.FirstName, getUser.LastName, getUser.Email, getUserRole.First());
             string token = GenerateToken(userSession);
             return new LoginResponse(true, token!, "Login completed");
+        }
+        public async Task<GeneralResponse> UpdateAccount(UserDTO userDTO)
+        {
+            if (userDTO is null) return new GeneralResponse(false, "Model is empty");
+            //Get user
+            var user = await userManager.FindByEmailAsync(userDTO.Email);
+            if (user is null)
+                return new GeneralResponse(false, "User account is not registered ");
+            
+            //Assing new values
+            user.FirstName = userDTO.FirstName;
+            user.LastName = userDTO.LastName;
+            user.Street = userDTO.Street;
+            user.City = userDTO.City;
+            user.PostalCode = userDTO.PostalCode;
+            user.Province = userDTO.Province;
+            user.Longitude = userDTO.Longitude;
+            user.Latitude = userDTO.Latitude;
+
+            //Update user
+            var updatedUser = await userManager.UpdateAsync(user);
+            if (!updatedUser.Succeeded)
+                return new GeneralResponse(false, updatedUser.ToString());
+
+            //return response
+            return new GeneralResponse(true, "Account Updated");
         }
         private string GenerateToken(UserSession user)
         {
