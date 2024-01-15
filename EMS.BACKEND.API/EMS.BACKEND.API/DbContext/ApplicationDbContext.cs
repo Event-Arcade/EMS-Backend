@@ -4,8 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.DbContext
 {
-    public class ApplicationDbContext : IdentityDbContext<Client>
+    public class ApplicationDbContext(DbContextOptions options) : IdentityDbContext<ApplicationUser>(options)
     {
-        public ApplicationDbContext(DbContextOptions options): base(options) { }
     }
 }

@@ -1,8 +1,11 @@
 {
   "ExpandedNodes": [
     "",
-    "\\EMS.BACKEND.API\\EMS.BACKEND.API"
+    "\\EMS.BACKEND.API\\EMS.BACKEND.API",
+    "\\EMS.BACKEND.API\\EMS.BACKEND.API\\Models",
+    "\\EMS.BACKEND.API\\EMS.BACKEND.API\\Services",
+    "\\EMS.BACKEND.API\\EMS.BACKEND.API\\Services\\ClientService"
   ],
-  "SelectedNode": "\\README.md",
+  "SelectedNode": "\\EMS.BACKEND.API",
   "PreviewInSolutionExplorer": false
 }
