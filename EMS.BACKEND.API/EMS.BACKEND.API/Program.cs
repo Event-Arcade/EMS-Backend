@@ -10,6 +10,7 @@ using Swashbuckle.AspNetCore.Filters;
 using Microsoft.Net.Http.Headers;
 using EMS.BACKEND.API.Repositories;
 using SharedClassLibrary.Contracts;
+using EMS.BACKEND.API.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,10 +26,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 );
 
 //Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(config =>
+    {
+        //todo : implement email verification
+        //config.SignIn.RequireConfirmedEmail = true;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddRoles<IdentityRole>();
+
+//Access the http content
+builder.Services.AddHttpContextAccessor();
 
 //JWT
 builder.Services.AddAuthentication(options =>
@@ -61,7 +70,10 @@ builder.Services.AddSwaggerGen(options =>
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
-builder.Services.AddScoped<IUserAccount, AccountRepository>();
+builder.Services.AddScoped<IUserAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IShopServiceRepository,ShopServiceRepository >();
+builder.Services.AddScoped<IFileService,  FileService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -69,9 +81,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
     app.UseCors(policy =>
     {
-        policy.WithOrigins("http://localhost:7254", "https://localhost:7254")
+        policy.AllowAnyOrigin()
         .AllowAnyMethod()
         .AllowAnyHeader()
         .WithHeaders(HeaderNames.ContentType);

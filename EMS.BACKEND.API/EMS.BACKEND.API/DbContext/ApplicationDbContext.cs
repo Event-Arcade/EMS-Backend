@@ -6,6 +6,7 @@ namespace EMS.BACKEND.API.DbContext
 {
     public class ApplicationDbContext(DbContextOptions options) : IdentityDbContext<ApplicationUser>(options)
     {
-        DbSet<PlatFormService> platforms;
+        public DbSet<Service> Services { get; set; }
+        public DbSet<Shop> Shops { get; set; }
     }
 }
