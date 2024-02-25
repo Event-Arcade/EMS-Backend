@@ -1,16 +1,16 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedClassLibrary.Contracts;
-using SharedClassLibrary.DTOs;
 
 namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController(IUserAccount userAccount) : ControllerBase
+    public class AccountController(IUserAccountRepository userAccount) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<IActionResult> Register(UserDTO userDTO)
+        public async Task<IActionResult> Register(UserRequestDTO userDTO)
         {
             var response = await userAccount.CreateAccount(userDTO);
             return Ok(response);
@@ -22,12 +22,20 @@ namespace EMS.BACKEND.API.Controllers
             var response = await userAccount.LoginAccount(loginDTO);
             return Ok(response);
         }
-        [HttpPost("update")]
-        [Authorize]
-        public async Task<IActionResult> Update(UserDTO userDTO)
+
+        [HttpPut("update"), Authorize]
+        public async Task<IActionResult> Update(UserRequestDTO userDTO)
         {
             var response = await userAccount.UpdateAccount(userDTO);
             return Ok(response);
+        }
+
+        //return current user details
+        [HttpGet("getme"), Authorize]
+        public async Task<IActionResult> GetMe()
+        {
+            var result = await userAccount.GetMe();
+            return Ok(result);
         }
     }
 }
