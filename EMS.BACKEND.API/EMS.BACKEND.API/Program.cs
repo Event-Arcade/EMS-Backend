@@ -11,12 +11,13 @@ using Microsoft.Net.Http.Headers;
 using EMS.BACKEND.API.Repositories;
 using SharedClassLibrary.Contracts;
 using EMS.BACKEND.API.Contracts;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddSignalR();
 //Db configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
@@ -112,5 +113,7 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 }
+
+app.MapHub<ChatHub>("/Chat");
 
 app.Run();
