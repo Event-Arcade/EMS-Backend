@@ -75,6 +75,8 @@ builder.Services.AddScoped<IUserAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IShopServiceRepository,ShopServiceRepository >();
 builder.Services.AddScoped<IFileService,  FileService>();
 
+
+builder.Services.AddSingleton<SharedDb>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -113,6 +115,19 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 }
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("reactApp", builder => 
+    {
+        builder.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+
+    });
+
+}
+
+);
+
 
 app.MapHub<ChatHub>("/Chat");
 
