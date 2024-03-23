@@ -11,12 +11,12 @@ using System.Text;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class AccountRepository(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, 
+    public class AccountRepository(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
         IConfiguration config, IHttpContextAccessor httpContextAccessor, IFileService fileService) : IUserAccountRepository
     {
         public async Task<LoginResponse> CreateAccount(UserRequestDTO userDTO)
         {
-            if (userDTO is null) return new LoginResponse(false,null!, "Model is empty");
+            if (userDTO is null) return new LoginResponse(false, null!, "Model is empty");
 
             var newUser = new ApplicationUser()
             {
@@ -34,31 +34,22 @@ namespace EMS.BACKEND.API.Repositories
             };
 
             //store image
-            var (condition,filepath) = await fileService.UploadFile(userDTO.ProfilePicture,"Images");
-            if(condition)
+            var (condition, filepath) = await fileService.UploadFile(userDTO.ProfilePicture, "Images");
+            if (condition)
             {
                 newUser.ProfilePicture = filepath;
             }
             else
             {
-                return new LoginResponse(false,null!, filepath);
+                return new LoginResponse(false, null!, filepath);
             }
             var user = await userManager.FindByEmailAsync(newUser.Email);
             if (user is not null)
-                return new LoginResponse(false,null!, "User registered already");
+                return new LoginResponse(false, null!, "User registered already");
 
             var createUser = await userManager.CreateAsync(newUser, userDTO.Password);
             if (!createUser.Succeeded)
-                return new LoginResponse(false,null!, createUser.ToString());
-
-            //ctreate new user account if there is no users in database as admin user
-            // var roleExists = await roleManager.RoleExistsAsync("admin");
-            // if (!roleExists)
-            // {
-            //     var createRole = await roleManager.CreateAsync(new IdentityRole("admin"));
-            //     if (!createRole.Succeeded)
-            //         return new GeneralResponse(false, createRole.ToString());
-            // }
+                return new LoginResponse(false, null!, createUser.ToString());
 
             //Assign Default Role : "client"
             await userManager.AddToRoleAsync(newUser, "client");
@@ -66,15 +57,15 @@ namespace EMS.BACKEND.API.Repositories
 
             //generate jwt token
             var getUser = await userManager.FindByEmailAsync(newUser.Email);
-            if(getUser is not null)
+            if (getUser is not null)
             {
                 var getUserRole = await userManager.GetRolesAsync(getUser);
                 var userSession = new UserSession(getUser.Id, getUser.Email, getUserRole.First());
                 string token = GenerateToken(userSession);
                 return new LoginResponse(true, token!, "Login completed");
             }
-            
-            return new LoginResponse(true,null!, "Account Created");
+
+            return new LoginResponse(true, null!, "Account Created");
         }
         public async Task<LoginResponse> LoginAccount(LoginDTO loginDTO)
         {
@@ -90,7 +81,7 @@ namespace EMS.BACKEND.API.Repositories
                 return new LoginResponse(false, null!, "Invalid email/password");
 
             var getUserRole = await userManager.GetRolesAsync(getUser);
-            var userSession = new UserSession(getUser.Id,getUser.Email, getUserRole.First());
+            var userSession = new UserSession(getUser.Id, getUser.Email, getUserRole.First());
             string token = GenerateToken(userSession);
             return new LoginResponse(true, token!, "Login completed");
         }
@@ -102,7 +93,7 @@ namespace EMS.BACKEND.API.Repositories
             var user = await userManager.FindByEmailAsync(userDTO.Email);
             if (user is null)
                 return new GeneralResponse(false, "User account is not registered ");
-            
+
             //Assing new values
             user.FirstName = userDTO.FirstName;
             user.LastName = userDTO.LastName;
@@ -114,7 +105,7 @@ namespace EMS.BACKEND.API.Repositories
             user.Latitude = userDTO.Latitude;
 
             //Store updated image
-            if(userDTO.ProfilePicture != null)
+            if (userDTO.ProfilePicture != null)
             {
                 var (condition, filepath) = await fileService.UploadFile(userDTO.ProfilePicture, "Images");
                 if (condition)
@@ -123,7 +114,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
 
-            
+
             //Update user
             var updatedUser = await userManager.UpdateAsync(user);
             if (!updatedUser.Succeeded)
@@ -132,43 +123,48 @@ namespace EMS.BACKEND.API.Repositories
             //return response
             return new GeneralResponse(true, "Account Updated");
         }
-
         //Reset Password
         //public async Task<GeneralResponse> ResetUserPassowrd(UserRequestDTO userDTO);
         //Get currrent logged in user details
         public async Task<UserResponse> GetMe()
         {
             var result = string.Empty;
-            if(httpContextAccessor.HttpContext != null)
+            if (httpContextAccessor.HttpContext != null)
             {
                 result = httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Email);
                 Console.WriteLine($"Id : {result}");
-                if(result != null)
+                if (result != null)
                 {
                     var currentUser = await userManager.FindByEmailAsync(result);
                     if (currentUser != null)
                     {
-                        var currentUserResponse = new UserResponseDTO()
+                        var (condition, bitStream, contentType, message) = await fileService.DownloadFiles(currentUser.ProfilePicture);
+                        if (condition)
                         {
-                            Id = currentUser.Id,
-                            FirstName = currentUser.FirstName,
-                            LastName = currentUser.LastName,
-                            Street = currentUser.Street,
-                            City = currentUser.City,
-                            PostalCode = currentUser.PostalCode,
-                            Province = currentUser.Province,
-                            Longitude = currentUser.Longitude,
-                            Latitude = currentUser.Latitude,
-                            Email = currentUser.Email,
-                            ProfilePicturePath = currentUser.ProfilePicture,
-                        };
-                        return new UserResponse(true, "successfully found", currentUserResponse);
+                            var currentUserResponse = new UserResponseDTO()
+                            {
+                                Id = currentUser.Id,
+                                FirstName = currentUser.FirstName,
+                                LastName = currentUser.LastName,
+                                Street = currentUser.Street,
+                                City = currentUser.City,
+                                PostalCode = currentUser.PostalCode,
+                                Province = currentUser.Province,
+                                Longitude = currentUser.Longitude,
+                                Latitude = currentUser.Latitude,
+                                Email = currentUser.Email,
+                            };
+                            return new UserResponse(true, "successfully found", currentUserResponse);
+                        }
+                        else
+                        {
+                            return new UserResponse(false, message, null);
+                        }
                     }
-                } 
+                }
             }
-            return new UserResponse(false,"User cannot found!", null);
+            return new UserResponse(false, "User cannot found!", null);
         }
-
         //Generate JWT token
         private string GenerateToken(UserSession user)
         {
@@ -190,5 +186,29 @@ namespace EMS.BACKEND.API.Repositories
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<StaticDataResponse> GetProfilePicture()
+        {
+            var result = string.Empty;
+            if (httpContextAccessor.HttpContext != null)
+            {
+                result = httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Email);
+                Console.WriteLine($"Id : {result}");
+                if (result != null)
+                {
+                    var currentUser = await userManager.FindByEmailAsync(result);
+                    if (currentUser != null)
+                    {
+                        var (condition, bitStream, contentType, message) = await fileService.DownloadFiles(currentUser.ProfilePicture);
+                        if (condition)
+                        {
+                            return new StaticDataResponse(true, bitStream, contentType);
+                        }
+                    }
+                    return new StaticDataResponse(false, null!, null!);
+                }
+
+            }
+            return new StaticDataResponse(false, null!, null!);
+        }
     }
 }

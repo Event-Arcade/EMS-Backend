@@ -1,47 +1,41 @@
-﻿using EMS.BACKEND.API.Contracts;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using EMS.BACKEND.API.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class FileService(IWebHostEnvironment hostEnvironment) : IFileService
+    public class FileService(IAmazonS3 _s3Client) : IFileService
     {
-        public async Task<(bool condition, byte[] archiveData, string message)> DownloadFiles(string filePath)
+        public async Task<(bool condition, Stream staticData, string contentType, string message)> DownloadFiles(string filePath)
         {
             try
             {
-                if (File.Exists(filePath))
-                {
-                    var fileBytes =await File.ReadAllBytesAsync(filePath);
-                    //var fileStream = new MemoryStream(fileBytes);
-                    //var file = new FormFile(fileStream, 0, fileBytes.Length, null, Path.GetFileName(filePath));
-                    return (true, fileBytes,Path.GetExtension(filePath)); // Adjust the MIME type according to your image format
-                }
-                else
-                {
-                    return (false,null!, "Image not found.");
-                }
+                var s3Object = await _s3Client.GetObjectAsync("ems-static-data-storage", filePath);
+                return (true, s3Object.ResponseStream, s3Object.Headers.ContentType, string.Empty);
             }
             catch (Exception ex)
             {
-                return (false,null!, $"Internal server error: {ex}");
+                return (false, null!, null!, $"Internal server error: {ex}");
             }
         }
         public async Task<(bool, string)> UploadFile(IFormFile file, string subDirectory)
         {
-            subDirectory = subDirectory ?? string.Empty;
-            var target = Path.Combine(hostEnvironment.ContentRootPath, subDirectory);
-
-            Directory.CreateDirectory(target);
+            subDirectory = subDirectory ?? "defalut";
 
             try
             {
                 if (file.Length > 0)
                 {
-                    string fileName = Guid.NewGuid().ToString() ;
-                    var filePath = Path.Combine(hostEnvironment.WebRootPath, "Images", fileName + Path.GetExtension(file.FileName));
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    string filePath = $"{subDirectory}/{Guid.NewGuid().ToString()}";
+                    var request = new PutObjectRequest()
                     {
-                        await file.CopyToAsync(stream);
-                    }
+                        BucketName = "ems-static-data-storage",
+                        Key = filePath,
+                        InputStream = file.OpenReadStream(),
+                    };
+
+                    request.Metadata.Add("content-Type", file.ContentType);
+                    await _s3Client.PutObjectAsync(request);
                     return (true, filePath);
                 }
                 return (false, "No file uploaded.");

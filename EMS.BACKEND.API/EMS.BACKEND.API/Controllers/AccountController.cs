@@ -37,5 +37,13 @@ namespace EMS.BACKEND.API.Controllers
             var result = await userAccount.GetMe();
             return Ok(result);
         }
+
+        //return current user profile picture
+        [HttpGet("getprofilepicture"), Authorize]
+        public async Task<IActionResult> GetProfilePicture()
+        {
+            var result = await userAccount.GetProfilePicture();
+            return File(result.bitStream, result.contentType);
+        }
     }
 }
