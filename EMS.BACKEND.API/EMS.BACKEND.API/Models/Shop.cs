@@ -1,12 +1,15 @@
-﻿namespace EMS.BACKEND.API.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace EMS.BACKEND.API.Models
 {
     public class Shop
     {
+        [Key]
         public string Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public double Rating { get; set; }
-        public ApplicationUser Owner { get; set; }
-        public List<Service> Services { get; set; }
+        public string OwnerId { get; set; }
     }
 }

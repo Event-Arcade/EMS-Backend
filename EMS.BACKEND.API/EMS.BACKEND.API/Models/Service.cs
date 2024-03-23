@@ -7,10 +7,10 @@ namespace EMS.BACKEND.API.Models
 {
     public class Service
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public double Price { get; set; } = 0;
-        public double Logitude { get; set; }
-        public double Latitude { get; set; }
+        public string ShopId { get; set; }
+        public string CategoryId { get; set; }
     }
 }

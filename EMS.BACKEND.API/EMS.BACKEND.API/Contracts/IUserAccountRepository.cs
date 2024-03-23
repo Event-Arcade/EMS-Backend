@@ -1,6 +1,7 @@
-﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
-using NuGet.Common;
-using static EMS.BACKEND.API.DTOs.ResponseDTOs.Responses;
+﻿
+using EMS.BACKEND.API.DTOs.RequestDTOs;
+using EMS.BACKEND.API.DTOs.ResponseDTOs;
+
 namespace SharedClassLibrary.Contracts
 {
     public interface IUserAccountRepository

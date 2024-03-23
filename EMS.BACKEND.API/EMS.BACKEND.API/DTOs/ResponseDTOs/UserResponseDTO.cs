@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model;
-using System.Collections;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace EMS.BACKEND.API.DTOs.ResponseDTOs
 {

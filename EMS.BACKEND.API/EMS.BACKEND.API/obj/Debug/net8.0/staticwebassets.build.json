@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "MvVPTein3s3D78II3U1r3o9QbjhXLlngU3fkjLKZKZ8=",
+  "Hash": "PFemFWJ2JmVqIlmoNEhK7+azM781lgMcjMkI3NNzEuU=",
   "Source": "EMS.BACKEND.API",
   "BasePath": "_content/EMS.BACKEND.API",
   "Mode": "Default",
@@ -10,7 +10,7 @@
     {
       "Name": "EMS.BACKEND.API\\wwwroot",
       "Source": "EMS.BACKEND.API",
-      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
       "BasePath": "_content/EMS.BACKEND.API",
       "Pattern": "**"
     }
@@ -55,10 +55,10 @@
       "OriginalItemSpec": "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.components.quickgrid\\8.0.1\\staticwebassets\\QuickGrid.razor.js"
     },
     {
-      "Identity": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\EMS.BACKEND.API.styles.css",
+      "Identity": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\EMS.BACKEND.API.styles.css",
       "SourceId": "EMS.BACKEND.API",
       "SourceType": "Computed",
-      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\",
+      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\",
       "BasePath": "_content/EMS.BACKEND.API",
       "RelativePath": "EMS.BACKEND.API.styles.css",
       "AssetKind": "All",
@@ -71,15 +71,15 @@
       "AssetTraitValue": "ApplicationBundle",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\EMS.BACKEND.API.styles.css"
+      "OriginalItemSpec": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\obj\\Debug\\net8.0\\scopedcss\\bundle\\EMS.BACKEND.API.styles.css"
     },
     {
-      "Identity": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\37590558-8fa4-4a78-8ae6-66e351c5e5f4.jpg",
+      "Identity": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\3eddae06-8f1a-4e0e-b8f6-4eb14171a3b1.jpg",
       "SourceId": "EMS.BACKEND.API",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
       "BasePath": "_content/EMS.BACKEND.API",
-      "RelativePath": "Images/37590558-8fa4-4a78-8ae6-66e351c5e5f4.jpg",
+      "RelativePath": "Images/3eddae06-8f1a-4e0e-b8f6-4eb14171a3b1.jpg",
       "AssetKind": "All",
       "AssetMode": "All",
       "AssetRole": "Primary",
@@ -90,7 +90,45 @@
       "AssetTraitValue": "",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\Images\\37590558-8fa4-4a78-8ae6-66e351c5e5f4.jpg"
+      "OriginalItemSpec": "wwwroot\\Images\\3eddae06-8f1a-4e0e-b8f6-4eb14171a3b1.jpg"
+    },
+    {
+      "Identity": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\4e4f65b1-be3c-4850-95c1-618ca6d6e005.jpg",
+      "SourceId": "EMS.BACKEND.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
+      "BasePath": "_content/EMS.BACKEND.API",
+      "RelativePath": "Images/4e4f65b1-be3c-4850-95c1-618ca6d6e005.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\Images\\4e4f65b1-be3c-4850-95c1-618ca6d6e005.jpg"
+    },
+    {
+      "Identity": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\575c2216-c510-4af0-b726-222a281ad2fc.jpg",
+      "SourceId": "EMS.BACKEND.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\",
+      "BasePath": "_content/EMS.BACKEND.API",
+      "RelativePath": "Images/575c2216-c510-4af0-b726-222a281ad2fc.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\Images\\575c2216-c510-4af0-b726-222a281ad2fc.jpg"
     }
   ]
 }

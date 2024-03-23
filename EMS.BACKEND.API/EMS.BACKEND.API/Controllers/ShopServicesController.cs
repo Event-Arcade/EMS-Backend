@@ -1,4 +1,4 @@
-﻿using EMS.BACKEND.API.DbContext;
+﻿
 using EMS.BACKEND.API.DTOs.RequestDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,33 +7,60 @@ using SharedClassLibrary.Contracts;
 namespace EMS.BACKEND.API.Controllers
 {
 
-    [Route("api/[controller]"),ApiController,Authorize]
+    [Route("api/[controller]"), ApiController]
     public class ShopServicesController(IShopServiceRepository shopServiceRepository) : ControllerBase
     {
-        [HttpGet("myshop"),Authorize(Roles = "admin , vendor")] 
-        public IActionResult Get()
+        [HttpGet("myshop"), Authorize(Roles ="vendor")]
+        public async Task<IActionResult> GetMyShop()
         {
-            var response = shopServiceRepository.GetShop();
+            var response = await shopServiceRepository.GetMyShop();
+            if (response == null)
+            {
+                return BadRequest(response);
+            }
             return Ok(response);
         }
 
-        [HttpPost("createmyshop"),Authorize]
-        public IActionResult CreateShop(ShopRequestDTO shopRequestDTO)
+        [HttpPost("createmyshop"), Authorize(Roles = "client")]
+        public async Task<IActionResult> CreateShop(ShopRequestDTO shopRequestDTO)
         {
-            var responce = shopServiceRepository.CreateShop(shopRequestDTO);
-            return Ok(responce);
+            var response = await shopServiceRepository.CreateShop(shopRequestDTO);
+            return Ok(response);
         }
 
-        [HttpPut("updatemyshop"), Authorize(Roles = "admin , vendor")]
-        public IActionResult Put(ServiceRequestDTO platformDTO)
+        [HttpPut("updatemyshop"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> UpdateShop(ShopRequestDTO shopRequestDTO)
         {
-            return Ok("elm");
+            var response = await shopServiceRepository.UpdateShop(shopRequestDTO);
+            if (response == null)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
         }
 
-        [HttpDelete("deletemyshop"), Authorize(Roles = " admin, vendor")]
-        public IActionResult Delete()
+        [HttpDelete("deletemyshop"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> DeleteShop()
         {
-            return Ok("deleted");
+            var response = await shopServiceRepository.DeleteShop();
+            if (response == null)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
         }
+
+        //get all shops
+        [HttpGet("allshops")]
+        public async Task<IActionResult> GetAllShops()
+        {
+            var response = await shopServiceRepository.GetAllShops();
+            if (response == null)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
     }
 }

@@ -1,8 +1,16 @@
 {
   "Files": [
     {
-      "Id": "C:\\Users\\bhanu\\Desktop\\5th sem\\EE5454 Software Group Project\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\37590558-8fa4-4a78-8ae6-66e351c5e5f4.jpg",
-      "PackagePath": "staticwebassets\\Images\\37590558-8fa4-4a78-8ae6-66e351c5e5f4.jpg"
+      "Id": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\3eddae06-8f1a-4e0e-b8f6-4eb14171a3b1.jpg",
+      "PackagePath": "staticwebassets\\Images\\3eddae06-8f1a-4e0e-b8f6-4eb14171a3b1.jpg"
+    },
+    {
+      "Id": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\4e4f65b1-be3c-4850-95c1-618ca6d6e005.jpg",
+      "PackagePath": "staticwebassets\\Images\\4e4f65b1-be3c-4850-95c1-618ca6d6e005.jpg"
+    },
+    {
+      "Id": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API\\EMS.BACKEND.API\\wwwroot\\Images\\575c2216-c510-4af0-b726-222a281ad2fc.jpg",
+      "PackagePath": "staticwebassets\\Images\\575c2216-c510-4af0-b726-222a281ad2fc.jpg"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.EMS.BACKEND.API.Microsoft.AspNetCore.StaticWebAssets.props",

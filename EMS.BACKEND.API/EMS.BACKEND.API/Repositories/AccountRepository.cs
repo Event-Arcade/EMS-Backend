@@ -8,7 +8,6 @@ using SharedClassLibrary.Contracts;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static EMS.BACKEND.API.DTOs.ResponseDTOs.Responses;
 
 namespace EMS.BACKEND.API.Repositories
 {
@@ -60,6 +59,7 @@ namespace EMS.BACKEND.API.Repositories
             //     if (!createRole.Succeeded)
             //         return new GeneralResponse(false, createRole.ToString());
             // }
+
             //Assign Default Role : "client"
             await userManager.AddToRoleAsync(newUser, "client");
 
@@ -94,7 +94,6 @@ namespace EMS.BACKEND.API.Repositories
             string token = GenerateToken(userSession);
             return new LoginResponse(true, token!, "Login completed");
         }
-
         //Update Account Details
         public async Task<GeneralResponse> UpdateAccount(UserRequestDTO userDTO)
         {
@@ -113,6 +112,16 @@ namespace EMS.BACKEND.API.Repositories
             user.Province = userDTO.Province;
             user.Longitude = userDTO.Longitude;
             user.Latitude = userDTO.Latitude;
+
+            //Store updated image
+            if(userDTO.ProfilePicture != null)
+            {
+                var (condition, filepath) = await fileService.UploadFile(userDTO.ProfilePicture, "Images");
+                if (condition)
+                {
+                    user.ProfilePicture = filepath;
+                }
+            }
 
             
             //Update user
@@ -169,7 +178,7 @@ namespace EMS.BACKEND.API.Repositories
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
             };
             var token = new JwtSecurityToken(
                 issuer: config["Jwt:Issuer"],

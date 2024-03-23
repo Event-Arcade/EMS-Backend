@@ -6,9 +6,9 @@ namespace EMS.BACKEND.API.DTOs.RequestDTOs
         [Required]
         [EmailAddress]
         [DataType(DataType.EmailAddress)]
-        public string Email { get; set; } = string.Empty;
+        public string Email { get; set; } 
         [Required]
         [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
+        public string Password { get; set; } 
     }
 }
