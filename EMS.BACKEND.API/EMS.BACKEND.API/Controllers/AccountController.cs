@@ -37,12 +37,5 @@ namespace EMS.BACKEND.API.Controllers
             var result = await userAccount.GetMe();
             return Ok(result);
         }
-
-        [HttpGet("presignedurl"), Authorize]
-        public IActionResult GeneratePreSignedUrl()
-        {
-            var result = userAccount.GeneratePreSignedUrl();
-            return Ok(result);
-        }
     }
 }

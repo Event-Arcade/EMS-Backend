@@ -19,5 +19,7 @@ namespace EMS.BACKEND.API.DTOs.ResponseDTOs
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; } = string.Empty;
 
+        public string? ProfilePictureURL { get; set; }
+
     }
 }

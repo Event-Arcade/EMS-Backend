@@ -1,11 +1,9 @@
-﻿using Amazon;
-using Amazon.S3;
-using Amazon.S3.Model;
-using EMS.BACKEND.API.Contracts;
+﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using SharedClassLibrary.Contracts;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,8 +12,8 @@ using System.Text;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class AccountRepository(UserManager<ApplicationUser> userManager, 
-        IConfiguration config, IHttpContextAccessor httpContextAccessor, IFileService fileService, ICloudProviderRepository cloudProvider) : IUserAccountRepository
+    public class AccountRepository(UserManager<ApplicationUser> userManager,
+        IConfiguration config, IHttpContextAccessor httpContextAccessor, ICloudProviderRepository cloudProvider) : IUserAccountRepository
     {
         public async Task<LoginResponse> CreateAccount(UserRequestDTO userDTO)
         {
@@ -37,7 +35,7 @@ namespace EMS.BACKEND.API.Repositories
             };
 
             //store image
-            var (condition, filepath) = await fileService.UploadFile(userDTO.ProfilePicture, "Images");
+            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, "Images");
             if (condition)
             {
                 newUser.ProfilePicture = filepath;
@@ -110,7 +108,7 @@ namespace EMS.BACKEND.API.Repositories
             //Store updated image
             if (userDTO.ProfilePicture != null)
             {
-                var (condition, filepath) = await fileService.UploadFile(userDTO.ProfilePicture, "Images");
+                var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, "Images");
                 if (condition)
                 {
                     user.ProfilePicture = filepath;
@@ -141,38 +139,30 @@ namespace EMS.BACKEND.API.Repositories
                     var currentUser = await userManager.FindByEmailAsync(result);
                     if (currentUser != null)
                     {
-                        var (condition, bitStream, contentType, message) = await fileService.DownloadFiles(currentUser.ProfilePicture);
-                        if (condition)
+                        var currentUserResponse = new UserResponseDTO()
                         {
-                            var currentUserResponse = new UserResponseDTO()
-                            {
-                                Id = currentUser.Id,
-                                FirstName = currentUser.FirstName,
-                                LastName = currentUser.LastName,
-                                Street = currentUser.Street,
-                                City = currentUser.City,
-                                PostalCode = currentUser.PostalCode,
-                                Province = currentUser.Province,
-                                Longitude = currentUser.Longitude,
-                                Latitude = currentUser.Latitude,
-                                Email = currentUser.Email,
-                            };
-                            return new UserResponse(true, "successfully found", currentUserResponse);
-                        }
-                        else
+                            Id = currentUser.Id,
+                            FirstName = currentUser.FirstName,
+                            LastName = currentUser.LastName,
+                            Street = currentUser.Street,
+                            City = currentUser.City,
+                            PostalCode = currentUser.PostalCode,
+                            Province = currentUser.Province,
+                            Longitude = currentUser.Longitude,
+                            Latitude = currentUser.Latitude,
+                            Email = currentUser.Email,
+                        };
+                        if (currentUser.ProfilePicture != null)
                         {
-                            return new UserResponse(false, message, null);
+                            currentUserResponse.ProfilePictureURL = cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicture);
                         }
+                        return new UserResponse(true, "successfully found", currentUserResponse);
                     }
                 }
             }
-            return new UserResponse(false, "User cannot found!", null);
+            return new UserResponse(false, "", null);
         }
 
-        public string GeneratePreSignedUrl()
-        {
-            return cloudProvider.GeneratePreSignedUrlForDownload();
-        }
         //Generate JWT token
         private string GenerateToken(UserSession user)
         {

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+41126385505862642738ed94266f61b033f9f2a8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4828154005ee8e186d995528b1cbaa29ba669c96")]
 [assembly: System.Reflection.AssemblyProductAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

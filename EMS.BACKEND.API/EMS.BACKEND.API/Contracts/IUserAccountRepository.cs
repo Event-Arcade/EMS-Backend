@@ -10,6 +10,5 @@ namespace SharedClassLibrary.Contracts
         Task<GeneralResponse> UpdateAccount(UserRequestDTO userDTO);
         Task<LoginResponse> LoginAccount(LoginDTO loginDTO);
         Task<UserResponse> GetMe();
-        string GeneratePreSignedUrl();
     }
 }

@@ -7,29 +7,15 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class CloudProviderRepository(IConfiguration configuration, IAmazonS3 amazonS3) : ICloudProviderRepository
     {
-
-        public string GeneratePreSignedUrlForUpload()
+        public string GeneratePreSignedUrlForDownload(string filepath)
         {
             var request = new GetPreSignedUrlRequest
             {
                 BucketName = configuration["AWS:BucketName"],
-                Key = new Guid().ToString(),
-                Verb = HttpVerb.PUT,
-                Expires = DateTime.UtcNow.AddMinutes(5)
-            };
-
-            string url = amazonS3.GetPreSignedURL(request);
-            return url;
-        }
-
-        public string GeneratePreSignedUrlForDownload()
-        {
-            var request = new GetPreSignedUrlRequest
-            {
-                BucketName = configuration["AWS:BucketName"],
-                Key = new Guid().ToString(),
+                Key = filepath,
                 Verb = HttpVerb.GET,
-                Expires = DateTime.UtcNow.AddDays(1)
+                Expires = DateTime.UtcNow.AddDays(1),
+                
             };
 
             string url = amazonS3.GetPreSignedURL(request);
