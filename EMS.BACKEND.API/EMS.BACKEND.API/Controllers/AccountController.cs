@@ -38,12 +38,11 @@ namespace EMS.BACKEND.API.Controllers
             return Ok(result);
         }
 
-        //return current user profile picture
-        [HttpGet("getprofilepicture"), Authorize]
-        public async Task<IActionResult> GetProfilePicture()
+        [HttpGet("presignedurl"), Authorize]
+        public IActionResult GeneratePreSignedUrl()
         {
-            var result = await userAccount.GetProfilePicture();
-            return File(result.bitStream, result.contentType);
+            var result = userAccount.GeneratePreSignedUrl();
+            return Ok(result);
         }
     }
 }

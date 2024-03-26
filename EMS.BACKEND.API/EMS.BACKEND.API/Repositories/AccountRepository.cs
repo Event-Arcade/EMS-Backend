@@ -1,4 +1,7 @@
-﻿using EMS.BACKEND.API.Contracts;
+﻿using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
@@ -11,8 +14,8 @@ using System.Text;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class AccountRepository(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,
-        IConfiguration config, IHttpContextAccessor httpContextAccessor, IFileService fileService) : IUserAccountRepository
+    public class AccountRepository(UserManager<ApplicationUser> userManager, 
+        IConfiguration config, IHttpContextAccessor httpContextAccessor, IFileService fileService, ICloudProviderRepository cloudProvider) : IUserAccountRepository
     {
         public async Task<LoginResponse> CreateAccount(UserRequestDTO userDTO)
         {
@@ -165,6 +168,11 @@ namespace EMS.BACKEND.API.Repositories
             }
             return new UserResponse(false, "User cannot found!", null);
         }
+
+        public string GeneratePreSignedUrl()
+        {
+            return cloudProvider.GeneratePreSignedUrlForDownload();
+        }
         //Generate JWT token
         private string GenerateToken(UserSession user)
         {
@@ -186,29 +194,5 @@ namespace EMS.BACKEND.API.Repositories
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<StaticDataResponse> GetProfilePicture()
-        {
-            var result = string.Empty;
-            if (httpContextAccessor.HttpContext != null)
-            {
-                result = httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Email);
-                Console.WriteLine($"Id : {result}");
-                if (result != null)
-                {
-                    var currentUser = await userManager.FindByEmailAsync(result);
-                    if (currentUser != null)
-                    {
-                        var (condition, bitStream, contentType, message) = await fileService.DownloadFiles(currentUser.ProfilePicture);
-                        if (condition)
-                        {
-                            return new StaticDataResponse(true, bitStream, contentType);
-                        }
-                    }
-                    return new StaticDataResponse(false, null!, null!);
-                }
-
-            }
-            return new StaticDataResponse(false, null!, null!);
-        }
     }
 }

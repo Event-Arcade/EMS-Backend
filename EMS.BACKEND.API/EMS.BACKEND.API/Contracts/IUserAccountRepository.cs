@@ -10,6 +10,6 @@ namespace SharedClassLibrary.Contracts
         Task<GeneralResponse> UpdateAccount(UserRequestDTO userDTO);
         Task<LoginResponse> LoginAccount(LoginDTO loginDTO);
         Task<UserResponse> GetMe();
-        Task<StaticDataResponse> GetProfilePicture();
+        string GeneratePreSignedUrl();
     }
 }

@@ -77,6 +77,7 @@ builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
 
 var app = builder.Build();
 

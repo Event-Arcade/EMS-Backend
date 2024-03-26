@@ -6,18 +6,6 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class FileService(IAmazonS3 _s3Client) : IFileService
     {
-        public async Task<(bool condition, Stream staticData, string contentType, string message)> DownloadFiles(string filePath)
-        {
-            try
-            {
-                var s3Object = await _s3Client.GetObjectAsync("ems-static-data-storage", filePath);
-                return (true, s3Object.ResponseStream, s3Object.Headers.ContentType, string.Empty);
-            }
-            catch (Exception ex)
-            {
-                return (false, null!, null!, $"Internal server error: {ex}");
-            }
-        }
         public async Task<(bool, string)> UploadFile(IFormFile file, string subDirectory)
         {
             subDirectory = subDirectory ?? "defalut";
@@ -45,6 +33,5 @@ namespace EMS.BACKEND.API.Repositories
                 return (false, $"Internal server error: {ex}");
             }
         }
-
     }
 }
