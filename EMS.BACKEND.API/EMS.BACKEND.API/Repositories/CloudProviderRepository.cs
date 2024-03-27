@@ -15,7 +15,7 @@ namespace EMS.BACKEND.API.Repositories
                 Key = filepath,
                 Verb = HttpVerb.GET,
                 Expires = DateTime.UtcNow.AddDays(1),
-                
+
             };
 
             string url = amazonS3.GetPreSignedURL(request);
@@ -32,8 +32,7 @@ namespace EMS.BACKEND.API.Repositories
                     BucketName = configuration["AWS:BucketName"],
                     Key = filePath,
                     InputStream = file.OpenReadStream(),
-                    ContentType = file.ContentType,
-                    CannedACL = S3CannedACL.PublicRead
+                    ContentType = file.ContentType
                 };
 
                 var result = await amazonS3.PutObjectAsync(request);
