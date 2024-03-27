@@ -25,7 +25,8 @@ builder.Services.AddAWSService<IAmazonS3>();
 //Db configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("default") ??
+        //get connection string from appsettings.json
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
             throw new InvalidOperationException("Connection string is not found"));
     });
 
@@ -45,9 +46,12 @@ builder.Services
 builder.Services.AddHttpContextAccessor();
 
 //JWT
-builder.Services.AddAuthentication(options =>{
+builder.Services.AddAuthentication(options =>
+{
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;}).AddJwtBearer(options =>{
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
