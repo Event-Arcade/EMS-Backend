@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj": {}
+    "c:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj": {
+    "c:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj",
+        "projectUniqueName": "c:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj",
         "projectName": "EMS.BACKEND.API",
-        "projectPath": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj",
+        "projectPath": "c:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj",
         "packagesPath": "C:\\Users\\bhanu\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\obj\\",
+        "outputPath": "c:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
