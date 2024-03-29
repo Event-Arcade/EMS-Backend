@@ -1,0 +1,20 @@
+version: '1'
+services:
+  emsbackendapi:
+    image: ${DOCKER_REGISTRY-}bhanuka2500/ems-backend-api
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+      - "8082:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:8080
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=Ems123
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/emscertificate.pfx
+    volumes:
+      - ~/.aspnet/https:/https/
+  
+  
+  
