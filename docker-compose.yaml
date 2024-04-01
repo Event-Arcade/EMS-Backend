@@ -1,10 +1,9 @@
 version: "3"
 services:
-  emsbackendapi:
-    image: ${DOCKER_REGISTRY-}bhanuka2500/ems-backend-api
-    build:
-      context: .
-      dockerfile: Dockerfile
+  app:
+    image: bhanuka2500/ems-backend-api:latest
+    container_name: ems-backend-api-deployement-container
+    restart: always
     ports:
       - "8080:8080"
     environment:
