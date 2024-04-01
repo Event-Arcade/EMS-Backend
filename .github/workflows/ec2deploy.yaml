@@ -41,7 +41,7 @@ jobs:
     - name: Set permissions for private key
       run: |
         echo "${{ env.AWS_PRIVATE_KEY }}" > ems-ec2-dev-admin.pem
-        chmod 600 ems-ec2-dev-admin.pem
+        chmod 400 ems-ec2-dev-admin.pem
     - name: Pull Docker image
       run: |
         ssh -o StrictHostKeyChecking=no -i ems-ec2-dev-admin.pem ubuntu@16.171.23.22 'sudo docker pull bhanuka2500/ems-backend-api:latest'
