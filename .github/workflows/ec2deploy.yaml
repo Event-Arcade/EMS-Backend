@@ -40,7 +40,7 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Set permissions for private key
       run: |
-        echo "${{ secrets.AWS_PRIVATE_KEY }}" > ems-ec2-dev-admin.pem
+        echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ems-ec2-dev-admin.pem
         chmod 400 ems-ec2-dev-admin.pem
     - name: Pull Docker image
       run: |
