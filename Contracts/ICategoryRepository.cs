@@ -5,11 +5,11 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface ICategoryRepository
     {
-        Task<ResponseDTO> GetAllCategories();
-        Task<ResponseDTO> GetCategoryById(string categoryId);
-        Task<ResponseDTO> AddCategory(RequestDTO categoryRequestDTO);
-        Task<ResponseDTO> UpdateCategory(RequestDTO categoryRequestDTO);
-        Task<ResponseDTO> DeleteCategory(string categoryId);
+        Task<BaseResponseDTO> GetAllCategories();
+        Task<BaseResponseDTO> GetCategoryById(string categoryId);
+        Task<BaseResponseDTO> AddCategory(BaseRequestDTO categoryRequestDTO);
+        Task<BaseResponseDTO> UpdateCategory(BaseRequestDTO categoryRequestDTO);
+        Task<BaseResponseDTO> DeleteCategory(string categoryId);
 
     }
 }

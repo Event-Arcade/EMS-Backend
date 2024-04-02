@@ -1,6 +1,6 @@
 namespace EMS.BACKEND.API.DTOs.RequestDTOs
 {
-    public class RequestDTO
+    public class BaseRequestDTO
     {
         public string? Id { get; set; }
         public string? Name { get; set; }

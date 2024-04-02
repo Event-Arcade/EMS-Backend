@@ -9,12 +9,12 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider) : ICategoryRepository
     {
-        public async Task<ResponseDTO> AddCategory(RequestDTO categoryRequestDTO)
+        public async Task<BaseResponseDTO> AddCategory(BaseRequestDTO categoryRequestDTO)
         {
             //check if categoryRequestDTO is null
             if (categoryRequestDTO == null)
             {
-                return new ResponseDTO
+                return new BaseResponseDTO
                 {
                     Flag = false,
                     Message = "CategoryRequestDTO is null"
@@ -29,7 +29,7 @@ namespace EMS.BACKEND.API.Repositories
                 var categoryExists = await dbContext.Categories.AnyAsync(c => c.Name == categoryRequestDTO.Name);
                 if (categoryExists)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = "Category already exists"
@@ -40,7 +40,7 @@ namespace EMS.BACKEND.API.Repositories
                 var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.Image, "admin/category");
                 if (!uploadResult.Item1)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = uploadResult.Item2
@@ -67,7 +67,7 @@ namespace EMS.BACKEND.API.Repositories
                     var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
                     newCategory.CategoryImage = imageUrl;
 
-                    return new ResponseDTO<Category>
+                    return new BaseResponseDTO<Category>
                     {
                         Flag = true,
                         Message = "Category added successfully",
@@ -77,7 +77,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = ex.Message
@@ -86,11 +86,11 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<ResponseDTO> DeleteCategory(string categoryId)
+        public async Task<BaseResponseDTO> DeleteCategory(string categoryId)
         {
             if (string.IsNullOrEmpty(categoryId))
             {
-                return new ResponseDTO
+                return new BaseResponseDTO
                 {
                     Flag = false,
                     Message = "CategoryId is null or empty"
@@ -105,7 +105,7 @@ namespace EMS.BACKEND.API.Repositories
                     var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
                     if (category == null)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = "Category not found"
@@ -116,7 +116,7 @@ namespace EMS.BACKEND.API.Repositories
                     var removeResult = await cloudProvider.RemoveFile(category.CategoryImage);
                     if (!removeResult)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = "Failed to delete category image"
@@ -127,7 +127,7 @@ namespace EMS.BACKEND.API.Repositories
                     dbContext.Categories.Remove(category);
                     await dbContext.SaveChangesAsync();
 
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = true,
                         Message = "Category deleted successfully"
@@ -135,7 +135,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = ex.Message
@@ -144,7 +144,7 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<ResponseDTO> GetAllCategories()
+        public async Task<BaseResponseDTO> GetAllCategories()
         {
             using (var scope = serviceScopeFactory.CreateScope())
             {
@@ -154,7 +154,7 @@ namespace EMS.BACKEND.API.Repositories
                     var categories = await dbContext.Categories.ToListAsync();
                     if (categories == null)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = "Categories not found"
@@ -171,7 +171,7 @@ namespace EMS.BACKEND.API.Repositories
                         categoryList.Add(category);
                     }
 
-                    return new ResponseDTO<List<Category>>
+                    return new BaseResponseDTO<List<Category>>
                     {
                         Flag = true,
                         Message = "Categories found",
@@ -180,7 +180,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = ex.Message
@@ -189,11 +189,11 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<ResponseDTO> GetCategoryById(string categoryId)
+        public async Task<BaseResponseDTO> GetCategoryById(string categoryId)
         {
             if (string.IsNullOrEmpty(categoryId))
             {
-                return new ResponseDTO
+                return new BaseResponseDTO
                 {
                     Flag = false,
                     Message = "CategoryId is null or empty"
@@ -208,7 +208,7 @@ namespace EMS.BACKEND.API.Repositories
                     var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
                     if (category == null)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = "Category not found"
@@ -219,7 +219,7 @@ namespace EMS.BACKEND.API.Repositories
                     var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
                     category.CategoryImage = imageUrl;
 
-                    return new ResponseDTO<Category>
+                    return new BaseResponseDTO<Category>
                     {
                         Flag = true,
                         Message = "Category found",
@@ -228,7 +228,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = ex.Message
@@ -237,11 +237,11 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<ResponseDTO> UpdateCategory(RequestDTO categoryRequestDTO)
+        public async Task<BaseResponseDTO> UpdateCategory(BaseRequestDTO categoryRequestDTO)
         {
             if (categoryRequestDTO == null)
             {
-                return new ResponseDTO
+                return new BaseResponseDTO
                 {
                     Flag = false,
                     Message = "CategoryRequestDTO is null"
@@ -257,7 +257,7 @@ namespace EMS.BACKEND.API.Repositories
                     var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryRequestDTO.Id);
                     if (category == null)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = "Category not found"
@@ -271,7 +271,7 @@ namespace EMS.BACKEND.API.Repositories
                     var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.Image, "admin/category");
                     if (!uploadResult.Item1)
                     {
-                        return new ResponseDTO
+                        return new BaseResponseDTO
                         {
                             Flag = false,
                             Message = uploadResult.Item2
@@ -288,7 +288,7 @@ namespace EMS.BACKEND.API.Repositories
                     //return updated category
                     var updatedCategory = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryRequestDTO.Id);
 
-                    return new ResponseDTO<Category>
+                    return new BaseResponseDTO<Category>
                     {
                         Flag = true,
                         Message = "Category updated successfully",
@@ -298,7 +298,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new ResponseDTO
+                    return new BaseResponseDTO
                     {
                         Flag = false,
                         Message = ex.Message
