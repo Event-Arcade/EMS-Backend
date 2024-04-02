@@ -6,11 +6,10 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface IServiceRepository
     {
-        Task<ServiceListResponse> GetAllServices();
-        Task<ServiceListResponse> GetServicesByShopId(string shopId);
-        Task<ServiceResponse> GetServiceById(string id);
-        Task<ServiceResponse> Create(ServiceRequestDTO serviceRequestDTO);
-        Task<ServiceResponse> Update(ServiceRequestDTO serviceRequestDTO);
-        Task<ServiceResponse> Delete(string id);
+        Task<BaseResponseDTO> GetAllServices();
+        Task<BaseResponseDTO> GetServiceById(string id);
+        Task<BaseResponseDTO> Create(ServiceRequestDTO serviceRequestDTO);
+        Task<BaseResponseDTO> Update(ServiceRequestDTO serviceRequestDTO);
+        Task<BaseResponseDTO> Delete(string id);
     }
 }

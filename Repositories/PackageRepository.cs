@@ -7,27 +7,27 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class PackageRepository : IPackageRepository
     {
-        public Task<PackageResponse> CreatePackage(PackageRequestDTO packageRequestDTO)
+        public Task<BaseResponseDTO> CreatePackage(PackageRequestDTO packageRequestDTO)
         {
             throw new NotImplementedException();
         }
 
-        public Task<GeneralResponse> DeletePackage(string id)
+        public Task<BaseResponseDTO> DeletePackage(string id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<PackageListResponse> GetAllPackages()
+        public Task<BaseResponseDTO<List<Package>>> GetAllPackages()
         {
             throw new NotImplementedException();
         }
 
-        public Task<PackageResponse> GetPackageById(string id)
+        public Task<BaseResponseDTO> GetPackageById(string id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<PackageResponse> UpdatePackage(PackageRequestDTO packageRequestDTO)
+        public Task<BaseResponseDTO> UpdatePackage(PackageRequestDTO packageRequestDTO)
         {
             throw new NotImplementedException();
         }

@@ -12,11 +12,16 @@ namespace EMS.BACKEND.API.Repositories
     public class ServiceRepository(UserManager<ApplicationUser> userManager, IUserAccountRepository userAccountRepository,
                                             IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor) : IServiceRepository
     {
-        public async Task<ServiceResponse> Create(ServiceRequestDTO serviceRequestDTO)
+        public async Task<BaseResponseDTO> Create(ServiceRequestDTO serviceRequestDTO)
         {
             if (serviceRequestDTO == null)
             {
-                return new ServiceResponse(false, "ServiceRequestDTO is null", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "ServiceRequestDTO is null"
+                };
+
             }
 
             var service = new Service
@@ -36,33 +41,44 @@ namespace EMS.BACKEND.API.Repositories
                     var serviceExists = await dbContext.Services.AnyAsync(s => s.Name == service.Name && s.ShopId == service.ShopId);
                     if (serviceExists)
                     {
-                        return new ServiceResponse(false, "Service already exists", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Service already exists"
+                        };
                     }
 
                     await dbContext.Services.AddAsync(service);
                     await dbContext.SaveChangesAsync();
 
-                    return new ServiceResponse(true, "Service created successfully", new ServiceResponseDTO
+                    return new BaseResponseDTO<Service>
                     {
-                        Id = service.Id,
-                        Name = service.Name,
-                        Price = service.Price,
-                        ShopId = service.ShopId
-                    });
+                        Flag = true,
+                        Message = "Service created successfully",
+                        Data = service
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
 
-        public async Task<ServiceResponse> Delete(string id)
+        public async Task<BaseResponseDTO> Delete(string id)
         {
-            //implement delete service
+            //chech if id is null or empty
             if (string.IsNullOrEmpty(id))
             {
-                return new ServiceResponse(false, "Service Id is null or empty", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Service Id is null or empty"
+                };
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
@@ -71,24 +87,38 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == id);
+
+                    //check if service exists
                     if (service == null)
                     {
-                        return new ServiceResponse(false, "Service not found", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Service not found"
+                        };
                     }
 
                     dbContext.Services.Remove(service);
                     await dbContext.SaveChangesAsync();
 
-                    return new ServiceResponse(true, "Service deleted successfully", null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = true,
+                        Message = "Service deleted successfully"
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
 
-        public async Task<ServiceListResponse> GetAllServices()
+        public async Task<BaseResponseDTO> GetAllServices()
         {
             using (var scope = serviceScopeFactory.CreateScope())
             {
@@ -96,9 +126,15 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     var services = dbContext.Services.ToList();
+
+                    //check if services exist
                     if (services == null)
                     {
-                        return new ServiceListResponse(false, "No services found", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "No services found"
+                        };
                     }
 
                     var serviceResponseDTOs = services.Select(s => new ServiceResponseDTO
@@ -109,20 +145,34 @@ namespace EMS.BACKEND.API.Repositories
                         ShopId = s.ShopId
                     }).ToList();
 
-                    return new ServiceListResponse(true, $"{services.Count} services found", serviceResponseDTOs);
+                    return new BaseResponseDTO<List<ServiceResponseDTO>>
+                    {
+                        Flag = true,
+                        Message = $"{services.Count} services found",
+                        Data = serviceResponseDTOs
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceListResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
 
-        public async Task<ServiceResponse> GetServiceById(string id)
+        public async Task<BaseResponseDTO> GetServiceById(string id)
         {
+            //check if id is null or empty
             if (string.IsNullOrEmpty(id))
             {
-                return new ServiceResponse(false, "Service Id is null or empty", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Service Id is null or empty"
+                };
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
@@ -131,31 +181,45 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == id);
+
+                    //check if service exists
                     if (service == null)
                     {
-                        return new ServiceResponse(false, "Service not found", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Service not found"
+                        };
                     }
 
-                    return new ServiceResponse(true, "Service found", new ServiceResponseDTO
+                    return new BaseResponseDTO<Service>
                     {
-                        Id = service.Id,
-                        Name = service.Name,
-                        Price = service.Price,
-                        ShopId = service.ShopId
-                    });
+                        Flag = true,
+                        Message = "Service found",
+                        Data = service
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
 
-        public async Task<ServiceListResponse> GetServicesByShopId(string shopId)
+        public async Task<BaseResponseDTO> GetServicesByShopId(string shopId)
         {
+            //check if shopId is null or empty
             if (string.IsNullOrEmpty(shopId))
             {
-                return new ServiceListResponse(false, "Shop Id is null or empty", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Shop Id is null or empty"
+                };
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
@@ -164,33 +228,45 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     var services = await dbContext.Services.Where(s => s.ShopId == shopId).ToListAsync();
-                    if (services == null)
+
+                    //check if services exist
+                    if (services == null || services.Count == 0)
                     {
-                        return new ServiceListResponse(false, "No services found", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "No services found"
+                        };
                     }
 
-                    var serviceResponseDTOs = services.Select(s => new ServiceResponseDTO
+                    return new BaseResponseDTO<List<Service>>
                     {
-                        Id = s.Id,
-                        Name = s.Name,
-                        Price = s.Price,
-                        ShopId = s.ShopId
-                    }).ToList();
-
-                    return new ServiceListResponse(true, $"{services.Count} services found", serviceResponseDTOs);
+                        Flag = true,
+                        Message = $"{services.Count} services found",
+                        Data = services
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceListResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
 
-        public async Task<ServiceResponse> Update(ServiceRequestDTO serviceRequestDTO)
+        public async Task<BaseResponseDTO> Update(ServiceRequestDTO serviceRequestDTO)
         {
+            //check if serviceRequestDTO is null
             if (serviceRequestDTO == null)
             {
-                return new ServiceResponse(false, "ServiceRequestDTO is null", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "ServiceRequestDTO is null"
+                };
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
@@ -199,9 +275,15 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceRequestDTO.Id);
+
+                    //check if service exists
                     if (service == null)
                     {
-                        return new ServiceResponse(false, "Service not found", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Service not found"
+                        };
                     }
 
                     service.Name = serviceRequestDTO.Name;
@@ -211,21 +293,22 @@ namespace EMS.BACKEND.API.Repositories
                     dbContext.Services.Update(service);
                     await dbContext.SaveChangesAsync();
 
-                    return new ServiceResponse(true, "Service updated successfully", new ServiceResponseDTO
+                    return new BaseResponseDTO<Service>
                     {
-                        Id = service.Id,
-                        Name = service.Name,
-                        Price = service.Price,
-                        ShopId = service.ShopId
-                    });
+                        Flag = true,
+                        Message = "Service updated successfully",
+                        Data = service
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ServiceResponse(false, ex.Message, null);
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = ex.Message
+                    };
                 }
             }
         }
-
-        
     }
 }

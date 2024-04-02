@@ -5,10 +5,10 @@ namespace SharedClassLibrary.Contracts
 {
     public interface IShopServiceRepository
     {
-        Task<ShopResponse> CreateShop(ShopRequestDTO shopRequestDTO);
-        Task<ShopResponse> UpdateShop(ShopRequestDTO shopRequestDTO);
-        Task<GeneralResponse> DeleteShop();
-        Task<ShopResponse> GetMyShop();
-        Task<ShopListResponse> GetAllShops();
+        Task<BaseResponseDTO> CreateShop(ShopRequestDTO shopRequestDTO);
+        Task<BaseResponseDTO> UpdateShop(ShopRequestDTO shopRequestDTO);
+        Task<BaseResponseDTO> DeleteShop();
+        Task<BaseResponseDTO> GetMyShop();
+        Task<BaseResponseDTO> GetAllShops();
     }
 }
