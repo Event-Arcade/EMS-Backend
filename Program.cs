@@ -126,10 +126,7 @@ using (var scope = app.Services.CreateScope())
     //seeding admin user
     var adminUser = new ApplicationUser
     {
-        FirstName = "admin1",
-        LastName = "admin2",
-        PasswordHash = "Admin@123",
-        UserName = "admin@gmail.com",
+        UserName = "admin",
         Email = "admin@gmail.com"
     };
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
@@ -144,10 +141,7 @@ using (var scope = app.Services.CreateScope())
     //seeding client user
     var clientUser = new ApplicationUser
     {
-        FirstName = "client",
-        LastName = "client",
-        PasswordHash = "Client@123",
-        UserName = "client@gmail.com",
+        UserName = "client",
         Email = "client@gmail.com"
     };
     if (await userManager.FindByEmailAsync(clientUser.Email) == null)
@@ -162,10 +156,7 @@ using (var scope = app.Services.CreateScope())
     //seeding vendor user
     var vendorUser = new ApplicationUser
     {
-        FirstName = "vendor",
-        LastName = "vendor",
-        PasswordHash = "Vendor@123",
-        UserName = "vendor@gmail.com",
+        UserName = "vendor",
         Email = "vendor@gmail.com"
     };
     if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
@@ -216,7 +207,6 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine($"Error occurd when seeeding a new shop: {ex}");
         }
     }
-
 
     //seeding services
     if (!dbContext.Services.Any())

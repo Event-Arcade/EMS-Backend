@@ -3,7 +3,6 @@ using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using SharedClassLibrary.Contracts;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,13 +18,16 @@ namespace EMS.BACKEND.API.Repositories
         {
             if (userDTO is null) return new LoginResponse(false, null!, "Model is empty");
 
+            //check weather user already registered
+            var user = await userManager.FindByEmailAsync(userDTO.Email);
+            if (user is not null)
+                return new LoginResponse(false, null!, "User registered already");
+
+            //create new user object
             var newUser = new ApplicationUser()
             {
-                FirstName = userDTO.FirstName,
-                LastName = userDTO.LastName,
                 Email = userDTO.Email,
-                PasswordHash = userDTO.Password,
-                UserName = userDTO.Email,
+                UserName = userDTO.FirstName + " " + userDTO.LastName,
                 Street = userDTO.Street,
                 City = userDTO.City,
                 PostalCode = userDTO.PostalCode,
@@ -34,7 +36,7 @@ namespace EMS.BACKEND.API.Repositories
                 Latitude = userDTO.Latitude,
             };
 
-            //store image
+            //store profile-picture in storage
             var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, "Images");
             if (condition)
             {
@@ -44,9 +46,6 @@ namespace EMS.BACKEND.API.Repositories
             {
                 return new LoginResponse(false, null!, filepath);
             }
-            var user = await userManager.FindByEmailAsync(newUser.Email);
-            if (user is not null)
-                return new LoginResponse(false, null!, "User registered already");
 
             var createUser = await userManager.CreateAsync(newUser, userDTO.Password);
             if (!createUser.Succeeded)
@@ -96,8 +95,7 @@ namespace EMS.BACKEND.API.Repositories
                 return new GeneralResponse(false, "User account is not registered ");
 
             //Assing new values
-            user.FirstName = userDTO.FirstName;
-            user.LastName = userDTO.LastName;
+            user.UserName = userDTO.FirstName + " " + userDTO.LastName;
             user.Street = userDTO.Street;
             user.City = userDTO.City;
             user.PostalCode = userDTO.PostalCode;
@@ -139,11 +137,12 @@ namespace EMS.BACKEND.API.Repositories
                     var currentUser = await userManager.FindByEmailAsync(result);
                     if (currentUser != null)
                     {
+
                         var currentUserResponse = new UserResponseDTO()
                         {
                             Id = currentUser.Id,
-                            FirstName = currentUser.FirstName,
-                            LastName = currentUser.LastName,
+                            FirstName = currentUser.UserName.Split(' ')[0],
+                            LastName = currentUser.UserName.Split(' ')[1],
                             Street = currentUser.Street,
                             City = currentUser.City,
                             PostalCode = currentUser.PostalCode,
