@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory) : ICategoryRepository
+    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider) : ICategoryRepository
     {
         public async Task<CategoryResponse> AddCategory(CategoryRequestDTO categoryRequestDTO)
         {
+            //check if categoryRequestDTO is null
             if (categoryRequestDTO == null)
             {
                 return new CategoryResponse(false, "CategoryRequestDTO is null", null);
@@ -27,21 +28,36 @@ namespace EMS.BACKEND.API.Repositories
                     return new CategoryResponse(false, "Category already exists", null);
                 }
 
+                //upload category static data
+                var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.CategoryImage, "admin/category");
+                if (!uploadResult.Item1)
+                {
+                    return new CategoryResponse(false, uploadResult.Item2, null);
+                }
+
+
                 try
                 {
                     var category = new Category
                     {
                         Id = Guid.NewGuid().ToString(),
-                        Name = categoryRequestDTO.Name
+                        Name = categoryRequestDTO.Name,
+                        Description = categoryRequestDTO.Description,
+                        CategoryImage = uploadResult.Item2
                     };
 
                     await dbContext.Categories.AddAsync(category);
                     await dbContext.SaveChangesAsync();
+                    
+                    //get image link
+                    var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
 
                     return new CategoryResponse(true, "Category created successfully", new CategoryResponseDTO
                     {
                         Id = category.Id,
-                        Name = category.Name
+                        Name = category.Name,
+                        Description = category.Description,
+                        CategoryImage = imageUrl
                     });
                 }
                 catch (Exception ex)
@@ -69,6 +85,14 @@ namespace EMS.BACKEND.API.Repositories
                         return new GeneralResponse(false, "Category not found");
                     }
 
+                    //remove category image from cloud
+                    var removeResult = await cloudProvider.RemoveFile(category.CategoryImage);
+                    if (!removeResult)
+                    {
+                        return new GeneralResponse(false, "Failed to remove category image");
+                    }
+
+                    //delete category from database
                     dbContext.Categories.Remove(category);
                     await dbContext.SaveChangesAsync();
 
@@ -97,10 +121,16 @@ namespace EMS.BACKEND.API.Repositories
                     var categoryList = new List<CategoryResponseDTO>();
                     foreach (var category in categories)
                     {
+                        //get image link
+                        var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
+
+                        //add category to list
                         categoryList.Add(new CategoryResponseDTO
                         {
                             Id = category.Id,
-                            Name = category.Name
+                            Name = category.Name,
+                            Description = category.Description,
+                            CategoryImage = imageUrl
                         });
                     }
 
@@ -131,10 +161,15 @@ namespace EMS.BACKEND.API.Repositories
                         return new CategoryResponse(false, "Category not found", null);
                     }
 
+                    //get image link
+                    var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
+
                     return new CategoryResponse(true, "Category found", new CategoryResponseDTO
                     {
                         Id = category.Id,
-                        Name = category.Name
+                        Name = category.Name,
+                        Description = category.Description,
+                        CategoryImage = imageUrl
                     });
                 }
                 catch (Exception ex)
@@ -153,6 +188,7 @@ namespace EMS.BACKEND.API.Repositories
 
             using (var scope = serviceScopeFactory.CreateScope())
             {
+                //check if category exists
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
@@ -163,13 +199,29 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     category.Name = categoryRequestDTO.Name;
+                    category.Description = categoryRequestDTO.Description;
+
+                    //upload category static data
+                    var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.CategoryImage, "admin/category");
+                    if (!uploadResult.Item1)
+                    {
+                        return new CategoryResponse(false, uploadResult.Item2, null);
+                    }
+                    category.CategoryImage = uploadResult.Item2;
+
+                    //update category
                     dbContext.Categories.Update(category);
                     await dbContext.SaveChangesAsync();
+
+                    //get image link
+                    var categoryImageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
 
                     return new CategoryResponse(true, "Category updated successfully", new CategoryResponseDTO
                     {
                         Id = category.Id,
-                        Name = category.Name
+                        Name = category.Name,
+                        Description = category.Description,
+                        CategoryImage = categoryImageUrl
                     });
                 }
                 catch (Exception ex)
