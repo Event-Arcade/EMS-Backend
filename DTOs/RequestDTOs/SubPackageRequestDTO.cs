@@ -1,8 +1,11 @@
-﻿namespace EMS.BACKEND.API.DTOs.RequestDTOs
+﻿using EMS.BACKEND.API.Enums;
+
+namespace EMS.BACKEND.API.DTOs.RequestDTOs
 {
-    public class SubPackageRequestDTO
+    public class SubPackageRequestDTO 
     {
-        public string ServiceId { get; set; }
-        public string Status { get; set; }
+        public string? PackageId { get; set; }
+        public string? serviceId { get; set; }
+        public PackageStatus Status { get; set; }
     }
 }

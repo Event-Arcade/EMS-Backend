@@ -133,6 +133,40 @@ namespace EMS.BACKEND.API.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeedbackStaticResourcePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<string>("ServiceId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("FeedBacks");
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
                     b.Property<string>("Id")
@@ -140,10 +174,6 @@ namespace EMS.BACKEND.API.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -161,23 +191,27 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CategoryId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
 
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
                     b.Property<string>("ShopId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("StaticResourcesPaths")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("CategoryId");
+                    b.HasKey("Id");
 
                     b.HasIndex("ShopId");
 
@@ -251,7 +285,7 @@ namespace EMS.BACKEND.API.Migrations
 
                     b.Property<string>("ServiceId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -259,8 +293,6 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PackageId");
-
-                    b.HasIndex("ServiceId");
 
                     b.ToTable("SubPackages");
                 });
@@ -398,6 +430,15 @@ namespace EMS.BACKEND.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
+                {
+                    b.HasOne("EMS.BACKEND.API.Models.Service", null)
+                        .WithMany("FeedBacks")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
@@ -409,19 +450,9 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("EMS.BACKEND.API.Models.Shop", null)
                         .WithMany("Services")
-                        .HasForeignKey("ShopId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
+                        .HasForeignKey("ShopId");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
@@ -438,14 +469,6 @@ namespace EMS.BACKEND.API.Migrations
                         .HasForeignKey("PackageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("EMS.BACKEND.API.Models.Service", "Service")
-                        .WithMany()
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -507,6 +530,11 @@ namespace EMS.BACKEND.API.Migrations
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
                     b.Navigation("SubPackages");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
+                {
+                    b.Navigation("FeedBacks");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>

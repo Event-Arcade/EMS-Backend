@@ -1,298 +1,379 @@
-﻿using EMS.BACKEND.API.Contracts;
+﻿using Contracts;
+using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class ServiceRepository(IUserAccountRepository userAccountRepository, IServiceScopeFactory serviceScopeFactory) : IServiceRepository
+    public class ServiceRepository(IUserAccountRepository userAccountRepository, IFeedBackRepository feedBackRepository,
+    IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IServiceRepository
     {
-        public async Task<BaseResponseDTO> Create(ServiceRequestDTO serviceRequestDTO)
+        public async Task<BaseResponseDTO> CreateAsync(Service entity)
         {
-            if (serviceRequestDTO == null)
+            try
+            {
+                //check if entity is null 
+                if (entity == null)
+                {
+                    throw new ArgumentNullException(nameof(entity));
+                }
+
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    //assing new id into entity
+                    entity.Id = Guid.NewGuid().ToString();
+
+                    if (entity.formFiles != null)
+                    {
+                        entity.StaticResourcesPaths = new List<ServiceStaticResources>();
+                        foreach (var file in entity.formFiles)
+                        {
+                            var (flag, path) = await cloudProvider.UploadFile(file, configuration["StorageDirectories:FeedbackImages"]);
+                            if (!flag)
+                            {
+                                throw new Exception("Error uploading file");
+                            }
+                            var staticResource = new ServiceStaticResources
+                            {
+                                Id = Guid.NewGuid().ToString(),
+                                ServiceId = entity.Id,
+                                ResourceUrl = path
+                            };
+
+                            //add into database
+                            await context.ServiceStaticResources.AddAsync(staticResource);
+                        }
+                    }
+
+                    await context.Services.AddAsync(entity);
+                    await context.SaveChangesAsync();
+                    return new BaseResponseDTO
+                    {
+                        Message = "Service created successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
             {
                 return new BaseResponseDTO
                 {
-                    Flag = false,
-                    Message = "ServiceRequestDTO is null"
+                    Message = ex.Message,
+                    Flag = false
                 };
-
             }
+        }
 
-            var service = new Service
+        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        {
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                Name = serviceRequestDTO.Name,
-                Price = serviceRequestDTO.Price,
-                ShopId = serviceRequestDTO.ShopId
-            };
-
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                //check if id in null
+                if (id == null)
                 {
-                    //check if service exists
-                    var serviceExists = await dbContext.Services.AnyAsync(s => s.Name == service.Name && s.ShopId == service.ShopId);
-                    if (serviceExists)
+                    throw new ArgumentNullException(nameof(id));
+                }
+
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var service = await context.Services.FindAsync(id);
+                    if (service == null)
                     {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Service already exists"
-                        };
+                        throw new Exception("Service not found");
                     }
 
-                    await dbContext.Services.AddAsync(service);
-                    await dbContext.SaveChangesAsync();
+                    //check any sub package exist
+                    if (context.SubPackages.Any(x => x.ServiceId == id))
+                    {
+                        throw new Exception("Service can't be deleted because it has sub packages");
+                    }
+
+                    //delete all static resources
+                    var staticResources = await context.ServiceStaticResources.Where(x => x.ServiceId == id).ToListAsync();
+                    foreach (var item in staticResources)
+                    {
+                        //delete file from cloud
+                        await cloudProvider.RemoveFile(item.ResourceUrl);
+
+                        //remove from database
+                        context.ServiceStaticResources.Remove(item);
+                    }
+
+                    //delete all feedbacks associated with service
+                    var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == id).ToListAsync();
+                    foreach (var item in feedbacks)
+                    {
+                        await feedBackRepository.DeleteAsync(item.Id);
+                    }
+
+                    context.Services.Remove(service);
+                    await context.SaveChangesAsync();
+                    return new BaseResponseDTO
+                    {
+                        Message = "Service deleted successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+
+        public async Task<BaseResponseDTO<IEnumerable<Service>>> FindAllAsync()
+        {
+            try
+            {
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var services = await context.Services.Include(x => x.StaticResourcesPaths).Include(x => x.FeedBacks).ToListAsync();
+
+                    //get all feedbacks for each service
+                    foreach (var service in services)
+                    {
+                        var feedbacksForService = await feedBackRepository.GetFeedBacksByServiceId(service.Id);
+                        if (feedbacksForService.Flag)
+                        {
+                            foreach (var feedback in feedbacksForService.Data)
+                            {
+                                service.FeedBacks.Add(feedback);
+
+                            }
+                        }
+                    }
+
+                    //get all static resources for each service
+                    foreach (var s in services)
+                    {
+                        var staticResourcesForService = await context.ServiceStaticResources.Where(x => x.ServiceId == s.Id).ToListAsync();
+                        //assign url to each static resource
+                        foreach (var item in staticResourcesForService)
+                        {
+                            item.ResourceUrl = cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+                        }
+                        s.StaticResourcesPaths = staticResourcesForService;
+                    }
+
+                    return new BaseResponseDTO<IEnumerable<Service>>
+                    {
+                        Data = services,
+                        Message = "Services fetched successfully",
+                        Flag = true
+                    };
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<Service>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+
+        public async Task<BaseResponseDTO<Service>> FindByIdAsync(string id)
+        {
+            try
+            {
+                //check if id is null
+                if (id == null)
+                {
+                    throw new ArgumentNullException(nameof(id));
+                }
+
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var service = context.Services.Include(x => x.StaticResourcesPaths).Include(x => x.FeedBacks).FirstOrDefault(x => x.Id == id);
+
+                    //get all feedbacks for service
+                    var feedbacksForService = feedBackRepository.GetFeedBacksByServiceId(id);
+                    if (feedbacksForService.Result.Flag)
+                    {
+                        foreach (var feedback in feedbacksForService.Result.Data)
+                        {
+                            service.FeedBacks.Add(feedback);
+                        }
+                    }
+
+                    //get all static resources for service
+                    var staticResourcesForService = context.ServiceStaticResources.Where(x => x.ServiceId == id).ToList();
+                    //assign url to each static resource
+                    foreach (var item in staticResourcesForService)
+                    {
+                        item.ResourceUrl = cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+                    }
+                    service.StaticResourcesPaths = staticResourcesForService;
 
                     return new BaseResponseDTO<Service>
                     {
-                        Flag = true,
-                        Message = "Service created successfully",
-                        Data = service
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = ex.Message
+                        Data = service,
+                        Flag = true
                     };
                 }
             }
-        }
-        public async Task<BaseResponseDTO> Delete(string id)
-        {
-            //chech if id is null or empty
-            if (string.IsNullOrEmpty(id))
-            {
-                return new BaseResponseDTO
-                {
-                    Flag = false,
-                    Message = "Service Id is null or empty"
-                };
-            }
-
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == id);
-
-                    //check if service exists
-                    if (service == null)
-                    {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Service not found"
-                        };
-                    }
-
-                    dbContext.Services.Remove(service);
-                    await dbContext.SaveChangesAsync();
-
-                    return new BaseResponseDTO
-                    {
-                        Flag = true,
-                        Message = "Service deleted successfully"
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
-            }
-        }
-        public async Task<BaseResponseDTO<List<Service>>> GetAllServices()
-        {
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var services = dbContext.Services.ToList();
-
-                    //check if services exist
-                    if (services == null)
-                    {
-                        return new BaseResponseDTO<List<Service>>
-                        {
-                            Flag = false,
-                            Message = "No services found"
-                        };
-                    }
-
-                    return new BaseResponseDTO<List<Service>>
-                    {
-                        Flag = true,
-                        Message = $"{services.Count} services found",
-                        Data = services
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO<List<Service>>
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
-            }
-        }
-        public async Task<BaseResponseDTO<Service>> GetServiceById(string id)
-        {
-            //check if id is null or empty
-            if (string.IsNullOrEmpty(id))
+            catch (Exception ex)
             {
                 return new BaseResponseDTO<Service>
                 {
-                    Flag = false,
-                    Message = "Service Id is null or empty"
+                    Message = ex.Message,
+                    Flag = false
                 };
             }
+        }
 
-            using (var scope = serviceScopeFactory.CreateScope())
+        public async Task<BaseResponseDTO<IEnumerable<Service>>> GetServicesByShopId(string shopId)
+        {
+            try
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                //check if shopId is null
+                if (shopId == null)
                 {
-                    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == id);
+                    throw new ArgumentNullException(nameof(shopId));
+                }
 
-                    //check if service exists
-                    if (service == null)
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var services = context.Services.Where(x => x.ShopId == shopId).Include(x => x.StaticResourcesPaths).Include(x => x.FeedBacks).ToList();
+
+                    //get all feedbacks for each service
+                    foreach (var service in services)
                     {
-                        return new BaseResponseDTO<Service>
+                        var feedbacksForService = feedBackRepository.GetFeedBacksByServiceId(service.Id);
+                        if (feedbacksForService.Result.Flag)
                         {
-                            Flag = false,
-                            Message = "Service not found"
-                        };
+                            foreach (var feedback in feedbacksForService.Result.Data)
+                            {
+                                service.FeedBacks.Add(feedback);
+                            }
+                        }
                     }
 
-                    return new BaseResponseDTO<Service>
+                    //get all static resources for each service
+                    foreach (var s in services)
                     {
-                        Flag = true,
-                        Message = "Service found",
-                        Data = service
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO<Service>
+                        var staticResourcesForService = context.ServiceStaticResources.Where(x => x.ServiceId == s.Id).ToList();
+                        //assign url to each static resource
+                        foreach (var item in staticResourcesForService)
+                        {
+                            item.ResourceUrl = cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+                        }
+                        s.StaticResourcesPaths = staticResourcesForService;
+                    }
+
+                    return new BaseResponseDTO<IEnumerable<Service>>
                     {
-                        Flag = false,
-                        Message = ex.Message
+                        Data = services,
+                        Message = "Services fetched successfully",
+                        Flag = true
                     };
+
                 }
             }
-        }
-        public async Task<BaseResponseDTO<List<Service>>> GetServicesByShopId(string shopId)
-        {
-            //check if shopId is null or empty
-            if (string.IsNullOrEmpty(shopId))
+            catch (Exception ex)
             {
-                return new BaseResponseDTO<List<Service>>
+                return new BaseResponseDTO<IEnumerable<Service>>
                 {
-                    Flag = false,
-                    Message = "Shop Id is null or empty"
+                    Message = ex.Message,
+                    Flag = false
                 };
             }
+        }
 
-            using (var scope = serviceScopeFactory.CreateScope())
+        public async Task<BaseResponseDTO> UpdateAsync(Service entity)
+        {
+            try
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                //check if entity is null
+                if (entity == null)
                 {
-                    var services = await dbContext.Services.Where(s => s.ShopId == shopId).ToListAsync();
+                    throw new ArgumentNullException(nameof(entity));
+                }
 
-                    //check if services exist
-                    if (services == null || services.Count == 0)
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    //get old service
+                    var oldService = await context.Services.FindAsync(entity.Id);
+                    if (oldService == null)
                     {
-                        return new BaseResponseDTO<List<Service>>
-                        {
-                            Flag = false,
-                            Message = "No services found"
-                        };
+                        throw new Exception("Service not found");
                     }
 
-                    return new BaseResponseDTO<List<Service>>
+                    //update old service
+                    oldService.Name = entity.Name;
+                    oldService.Price = entity.Price;
+                    oldService.Description = entity.Description;
+                    oldService.Rating = entity.Rating;
+                    oldService.ShopId = entity.ShopId;
+                    oldService.CategoryId = entity.CategoryId;
+
+                    //delete all static resources
+                    var staticResources = await context.ServiceStaticResources.Where(x => x.ServiceId == entity.Id).ToListAsync();
+                    foreach (var item in staticResources)
                     {
-                        Flag = true,
-                        Message = $"{services.Count} services found",
-                        Data = services
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO<List<Service>>
+                        //delete file from cloud
+                        await cloudProvider.RemoveFile(item.ResourceUrl);
+
+                        //remove from database
+                        context.ServiceStaticResources.Remove(item);
+                    }
+
+                    //add new static resources
+                    if (entity.formFiles != null)
                     {
-                        Flag = false,
-                        Message = ex.Message
+                        entity.StaticResourcesPaths = new List<ServiceStaticResources>();
+                        foreach (var file in entity.formFiles)
+                        {
+                            var (flag, path) = await cloudProvider.UploadFile(file, configuration["StorageDirectories:FeedbackImages"]);
+                            if (!flag)
+                            {
+                                throw new Exception("Error uploading file");
+                            }
+                            var staticResource = new ServiceStaticResources
+                            {
+                                Id = Guid.NewGuid().ToString(),
+                                ServiceId = entity.Id,
+                                ResourceUrl = path
+                            };
+
+                            //add into database
+                            await context.ServiceStaticResources.AddAsync(staticResource);
+                        }
+                    }
+
+                    await context.SaveChangesAsync();
+                    return new BaseResponseDTO
+                    {
+                        Message = "Service updated successfully",
+                        Flag = true
                     };
                 }
             }
-        }
-        public async Task<BaseResponseDTO> Update(ServiceRequestDTO serviceRequestDTO)
-        {
-            //check if serviceRequestDTO is null
-            if (serviceRequestDTO == null)
+            catch (Exception ex)
             {
                 return new BaseResponseDTO
                 {
-                    Flag = false,
-                    Message = "ServiceRequestDTO is null"
+                    Message = ex.Message,
+                    Flag = false
                 };
-            }
-
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var service = await dbContext.Services.FirstOrDefaultAsync(s => s.Id == serviceRequestDTO.Id);
-
-                    //check if service exists
-                    if (service == null)
-                    {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Service not found"
-                        };
-                    }
-
-                    service.Name = serviceRequestDTO.Name;
-                    service.Price = serviceRequestDTO.Price;
-                    service.ShopId = serviceRequestDTO.ShopId;
-
-                    dbContext.Services.Update(service);
-                    await dbContext.SaveChangesAsync();
-
-                    return new BaseResponseDTO
-                    {
-                        Flag = true,
-                        Message = "Service updated successfully"
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
             }
         }
     }
