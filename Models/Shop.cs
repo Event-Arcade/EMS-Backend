@@ -11,5 +11,6 @@ namespace EMS.BACKEND.API.Models
         public string Description { get; set; }
         public double Rating { get; set; }
         public string OwnerId { get; set; }
+        public virtual ICollection<Service> Services  { get; set; }
     }
 }

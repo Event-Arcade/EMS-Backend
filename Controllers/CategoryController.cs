@@ -10,7 +10,7 @@ namespace EMS.BACKEND.API.Controllers
     public class CategoryController(ICategoryRepository categoryRepository) : Controller
     {
         [HttpPost("add"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddCategory(CategoryRequestDTO categoryRequestDTO)
+        public async Task<IActionResult> AddCategory(BaseRequestDTO categoryRequestDTO)
         {
             var result = await categoryRepository.AddCategory(categoryRequestDTO);
             return Ok(result);
@@ -38,7 +38,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("update"),Authorize(Roles ="admin")]
-        public async Task<IActionResult> UpdateCategory(CategoryRequestDTO categoryRequestDTO)
+        public async Task<IActionResult> UpdateCategory(BaseRequestDTO categoryRequestDTO)
         {
             var result = await categoryRepository.UpdateCategory(categoryRequestDTO);
             return Ok(result);

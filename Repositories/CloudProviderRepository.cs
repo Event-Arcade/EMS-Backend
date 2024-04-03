@@ -21,7 +21,6 @@ namespace EMS.BACKEND.API.Repositories
             string url = amazonS3.GetPreSignedURL(request);
             return url;
         }
-
         public async Task<(bool, string)> UploadFile(IFormFile file, string subDirectory)
         {
             try
@@ -47,5 +46,27 @@ namespace EMS.BACKEND.API.Repositories
                 return (false, ex.Message);
             }
         }
+        public async Task<bool> RemoveFile(string filePath)
+        {
+            try
+            {
+                var request = new DeleteObjectRequest
+                {
+                    BucketName = configuration["AWS:BucketName"],
+                    Key = filePath
+                };
+
+                var result = await amazonS3.DeleteObjectAsync(request);
+                if (result.HttpStatusCode == HttpStatusCode.OK)
+                {
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }        
     }
 }

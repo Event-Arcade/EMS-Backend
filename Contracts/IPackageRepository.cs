@@ -6,10 +6,10 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface IPackageRepository
     {
-        Task<PackageListResponse> GetAllPackages();
-        Task<PackageResponse> GetPackageById(string id);
-        Task<PackageResponse> CreatePackage(PackageRequestDTO packageRequestDTO);
-        Task<PackageResponse> UpdatePackage(PackageRequestDTO packageRequestDTO);
-        Task<GeneralResponse> DeletePackage(string id);
+        Task<BaseResponseDTO<List<Package>>> GetAllPackages();
+        Task<BaseResponseDTO> GetPackageById(string id);
+        Task<BaseResponseDTO> CreatePackage(PackageRequestDTO packageRequestDTO);
+        Task<BaseResponseDTO> UpdatePackage(PackageRequestDTO packageRequestDTO);
+        Task<BaseResponseDTO> DeletePackage(string id);
     }
 }
