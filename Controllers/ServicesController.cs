@@ -20,7 +20,7 @@ namespace EMS.BACKEND.API.Controllers
         [HttpGet("myservices{id}"), Authorize]
         public async Task<IActionResult> GetService(string id)
         {
-            var response = await serviceRepository.GetServicesByShopId(id);
+            var response = await serviceRepository.GetServiceById(id);
             return Ok(response);
         }
 

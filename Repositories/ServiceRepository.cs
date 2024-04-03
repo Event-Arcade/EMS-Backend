@@ -9,8 +9,7 @@ using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class ServiceRepository(UserManager<ApplicationUser> userManager, IUserAccountRepository userAccountRepository,
-                                            IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor) : IServiceRepository
+    public class ServiceRepository(IUserAccountRepository userAccountRepository, IServiceScopeFactory serviceScopeFactory) : IServiceRepository
     {
         public async Task<BaseResponseDTO> Create(ServiceRequestDTO serviceRequestDTO)
         {
@@ -68,7 +67,6 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-
         public async Task<BaseResponseDTO> Delete(string id)
         {
             //chech if id is null or empty
@@ -117,8 +115,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-
-        public async Task<BaseResponseDTO> GetAllServices()
+        public async Task<BaseResponseDTO<List<Service>>> GetAllServices()
         {
             using (var scope = serviceScopeFactory.CreateScope())
             {
@@ -130,31 +127,23 @@ namespace EMS.BACKEND.API.Repositories
                     //check if services exist
                     if (services == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<List<Service>>
                         {
                             Flag = false,
                             Message = "No services found"
                         };
                     }
 
-                    var serviceResponseDTOs = services.Select(s => new ServiceResponseDTO
-                    {
-                        Id = s.Id,
-                        Name = s.Name,
-                        Price = s.Price,
-                        ShopId = s.ShopId
-                    }).ToList();
-
-                    return new BaseResponseDTO<List<ServiceResponseDTO>>
+                    return new BaseResponseDTO<List<Service>>
                     {
                         Flag = true,
                         Message = $"{services.Count} services found",
-                        Data = serviceResponseDTOs
+                        Data = services
                     };
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<List<Service>>
                     {
                         Flag = false,
                         Message = ex.Message
@@ -162,13 +151,12 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-
-        public async Task<BaseResponseDTO> GetServiceById(string id)
+        public async Task<BaseResponseDTO<Service>> GetServiceById(string id)
         {
             //check if id is null or empty
             if (string.IsNullOrEmpty(id))
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<Service>
                 {
                     Flag = false,
                     Message = "Service Id is null or empty"
@@ -185,7 +173,7 @@ namespace EMS.BACKEND.API.Repositories
                     //check if service exists
                     if (service == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<Service>
                         {
                             Flag = false,
                             Message = "Service not found"
@@ -201,7 +189,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<Service>
                     {
                         Flag = false,
                         Message = ex.Message
@@ -209,13 +197,12 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-
-        public async Task<BaseResponseDTO> GetServicesByShopId(string shopId)
+        public async Task<BaseResponseDTO<List<Service>>> GetServicesByShopId(string shopId)
         {
             //check if shopId is null or empty
             if (string.IsNullOrEmpty(shopId))
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<List<Service>>
                 {
                     Flag = false,
                     Message = "Shop Id is null or empty"
@@ -232,7 +219,7 @@ namespace EMS.BACKEND.API.Repositories
                     //check if services exist
                     if (services == null || services.Count == 0)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<List<Service>>
                         {
                             Flag = false,
                             Message = "No services found"
@@ -248,7 +235,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<List<Service>>
                     {
                         Flag = false,
                         Message = ex.Message
@@ -256,7 +243,6 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-
         public async Task<BaseResponseDTO> Update(ServiceRequestDTO serviceRequestDTO)
         {
             //check if serviceRequestDTO is null
@@ -293,11 +279,10 @@ namespace EMS.BACKEND.API.Repositories
                     dbContext.Services.Update(service);
                     await dbContext.SaveChangesAsync();
 
-                    return new BaseResponseDTO<Service>
+                    return new BaseResponseDTO
                     {
                         Flag = true,
-                        Message = "Service updated successfully",
-                        Data = service
+                        Message = "Service updated successfully"
                     };
                 }
                 catch (Exception ex)

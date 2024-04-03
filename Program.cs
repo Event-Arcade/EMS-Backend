@@ -223,7 +223,7 @@ using (var scope = app.Services.CreateScope())
                             Name = "Service1",
                             Price = 1000,
                             ShopId = shop1.Id,
-                            CategoryId = transportCategory.Id
+                            Category = transportCategory
                         },
                         new Service
                         {
@@ -231,7 +231,7 @@ using (var scope = app.Services.CreateScope())
                             Name = "Service2",
                             Price = 2000,
                             ShopId =    shop1.Id,
-                            CategoryId = transportCategory.Id
+                            Category = transportCategory
                         },
                         new Service
                         {
@@ -239,7 +239,7 @@ using (var scope = app.Services.CreateScope())
                             Name = "Service3",
                             Price = 3000,
                             ShopId = shop1.Id,
-                            CategoryId = transportCategory.Id
+                            Category = transportCategory
                         }
                     };
 

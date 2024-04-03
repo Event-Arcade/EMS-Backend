@@ -1,12 +1,17 @@
+using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Models;
+
 namespace EMS.BACKEND.API.Contracts
 {
     public interface IStaticResourceRepository
     {
         //upload a Resource
-        Task<(bool, string)> UploadFile(IFormFile file);
+        Task<BaseResponseDTO> UploadFile(IFormFile formFile);
         //remove a Resource
-        Task<bool> RemoveFile(string fileId);
+        Task<BaseResponseDTO> RemoveFile(string fileId);
         //update a Resource
-        Task<(bool, string)> UpdateFile(IFormFile file, string fileId);
+        Task<BaseResponseDTO> UpdateFile(IFormFile file, string fileId);
+        //get a Resource
+        Task<BaseResponseDTO<StaticResource>> GetFile(string fileId);
     }
 }

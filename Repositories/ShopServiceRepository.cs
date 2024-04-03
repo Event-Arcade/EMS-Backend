@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
@@ -10,7 +11,7 @@ using SharedClassLibrary.Contracts;
 namespace EMS.BACKEND.API.Repositories
 {
     public class ShopServiceRepository(UserManager<ApplicationUser> userManager, IUserAccountRepository userAccountRepository,
-                                            IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor) : IShopServiceRepository
+                                            IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor, ICloudProviderRepository cloudProvider) : IShopServiceRepository
     {
         public async Task<BaseResponseDTO> CreateShop(ShopRequestDTO shopRequestDTO)
         {
@@ -81,31 +82,11 @@ namespace EMS.BACKEND.API.Repositories
                         await dbContext.Shops.AddAsync(newShop);
                         await dbContext.SaveChangesAsync();
 
-                        var createdShop = await dbContext.Shops.Where(s => s.Id == newShop.Id).FirstOrDefaultAsync();
-
-                        //check if the shop was created successfully
-                        if (createdShop != null)
+                        return new BaseResponseDTO
                         {
-
-                            //add the vendor role to the current user
-                            await userManager.RemoveFromRoleAsync(currentUser, "client");
-                            await userManager.AddToRoleAsync(currentUser, "vendor");
-                            return new BaseResponseDTO<Shop>
-                            {
-                                Flag = true,
-                                Message = "Shop created successfully",
-                                Data = createdShop
-                            };
-                        }
-                        else
-                        {
-                            return new BaseResponseDTO
-                            {
-                                Flag = false,
-                                Message = "Failed to create shop"
-                            };
-                        }
-
+                            Flag = false,
+                            Message = "Failed to create shop"
+                        };
                     }
                     catch (Exception ex)
                     {
@@ -148,7 +129,14 @@ namespace EMS.BACKEND.API.Repositories
                 try
                 {
                     //check whether any service provider is associated with the shop
-                    var serviceProvider = await dbContext.Services.Where(s => s.Shop.OwnerId == currentUser.Id).FirstOrDefaultAsync();
+                    if (dbContext.Services.Where(s => s.ShopId == currentUser.Id).Any())
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Shop cannot be deleted because it has service providers"
+                        };
+                    }
                     var shop = await dbContext.Shops.Where(s => s.OwnerId == currentUser.Id).FirstAsync();
 
                     //check if the shop exists
@@ -160,8 +148,18 @@ namespace EMS.BACKEND.API.Repositories
                             Message = "Shop not found!"
                         };
                     }
+
+                    //get all the services associated with the shop
+                    var services = await dbContext.Services.Where(s => s.ShopId == shop.Id).ToListAsync();
+                    foreach (var service in services)
+                    {
+                        dbContext.Services.Remove(service);
+                    }
+
+                    //delete the shop
                     dbContext.Shops.Remove(shop);
                     await dbContext.SaveChangesAsync();
+                    
                     return new BaseResponseDTO
                     {
                         Flag = true,
@@ -178,135 +176,139 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-        public async Task<BaseResponseDTO> GetMyShop()
+        public async Task<BaseResponseDTO<Shop>> GetMyShop()
         {
             //get the current login user(owner of the shop)
             var currentUserResponse = await userAccountRepository.GetMe();
             if (currentUserResponse.Flag == false)
             {
-                return new ShopResponse(false, "owner cannot found", null);
+                return new BaseResponseDTO<Shop>
+                {
+                    Flag = false,
+                    Message = "owner cannot found"
+                };
             }
             try
             {
-                if (currentUserResponse.userResponseDTO.Id == null)
-                {
-                    return new ShopResponse(false, "owner cannot found", null);
-                }
                 using (var scope = serviceScopeFactory.CreateScope())
                 {
                     ApplicationDbContext? dbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-                    if (dbContext == null)
-                    {
-                        return new ShopResponse(false, "Internal server error!", null);
-                    }
-                    ApplicationUser? currentUser = await userManager.FindByIdAsync(currentUserResponse.userResponseDTO.Id);
-                    if (currentUser == null)
-                    {
-                        return new ShopResponse(false, "owner cannot found", null);
-                    }
+                    var currentUser = currentUserResponse.Data;
                     var shop = await dbContext.Shops.Where(s => s.OwnerId == currentUser.Id).FirstAsync();
                     if (shop == null)
                     {
-                        return new ShopResponse(false, "Shop not found!", null);
+                        return new BaseResponseDTO<Shop>
+                        {
+                            Flag = false,
+                            Message = "Shop not found!"
+                        };
                     }
-                    var shopResponseDTO = new ShopResponseDTO()
+
+                    //get all the services associated with the shop
+                    var services = await dbContext.Services.Where(s => s.ShopId == shop.Id).ToListAsync();
+
+                    //TODO: assign image url to each service
+                    // foreach (var service in services)
+                    // {
+                    //     service.ImageUrl = cloudProvider.GeneratePreSignedUrlForDownload(service.ImageUrl);
+                    // }
+                    shop.Services = services;
+                    return new BaseResponseDTO<Shop>
                     {
-                        Id = shop.Id,
-                        Description = shop.Description,
-                        Name = shop.Name,
-                        Rating = shop.Rating,
+                        Flag = true,
+                        Message = "Shop found successfully",
+                        Data = shop
                     };
-                    return new ShopResponse(true, "Shop found successfully", shopResponseDTO);
+
                 }
             }
             catch (Exception ex)
             {
-                return new ShopResponse(false, $"Internal server error! {ex}", null);
+                return new BaseResponseDTO<Shop>
+                {
+                    Flag = false,
+                    Message = $"Internal server error! {ex}"
+                };
             }
         }
-        public async Task<ShopResponse> UpdateShop(ShopRequestDTO shopRequestDTO)
+        public async Task<BaseResponseDTO> UpdateShop(ShopRequestDTO shopRequestDTO)
         {
             //get the current login user(owner of the shop)
             var currentUserResponse = await userAccountRepository.GetMe();
             if (currentUserResponse.Flag == false)
             {
-                return new ShopResponse(false, "owner cannot found", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "owner cannot found"
+                };
             }
             try
             {
                 using (var scope = serviceScopeFactory.CreateScope())
                 {
                     ApplicationDbContext? dbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-
-                    if (dbContext == null)
-                    {
-                        return new ShopResponse(false, "Internal server error!", null);
-                    }
-
-                    var currentUser = await userManager.FindByIdAsync(currentUserResponse.userResponseDTO.Id ?? string.Empty);
-                    if (currentUser == null)
-                    {
-                        return new ShopResponse(false, "owner cannot found", null);
-                    }
+                    var currentUser = currentUserResponse.Data;
                     var shop = await dbContext.Shops.Where(s => s.OwnerId == currentUser.Id).FirstAsync();
                     if (shop == null)
                     {
-                        return new ShopResponse(false, "Shop not found!", null);
+                        return new BaseResponseDTO
+                        {
+                            Flag = false,
+                            Message = "Shop not found!"
+                        };
                     }
                     shop.Name = shopRequestDTO.Name;
                     shop.Description = shopRequestDTO.Description;
-                    shop.Rating = shopRequestDTO.Rating;
                     dbContext.Shops.Update(shop);
                     await dbContext.SaveChangesAsync();
 
-                    var shopResponseDTO = new ShopResponseDTO()
+                    return new BaseResponseDTO
                     {
-                        Id = shop.Id,
-                        Name = shop.Name,
-                        Description = shop.Description,
-                        Rating = shop.Rating,
+                        Flag = true,
+                        Message = "Shop updated successfully"
                     };
-                    return new ShopResponse(true, "Shop updated successfully", shopResponseDTO);
                 }
             }
             catch (Exception ex)
             {
-                return new ShopResponse(false, $"Internal server error! {ex}", null);
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = $"Internal server error! {ex}"
+                };
             }
         }
-        public async Task<ShopListResponse> GetAllShops()
+        public async Task<BaseResponseDTO<List<Shop>>> GetAllShops()
         {
             using (var scope = serviceScopeFactory.CreateScope())
             {
                 ApplicationDbContext? dbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-                if (dbContext == null)
-                {
-                    return new ShopListResponse(false, "Internal server error!", null);
-                }
                 try
                 {
                     var shops = await dbContext.Shops.ToListAsync();
                     if (shops.Count == 0)
                     {
-                        return new ShopListResponse(false, "No shop found!", null);
-                    }
-                    List<ShopResponseDTO> shopResponseDTOs = new List<ShopResponseDTO>();
-                    foreach (var shop in shops)
-                    {
-                        var shopResponseDTO = new ShopResponseDTO()
+                        return new BaseResponseDTO<List<Shop>>
                         {
-                            Id = shop.Id,
-                            Name = shop.Name,
-                            Description = shop.Description,
-                            Rating = shop.Rating,
+                            Flag = false,
+                            Message = "No shops found!"
                         };
-                        shopResponseDTOs.Add(shopResponseDTO);
                     }
-                    return new ShopListResponse(true, "Shops found successfully", shopResponseDTOs);
+                    return new BaseResponseDTO<List<Shop>>
+                    {
+                        Flag = true,
+                        Message = "Shops found successfully",
+                        Data = shops
+                    };
                 }
                 catch (Exception ex)
                 {
-                    return new ShopListResponse(false, $"Internal server error! {ex}", null);
+                    return new BaseResponseDTO<List<Shop>>
+                    {
+                        Flag = false,
+                        Message = $"Internal server error! {ex}"
+                    };
                 }
             }
         }

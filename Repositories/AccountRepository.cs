@@ -46,7 +46,7 @@ namespace EMS.BACKEND.API.Repositories
             };
 
             //store profile-picture in storage
-            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, "Images");
+            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture,config["StorageDirectories:ProfileImages"]);
             if (condition)
             {
                 newUser.ProfilePicture = filepath;
@@ -178,9 +178,15 @@ namespace EMS.BACKEND.API.Repositories
             //Store updated image
             if (userDTO.ProfilePicture != null)
             {
-                var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, "Images");
+                var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, config["StorageDirectories:ProfileImages"]);
                 if (condition)
                 {
+                    //remove previous image from storage
+                    if (user.ProfilePicture != null)
+                    {
+                        await cloudProvider.RemoveFile(user.ProfilePicture);
+                    }
+                    //assign new image
                     user.ProfilePicture = filepath;
                 }
                 else
@@ -213,7 +219,7 @@ namespace EMS.BACKEND.API.Repositories
         //Reset Password
         //public async Task<GeneralResponse> ResetUserPassowrd(UserRequestDTO userDTO);
         //Get currrent logged in user details
-        public async Task<BaseResponseDTO> GetMe()
+        public async Task<BaseResponseDTO<ApplicationUser>> GetMe()
         {
             var result = string.Empty;
             if (httpContextAccessor.HttpContext != null)
@@ -242,10 +248,10 @@ namespace EMS.BACKEND.API.Repositories
                     }
                 }
             }
-            return new BaseResponseDTO
+            return new BaseResponseDTO<ApplicationUser>
             {
                 Flag = false,
-                Message = "User not found"
+                Message = "User not found",
             };
         }
 

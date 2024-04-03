@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider) : ICategoryRepository
+    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : ICategoryRepository
     {
         public async Task<BaseResponseDTO> AddCategory(BaseRequestDTO categoryRequestDTO)
         {
@@ -37,15 +37,14 @@ namespace EMS.BACKEND.API.Repositories
                 }
 
                 //upload category static data
-                var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.Image, "admin/category");
-                if (!uploadResult.Item1)
+                var (result , path) = await cloudProvider.UploadFile(categoryRequestDTO.Image, configuration["StorageDirectories:CategoryImages"]);
+                if (!result)
                 {
                     return new BaseResponseDTO
                     {
                         Flag = false,
-                        Message = uploadResult.Item2
+                        Message = path
                     };
-
                 }
 
                 try
@@ -55,9 +54,10 @@ namespace EMS.BACKEND.API.Repositories
                         Id = Guid.NewGuid().ToString(),
                         Name = categoryRequestDTO.Name,
                         Description = categoryRequestDTO.Description,
-                        CategoryImage = uploadResult.Item2
+                        CategoryImage = path
                     };
 
+                    //add category to database
                     await dbContext.Categories.AddAsync(category);
                     await dbContext.SaveChangesAsync();
 
@@ -144,7 +144,7 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<BaseResponseDTO> GetAllCategories()
+        public async Task<BaseResponseDTO<List<Category>>> GetAllCategories()
         {
             using (var scope = serviceScopeFactory.CreateScope())
             {
@@ -154,10 +154,11 @@ namespace EMS.BACKEND.API.Repositories
                     var categories = await dbContext.Categories.ToListAsync();
                     if (categories == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<List<Category>>()
                         {
                             Flag = false,
-                            Message = "Categories not found"
+                            Message = "Categories not found",
+                            Data = new List<Category>()
                         };
                     }
 
@@ -171,7 +172,7 @@ namespace EMS.BACKEND.API.Repositories
                         categoryList.Add(category);
                     }
 
-                    return new BaseResponseDTO<List<Category>>
+                    return new BaseResponseDTO<List<Category>>()
                     {
                         Flag = true,
                         Message = "Categories found",
@@ -180,20 +181,21 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<List<Category>>()
                     {
                         Flag = false,
-                        Message = ex.Message
+                        Message = ex.Message,
+                        Data = new List<Category>()
                     };
                 }
             }
         }
 
-        public async Task<BaseResponseDTO> GetCategoryById(string categoryId)
+        public async Task<BaseResponseDTO<Category>> GetCategoryById(string categoryId)
         {
             if (string.IsNullOrEmpty(categoryId))
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<Category>()
                 {
                     Flag = false,
                     Message = "CategoryId is null or empty"
@@ -208,7 +210,7 @@ namespace EMS.BACKEND.API.Repositories
                     var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
                     if (category == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<Category>()
                         {
                             Flag = false,
                             Message = "Category not found"
@@ -228,7 +230,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<Category>()
                     {
                         Flag = false,
                         Message = ex.Message
@@ -267,17 +269,23 @@ namespace EMS.BACKEND.API.Repositories
                     category.Name = categoryRequestDTO.Name;
                     category.Description = categoryRequestDTO.Description;
 
+                    //store previous image path
+                    var previousImagePath = category.CategoryImage;
+
                     //upload category static data
-                    var uploadResult = await cloudProvider.UploadFile(categoryRequestDTO.Image, "admin/category");
-                    if (!uploadResult.Item1)
+                    var (result, path) = await cloudProvider.UploadFile(categoryRequestDTO.Image, configuration["StorageDirectories:CategoryImages"]);
+                    if (!result)
                     {
                         return new BaseResponseDTO
                         {
                             Flag = false,
-                            Message = uploadResult.Item2
+                            Message = path
                         };
                     }
-                    category.CategoryImage = uploadResult.Item2;
+                    category.CategoryImage = path;
+
+                    //remove previous image from cloud
+                    await cloudProvider.RemoveFile(previousImagePath);
 
                     //update category
                     dbContext.Categories.Update(category);
