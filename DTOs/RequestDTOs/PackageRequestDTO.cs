@@ -1,9 +1,12 @@
-﻿namespace EMS.BACKEND.API.DTOs.RequestDTOs
+﻿using EMS.BACKEND.API.Models;
+
+namespace EMS.BACKEND.API.DTOs.RequestDTOs
 {
-    public class PackageRequestDTO : BaseRequestDTO
+    public class PackageRequestDTO 
     {
-        public string UserId { get; set; }
-        public string Status { get; set; }
-        public List<SubPackageRequestDTO> SubPackages { get; set; }
+        public string Id { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public virtual IEnumerable<SubPackage> SubPackages { get; set; }
+        public  string UserId { get; set; }
     }
 }

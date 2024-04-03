@@ -6,7 +6,6 @@ namespace EMS.BACKEND.API.Models
     public class Package
     {
         public string Id { get; set; }
-        public string Description { get; set; }
         [NotMapped]
         public PackageStatus Status
         {

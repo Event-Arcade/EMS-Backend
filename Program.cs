@@ -12,6 +12,7 @@ using EMS.BACKEND.API.Repositories;
 using SharedClassLibrary.Contracts;
 using EMS.BACKEND.API.Contracts;
 using Amazon.S3;
+using Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,6 +83,7 @@ builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
+builder.Services.AddScoped<IFeedBackRepository, FeedbackRepository>();
 
 var app = builder.Build();
 
@@ -109,150 +111,150 @@ app.UseAuthorization();
 app.MapControllers();
 
 //seeding user-roles
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+// using (var scope = app.Services.CreateScope())
+// {
+//     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+//     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+//     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    //roles in the application
-    var roles = new[] { "vendor", "client", "admin" };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-    }
+//     //roles in the application
+//     var roles = new[] { "vendor", "client", "admin" };
+//     foreach (var role in roles)
+//     {
+//         if (!await roleManager.RoleExistsAsync(role))
+//             await roleManager.CreateAsync(new IdentityRole(role));
+//     }
 
-    //seeding admin user
-    var adminUser = new ApplicationUser
-    {
-        UserName = "admin",
-        Email = "admin@gmail.com"
-    };
-    if (await userManager.FindByEmailAsync(adminUser.Email) == null)
-    {
-        var response = await userManager.CreateAsync(adminUser, "Admin@123");
-        if (response.Succeeded)
-        {
-            await userManager.AddToRoleAsync(adminUser, "admin");
-        }
-    }
+//     //seeding admin user
+//     var adminUser = new ApplicationUser
+//     {
+//         UserName = "admin",
+//         Email = "admin@gmail.com"
+//     };
+//     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
+//     {
+//         var response = await userManager.CreateAsync(adminUser, "Admin@123");
+//         if (response.Succeeded)
+//         {
+//             await userManager.AddToRoleAsync(adminUser, "admin");
+//         }
+//     }
 
-    //seeding client user
-    var clientUser = new ApplicationUser
-    {
-        UserName = "client",
-        Email = "client@gmail.com"
-    };
-    if (await userManager.FindByEmailAsync(clientUser.Email) == null)
-    {
-        var response = await userManager.CreateAsync(clientUser, "Client@123");
-        if (response.Succeeded)
-        {
-            await userManager.AddToRoleAsync(clientUser, "client");
-        }
-    }
+//     //seeding client user
+//     var clientUser = new ApplicationUser
+//     {
+//         UserName = "client",
+//         Email = "client@gmail.com"
+//     };
+//     if (await userManager.FindByEmailAsync(clientUser.Email) == null)
+//     {
+//         var response = await userManager.CreateAsync(clientUser, "Client@123");
+//         if (response.Succeeded)
+//         {
+//             await userManager.AddToRoleAsync(clientUser, "client");
+//         }
+//     }
 
-    //seeding vendor user
-    var vendorUser = new ApplicationUser
-    {
-        UserName = "vendor",
-        Email = "vendor@gmail.com"
-    };
-    if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
-    {
-        var response = await userManager.CreateAsync(vendorUser, "Vendor@123");
-        if (response.Succeeded)
-        {
-            await userManager.AddToRoleAsync(vendorUser, "vendor");
-        }
-    }
+//     //seeding vendor user
+//     var vendorUser = new ApplicationUser
+//     {
+//         UserName = "vendor",
+//         Email = "vendor@gmail.com"
+//     };
+//     if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
+//     {
+//         var response = await userManager.CreateAsync(vendorUser, "Vendor@123");
+//         if (response.Succeeded)
+//         {
+//             await userManager.AddToRoleAsync(vendorUser, "vendor");
+//         }
+//     }
 
-    //seeding categories
-    if (!dbContext.Categories.Any())
-    {
-        var categories = new[] { "Entertainment", "Decoration", "Catering", "Transport" };
-        foreach (var category in categories)
-        {
-            dbContext.Categories.Add(new Category
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = category
-            });
-        }
-        dbContext.SaveChanges();
-    }
+//     //seeding categories
+//     if (!dbContext.Categories.Any())
+//     {
+//         var categories = new[] { "Entertainment", "Decoration", "Catering", "Transport" };
+//         foreach (var category in categories)
+//         {
+//             dbContext.Categories.Add(new Category
+//             {
+//                 Id = Guid.NewGuid().ToString(),
+//                 Name = category
+//             });
+//         }
+//         dbContext.SaveChanges();
+//     }
 
-    //seeding shop for vendorUser
-    if (!dbContext.Shops.Any())
-    {
-        var shop = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
-        try
-        {
-            var exsistedVendor = await userManager.FindByEmailAsync("vendor@gmail.com");
-            var newShop = new Shop()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = "shop1",
-                Description = "shop1 description",
-                Rating = 4,
-                OwnerId = exsistedVendor.Id
-            };
+//     //seeding shop for vendorUser
+//     if (!dbContext.Shops.Any())
+//     {
+//         var shop = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
+//         try
+//         {
+//             var exsistedVendor = await userManager.FindByEmailAsync("vendor@gmail.com");
+//             var newShop = new Shop()
+//             {
+//                 Id = Guid.NewGuid().ToString(),
+//                 Name = "shop1",
+//                 Description = "shop1 description",
+//                 Rating = 4,
+//                 OwnerId = exsistedVendor.Id
+//             };
 
-            await dbContext.Shops.AddAsync(newShop);
-            await dbContext.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error occurd when seeeding a new shop: {ex}");
-        }
-    }
+//             await dbContext.Shops.AddAsync(newShop);
+//             await dbContext.SaveChangesAsync();
+//         }
+//         catch (Exception ex)
+//         {
+//             Console.WriteLine($"Error occurd when seeeding a new shop: {ex}");
+//         }
+//     }
 
-    //seeding services
-    if (!dbContext.Services.Any())
-    {
-        var transportCategory = dbContext.Categories.FirstOrDefault(c => c.Name == "Transport");
-        var shop1 = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
-        try
-        {
-            var services = new List<Service>
-                    {
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service1",
-                            Price = 1000,
-                            ShopId = shop1.Id,
-                            Category = transportCategory
-                        },
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service2",
-                            Price = 2000,
-                            ShopId =    shop1.Id,
-                            Category = transportCategory
-                        },
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service3",
-                            Price = 3000,
-                            ShopId = shop1.Id,
-                            Category = transportCategory
-                        }
-                    };
+//     //seeding services
+//     if (!dbContext.Services.Any())
+//     {
+//         var transportCategory = dbContext.Categories.FirstOrDefault(c => c.Name == "Transport");
+//         var shop1 = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
+//         try
+//         {
+//             var services = new List<Service>
+//                     {
+//                         new Service
+//                         {
+//                             Id = Guid.NewGuid().ToString(),
+//                             Name = "Service1",
+//                             Price = 1000,
+//                             ShopId = shop1.Id,
+//                             Category = transportCategory
+//                         },
+//                         new Service
+//                         {
+//                             Id = Guid.NewGuid().ToString(),
+//                             Name = "Service2",
+//                             Price = 2000,
+//                             ShopId =    shop1.Id,
+//                             Category = transportCategory
+//                         },
+//                         new Service
+//                         {
+//                             Id = Guid.NewGuid().ToString(),
+//                             Name = "Service3",
+//                             Price = 3000,
+//                             ShopId = shop1.Id,
+//                             Category = transportCategory
+//                         }
+//                     };
 
-            dbContext.Services.AddRange(services);
-            dbContext.SaveChanges();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
-    }
+//             dbContext.Services.AddRange(services);
+//             dbContext.SaveChanges();
+//         }
+//         catch (Exception ex)
+//         {
+//             Console.WriteLine(ex.Message);
+//         }
+//     }
 
 
-}
+// }
 
 app.Run();

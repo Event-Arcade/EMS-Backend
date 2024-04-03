@@ -25,20 +25,34 @@ namespace EMS.BACKEND.API.Repositories
         {
             try
             {
-                string filePath = $"{subDirectory}/{Guid.NewGuid().ToString()}";
-                var request = new PutObjectRequest
+                string filePath;
+                //check if file is null
+                if (file == null)
                 {
-                    BucketName = configuration["AWS:BucketName"],
-                    Key = filePath,
-                    InputStream = file.OpenReadStream(),
-                    ContentType = file.ContentType
-                };
-
-                var result = await amazonS3.PutObjectAsync(request);
-                if (result.HttpStatusCode == HttpStatusCode.OK)
-                {
+                    //assign default image path
+                    filePath = $"{subDirectory}/default";
                     return (true, filePath);
+
                 }
+                else
+                {
+                    //generate file path
+                    filePath = $"{subDirectory}/{Guid.NewGuid().ToString()}";
+                    var request = new PutObjectRequest
+                    {
+                        BucketName = configuration["AWS:BucketName"],
+                        Key = filePath,
+                        InputStream = file.OpenReadStream(),
+                        ContentType = file.ContentType
+                    };
+                    var result = await amazonS3.PutObjectAsync(request);
+                    if (result.HttpStatusCode == HttpStatusCode.OK)
+                    {
+                        return (true, filePath);
+                    }
+                }
+
+
                 return (false, "Failed to upload file");
             }
             catch (Exception ex)
@@ -67,6 +81,22 @@ namespace EMS.BACKEND.API.Repositories
             {
                 return false;
             }
-        }        
+        }
+        public async Task<(bool, string)> UpdateFile(IFormFile file, string subDirectory, string oldFilePath)
+        {
+            try
+            {
+                //remove old file
+                await RemoveFile(oldFilePath);
+
+                //upload new file
+                return await UploadFile(file, subDirectory);
+
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
     }
 }

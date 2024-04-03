@@ -1,319 +1,238 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : ICategoryRepository
+    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider,
+                                        IConfiguration configuration) : ICategoryRepository
     {
-        public async Task<BaseResponseDTO> AddCategory(BaseRequestDTO categoryRequestDTO)
+        public async Task<BaseResponseDTO> CreateAsync(Category entity)
         {
-            //check if categoryRequestDTO is null
-            if (categoryRequestDTO == null)
+            // Check entity is null
+            if (entity == null)
             {
-                return new BaseResponseDTO
-                {
-                    Flag = false,
-                    Message = "CategoryRequestDTO is null"
-                };
+                throw new Exception("Request is null");
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-                //check if category exists
-                var categoryExists = await dbContext.Categories.AnyAsync(c => c.Name == categoryRequestDTO.Name);
-                if (categoryExists)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = "Category already exists"
-                    };
-                }
-
-                //upload category static data
-                var (result , path) = await cloudProvider.UploadFile(categoryRequestDTO.Image, configuration["StorageDirectories:CategoryImages"]);
-                if (!result)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = path
-                    };
-                }
-
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    var category = new Category
+                    // Check if category already exists
+                    var category = await context.Categories.FirstOrDefaultAsync(x => x.Name == entity.Name);
+                    if (category != null)
                     {
-                        Id = Guid.NewGuid().ToString(),
-                        Name = categoryRequestDTO.Name,
-                        Description = categoryRequestDTO.Description,
-                        CategoryImage = path
+                        throw new Exception("Category already exists");
+                    }
+
+                    // Upload category image to S3
+                    var (flag, filePath) = await cloudProvider.UploadFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"]);
+
+                    if (flag)
+                    {
+                        entity.CategoryImagePath = filePath;
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to upload category image");
+                    }
+                    // Save category
+                    await context.Categories.AddAsync(entity);
+                    await context.SaveChangesAsync();
+
+                    return new BaseResponseDTO
+                    {
+                        Message = "Category created successfully",
+                        Flag = true
                     };
-
-                    //add category to database
-                    await dbContext.Categories.AddAsync(category);
-                    await dbContext.SaveChangesAsync();
-
-                    //get new category
-                    var newCategory = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == category.Id);
-                    //get image link
-                    var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
-                    newCategory.CategoryImage = imageUrl;
-
+                }
+                catch (Exception ex)
+                {
                     return new BaseResponseDTO<Category>
                     {
-                        Flag = true,
-                        Message = "Category added successfully",
-                        Data = newCategory
-                    };
-
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
-            }
-        }
-
-        public async Task<BaseResponseDTO> DeleteCategory(string categoryId)
-        {
-            if (string.IsNullOrEmpty(categoryId))
-            {
-                return new BaseResponseDTO
-                {
-                    Flag = false,
-                    Message = "CategoryId is null or empty"
-                };
-            }
-
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
-                    if (category == null)
-                    {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Category not found"
-                        };
-                    }
-
-                    //remove category image from cloud
-                    var removeResult = await cloudProvider.RemoveFile(category.CategoryImage);
-                    if (!removeResult)
-                    {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Failed to delete category image"
-                        };
-                    }
-
-                    //delete category from database
-                    dbContext.Categories.Remove(category);
-                    await dbContext.SaveChangesAsync();
-
-                    return new BaseResponseDTO
-                    {
-                        Flag = true,
-                        Message = "Category deleted successfully"
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
-            }
-        }
-
-        public async Task<BaseResponseDTO<List<Category>>> GetAllCategories()
-        {
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var categories = await dbContext.Categories.ToListAsync();
-                    if (categories == null)
-                    {
-                        return new BaseResponseDTO<List<Category>>()
-                        {
-                            Flag = false,
-                            Message = "Categories not found",
-                            Data = new List<Category>()
-                        };
-                    }
-
-                    var categoryList = new List<Category>();
-                    foreach (var category in categories)
-                    {
-                        //get image link
-                        var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
-                        category.CategoryImage = imageUrl;
-                        //add category to list
-                        categoryList.Add(category);
-                    }
-
-                    return new BaseResponseDTO<List<Category>>()
-                    {
-                        Flag = true,
-                        Message = "Categories found",
-                        Data = categoryList
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO<List<Category>>()
-                    {
-                        Flag = false,
                         Message = ex.Message,
-                        Data = new List<Category>()
+                        Flag = false
                     };
                 }
             }
-        }
 
-        public async Task<BaseResponseDTO<Category>> GetCategoryById(string categoryId)
+        }
+        public async Task<BaseResponseDTO> DeleteAsync(string id)
         {
-            if (string.IsNullOrEmpty(categoryId))
+            // Check id is null
+            if (id == null)
             {
-                return new BaseResponseDTO<Category>()
-                {
-                    Flag = false,
-                    Message = "CategoryId is null or empty"
-                };
+                throw new Exception("Requested id is null");
+            }
+
+            // Find category by id
+            var category = await FindByIdAsync(id);
+            if (category == null)
+            {
+               throw new Exception("Category not found");
             }
 
             using (var scope = serviceScopeFactory.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
-                    if (category == null)
+                    //Check whether any service is using the category
+                    if (context.Services.Any(x => x.CategoryId == id))
                     {
-                        return new BaseResponseDTO<Category>()
-                        {
-                            Flag = false,
-                            Message = "Category not found"
-                        };
+                        throw new Exception("Category is in use");
                     }
 
-                    //get image link
-                    var imageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
-                    category.CategoryImage = imageUrl;
+                    // Remove category image from S3
+                    var flag = await cloudProvider.RemoveFile(category.Data.CategoryImagePath);
 
-                    return new BaseResponseDTO<Category>
+                    if (!flag)
                     {
-                        Flag = true,
-                        Message = "Category found",
-                        Data = category
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new BaseResponseDTO<Category>()
-                    {
-                        Flag = false,
-                        Message = ex.Message
-                    };
-                }
-            }
-        }
-
-        public async Task<BaseResponseDTO> UpdateCategory(BaseRequestDTO categoryRequestDTO)
-        {
-            if (categoryRequestDTO == null)
-            {
-                return new BaseResponseDTO
-                {
-                    Flag = false,
-                    Message = "CategoryRequestDTO is null"
-                };
-            }
-
-            using (var scope = serviceScopeFactory.CreateScope())
-            {
-                //check if category exists
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    var category = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryRequestDTO.Id);
-                    if (category == null)
-                    {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = "Category not found"
-                        };
+                        throw new Exception("Failed to delete category image");
                     }
 
-                    category.Name = categoryRequestDTO.Name;
-                    category.Description = categoryRequestDTO.Description;
+                    // Delete category
+                    context.Categories.Remove(category.Data);
+                    await context.SaveChangesAsync();
 
-                    //store previous image path
-                    var previousImagePath = category.CategoryImage;
-
-                    //upload category static data
-                    var (result, path) = await cloudProvider.UploadFile(categoryRequestDTO.Image, configuration["StorageDirectories:CategoryImages"]);
-                    if (!result)
+                    return new BaseResponseDTO
                     {
-                        return new BaseResponseDTO
-                        {
-                            Flag = false,
-                            Message = path
-                        };
-                    }
-                    category.CategoryImage = path;
-
-                    //remove previous image from cloud
-                    await cloudProvider.RemoveFile(previousImagePath);
-
-                    //update category
-                    dbContext.Categories.Update(category);
-                    await dbContext.SaveChangesAsync();
-
-                    //get image link
-                    var categoryImageUrl = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImage);
-                    //return updated category
-                    var updatedCategory = await dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryRequestDTO.Id);
-
-                    return new BaseResponseDTO<Category>
-                    {
-                        Flag = true,
-                        Message = "Category updated successfully",
-                        Data = updatedCategory
+                        Message = "Category deleted successfully",
+                        Flag = true
                     };
-
                 }
                 catch (Exception ex)
                 {
                     return new BaseResponseDTO
                     {
-                        Flag = false,
-                        Message = ex.Message
+                        Message = ex.Message,
+                        Flag = false
                     };
                 }
             }
         }
+        public async Task<BaseResponseDTO<IEnumerable<Category>>> FindAllAsync()
+        {
+            try
+            {
+                // Find all categories
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var categories = await context.Categories.ToListAsync();
 
+
+                    return new BaseResponseDTO<IEnumerable<Category>>
+                    {
+                        Data = categories,
+                        Message = "Categories found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<Category>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+        public async Task<BaseResponseDTO<Category>> FindByIdAsync(string id)
+        {
+            // Check id is null
+            if (id == null)
+            {
+                throw new Exception("Requested id is null");
+            }
+
+            try
+            {
+                // Find category by id
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
+
+                    if (category == null)
+                    {
+                        throw  new Exception("Category not found");
+                    }
+
+                    return new BaseResponseDTO<Category>
+                    {
+                        Data = category,
+                        Message = "Category found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<Category>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+        public async Task<BaseResponseDTO> UpdateAsync(Category entity)
+        {
+            // Check entity is null
+            if (entity == null)
+            {
+                throw new Exception("Reqest is null");
+            }
+
+            // Find category by id
+            var responseDTO =await FindByIdAsync(entity.Id);
+            var category = responseDTO.Data;
+            if (category == null)
+            {
+                throw new Exception("Category not found");
+            }
+
+            // Update category
+            using (var scope = serviceScopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                try
+                {
+                    //Update the category image
+                    var (flag, newFilePath) = await cloudProvider.UpdateFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"], category.CategoryImagePath);
+                    if (flag)
+                    {
+                        entity.CategoryImagePath = newFilePath;
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to update category image");
+                    }
+
+                    // Update category
+                    context.Categories.Update(entity);
+                    await context.SaveChangesAsync();
+
+                    return new BaseResponseDTO
+                    {
+                        Message = "Category updated successfully",
+                        Flag = true
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new BaseResponseDTO
+                    {
+                        Message = ex.Message,
+                        Flag = false
+                    };
+                }
+            }
+        }
     }
 }

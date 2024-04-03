@@ -11,7 +11,9 @@ namespace EMS.BACKEND.API.DbContext
         public DbSet<Service> Services { get; set; }
         public DbSet<Shop> Shops { get; set; }
         public DbSet<SubPackage> SubPackages { get; set; }
-        public DbSet<StaticResource> StaticResources { get; set; }
+        public DbSet<AdminStaticResource> StaticResources { get; set; }
+        public DbSet<FeedBack> FeedBacks { get; set; }
+        public DbSet<ServiceStaticResources> ServiceStaticResources { get; set; }
 
     }
 }

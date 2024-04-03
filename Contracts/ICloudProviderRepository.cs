@@ -10,5 +10,8 @@ namespace EMS.BACKEND.API.Contracts
 
         //remove file from 
         Task<bool> RemoveFile(string filePath);
+
+        //update file in the cloud
+        Task<(bool, string)> UpdateFile(IFormFile file, string subDirectory, string oldFilePath);
     }
 }
