@@ -12,6 +12,20 @@ namespace EMS.BACKEND.API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "AdminStaticResources",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminStaticResources", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
                 {
@@ -65,25 +79,11 @@ namespace EMS.BACKEND.API.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CategoryImage = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    CategoryImagePath = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StaticResources",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StaticResources", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -219,6 +219,7 @@ namespace EMS.BACKEND.API.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Rating = table.Column<double>(type: "float", nullable: false),
                     OwnerId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BackgroundImagePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
@@ -262,8 +263,7 @@ namespace EMS.BACKEND.API.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Rating = table.Column<double>(type: "float", nullable: false),
                     ShopId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    CategoryId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    StaticResourcesPaths = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    CategoryId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -292,6 +292,25 @@ namespace EMS.BACKEND.API.Migrations
                     table.PrimaryKey("PK_FeedBacks", x => x.Id);
                     table.ForeignKey(
                         name: "FK_FeedBacks_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServiceStaticResources",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ServiceId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServiceStaticResources", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServiceStaticResources_Services_ServiceId",
                         column: x => x.ServiceId,
                         principalTable: "Services",
                         principalColumn: "Id",
@@ -353,6 +372,11 @@ namespace EMS.BACKEND.API.Migrations
                 column: "ShopId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ServiceStaticResources_ServiceId",
+                table: "ServiceStaticResources",
+                column: "ServiceId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Shops_ApplicationUserId",
                 table: "Shops",
                 column: "ApplicationUserId");
@@ -366,6 +390,9 @@ namespace EMS.BACKEND.API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AdminStaticResources");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -388,7 +415,7 @@ namespace EMS.BACKEND.API.Migrations
                 name: "FeedBacks");
 
             migrationBuilder.DropTable(
-                name: "StaticResources");
+                name: "ServiceStaticResources");
 
             migrationBuilder.DropTable(
                 name: "SubPackages");

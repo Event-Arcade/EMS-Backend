@@ -22,6 +22,28 @@ namespace EMS.BACKEND.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.AdminStaticResource", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResourceUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AdminStaticResources");
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -116,7 +138,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CategoryImage")
+                    b.Property<string>("CategoryImagePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -208,14 +230,31 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<string>("ShopId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("StaticResourcesPaths")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ShopId");
 
                     b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ServiceStaticResources", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ResourceUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ServiceId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("ServiceStaticResources");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
@@ -225,6 +264,10 @@ namespace EMS.BACKEND.API.Migrations
 
                     b.Property<string>("ApplicationUserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BackgroundImagePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -246,28 +289,6 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Shops");
-                });
-
-            modelBuilder.Entity("EMS.BACKEND.API.Models.StaticResource", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ResourceUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StaticResources");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.SubPackage", b =>
@@ -455,6 +476,15 @@ namespace EMS.BACKEND.API.Migrations
                         .HasForeignKey("ShopId");
                 });
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ServiceStaticResources", b =>
+                {
+                    b.HasOne("EMS.BACKEND.API.Models.Service", null)
+                        .WithMany("StaticResourcesPaths")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", null)
@@ -535,6 +565,8 @@ namespace EMS.BACKEND.API.Migrations
             modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
                 {
                     b.Navigation("FeedBacks");
+
+                    b.Navigation("StaticResourcesPaths");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>

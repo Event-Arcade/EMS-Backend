@@ -3,7 +3,7 @@ using EMS.BACKEND.API.Models;
 
 namespace EMS.BACKEND.API.Contracts
 {
-    public interface IStaticResourceRepository : IBaseRepository<AdminStaticResource, AdminStaticResource>
+    public interface IAdminStaticResourceRepository : IBaseRepository<AdminStaticResource, AdminStaticResource>
     {
 
     }
