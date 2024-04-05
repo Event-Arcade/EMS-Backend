@@ -1,5 +1,4 @@
-﻿
-using EMS.BACKEND.API.Models;
+﻿using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedClassLibrary.Contracts;
