@@ -10,39 +10,74 @@ namespace EMS.BACKEND.API.Controllers
     [ApiController]
     public class ServicesController(IServiceRepository serviceRepository) : Controller
     {
-        [HttpGet("services")]
-        public async Task<IActionResult> GetAllServices()
+        [HttpGet("servicesbyshop/{shopId}")]
+        public async Task<IActionResult> GetAllServices(string shopId)
         {
-            //var response = await serviceRepository.GetAllServices();
-            return Ok();
+            var response = await serviceRepository.GetServicesByShopId(shopId);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpGet("myservices{id}"), Authorize]
+        [HttpGet("getservice/{id}"), Authorize]
         public async Task<IActionResult> GetService(string id)
         {
-           // var response = await serviceRepository.GetServiceById(id);
-            return Ok();
+            var response = await serviceRepository.FindByIdAsync(id);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpDelete("delete{id}"), Authorize]
+        [HttpDelete("delete/{id}"), Authorize(Roles = "Vendor")]
         public async Task<IActionResult> DeleteService(string id)
         {
-            //var response = await serviceRepository.Delete(id);
-            return Ok();
+            var response = await serviceRepository.DeleteAsync(id);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpPost("create"), Authorize]
-        public async Task<IActionResult> CreateService(ServiceRequestDTO serviceRequestDTO)
+        [HttpPost("create"), Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> CreateService(Service service)
         {
-            //var response = await serviceRepository.Create(serviceRequestDTO);
-            return Ok();
+            var response = await serviceRepository.CreateAsync(service);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpPut("update"), Authorize]
-        public async Task<IActionResult> UpdateService(ServiceRequestDTO serviceRequestDTO)
+        [HttpPut("update"), Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> UpdateService(Service service)
         {
-            //var response = await serviceRepository.Update(serviceRequestDTO);
-            return Ok();
+            var response = await serviceRepository.UpdateAsync(service);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
     }
 }

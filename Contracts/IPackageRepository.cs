@@ -6,6 +6,6 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface IPackageRepository : IBaseRepository<Package,PackageRequestDTO>
     {
-
+        Task<BaseResponseDTO<IEnumerable<Package>>> GetAllPackagesByUser(string userId);
     }
 }

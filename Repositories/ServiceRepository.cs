@@ -8,7 +8,7 @@ using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class ServiceRepository(IUserAccountRepository userAccountRepository, IFeedBackRepository feedBackRepository,
+    public class ServiceRepository(IUserAccountRepository userAccountRepository, IFeedbackRepository feedBackRepository,
     IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IServiceRepository
     {
         public async Task<BaseResponseDTO> CreateAsync(Service entity)
