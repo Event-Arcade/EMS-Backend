@@ -11,38 +11,73 @@ namespace EMS.BACKEND.API.Controllers
     public class CategoryController(ICategoryRepository categoryRepository) : Controller
     {
         [HttpPost("add"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddCategory(Category categoryRequestDTO)
+        public async Task<IActionResult> AddCategory(Category category)
         {
-            var result = await categoryRepository.CreateAsync(categoryRequestDTO);
-            return Ok(result);
+            var result = await categoryRepository.CreateAsync(category);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
-        [HttpDelete("delete/{categoryId}"), Authorize(Roles ="admin")]
+        [HttpDelete("delete/{categoryId}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteCategory(string categoryId)
         {
             var result = await categoryRepository.DeleteAsync(categoryId);
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllCategories()
         {
             var result = await categoryRepository.FindAllAsync();
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
         [HttpGet("getbyid/{categoryId}")]
         public async Task<IActionResult> GetCategoryById(string categoryId)
         {
             var result = await categoryRepository.FindByIdAsync(categoryId);
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
-        [HttpPut("update"),Authorize(Roles ="admin")]
+        [HttpPut("update"), Authorize(Roles = "admin")]
         public async Task<IActionResult> UpdateCategory(Category categoryRequestDTO)
         {
             var result = await categoryRepository.UpdateAsync(categoryRequestDTO);
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
     }
 }

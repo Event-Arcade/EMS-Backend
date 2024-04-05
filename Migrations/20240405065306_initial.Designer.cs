@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EMS.BACKEND.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240404084742_initial")]
+    [Migration("20240405065306_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -201,6 +201,7 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -467,7 +468,9 @@ namespace EMS.BACKEND.API.Migrations
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

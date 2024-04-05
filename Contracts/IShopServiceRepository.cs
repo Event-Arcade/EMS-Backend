@@ -8,5 +8,6 @@ namespace SharedClassLibrary.Contracts
     public interface IShopServiceRepository : IBaseRepository<Shop,Shop>
     {
         Task<BaseResponseDTO<Shop>> GetShopByServiceId(string serviceId);
+        Task<BaseResponseDTO<Shop>> GetShopByVendor();
     }
 }

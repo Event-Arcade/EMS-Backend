@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Controllers
 {
-    public class StaticResourceRepository(IServiceProvider serviceProvider, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IAdminStaticResourceRepository
+    public class AdminStaticResourceRepository(IServiceProvider serviceProvider, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IAdminStaticResourceRepository
     {
         public async Task<BaseResponseDTO> CreateAsync(AdminStaticResource entity)
         {
@@ -50,7 +50,6 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO> DeleteAsync(string id)
         {
             try
@@ -88,7 +87,6 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<AdminStaticResource>>> FindAllAsync()
         {
             try
@@ -112,7 +110,6 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO<IEnumerable<AdminStaticResource>> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<AdminStaticResource>> FindByIdAsync(string id)
         {
             try{
@@ -142,7 +139,6 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO<AdminStaticResource> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO> UpdateAsync(AdminStaticResource entity)
         {
             try{

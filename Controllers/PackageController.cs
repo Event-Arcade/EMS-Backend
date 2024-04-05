@@ -1,5 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.RequestDTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EMS.BACKEND.API.Controllers
@@ -8,39 +9,74 @@ namespace EMS.BACKEND.API.Controllers
     [ApiController]
     public class PackageController(IPackageRepository packageRepository) : Controller
     {
-        [HttpGet("GetAllPackages")]
-        public async Task<IActionResult> GetAllPackages()
+        [HttpGet("GetAllPackages/{userId}"),Authorize]
+        public async Task<IActionResult> GetAllPackages(string userId)
         {
-            //var packages = await packageRepository.GetAllPackages();
-            return Ok();
+            var result = await packageRepository.GetAllPackagesByUser(userId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
-        [HttpGet("GetPackageById")]
+        [HttpGet("GetPackageById"),Authorize]
         public async Task<IActionResult> GetPackageById(string id)
         {
-            //var package = await packageRepository.GetPackageById(id);
-            return Ok();
+            var result = await packageRepository.FindByIdAsync(id);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
-        [HttpPost("CreatePackage")]
+        [HttpPost("CreatePackage"), Authorize(Roles = "Client")]
         public async Task<IActionResult> CreatePackage(PackageRequestDTO packageRequestDTO)
         {
-           // var response = await packageRepository.CreatePackage(packageRequestDTO);
-            return Ok();
+            var response = await packageRepository.CreateAsync(packageRequestDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpPut("UpdatePackage")]
+        [HttpPut("UpdatePackage"), Authorize(Roles = "Client")]
         public async Task<IActionResult> UpdatePackage(PackageRequestDTO packageRequestDTO)
         {
-            //var response = await packageRepository.UpdatePackage(packageRequestDTO);
-            return Ok();
+            var result = await packageRepository.UpdateAsync(packageRequestDTO);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
 
-        [HttpDelete("DeletePackage")]
+        [HttpDelete("DeletePackage/{id}"), Authorize(Roles = "Client")]
         public async Task<IActionResult> DeletePackage(string id)
         {
-            //var response = await packageRepository.DeletePackage(id);
-            return Ok();
+            var response = await packageRepository.DeleteAsync(id);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
     }
 }

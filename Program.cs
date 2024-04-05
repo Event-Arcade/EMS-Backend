@@ -13,6 +13,7 @@ using SharedClassLibrary.Contracts;
 using EMS.BACKEND.API.Contracts;
 using Amazon.S3;
 using Contracts;
+using EMS.BACKEND.API.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,7 +84,8 @@ builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
-builder.Services.AddScoped<IFeedBackRepository, FeedbackRepository>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
 
 var app = builder.Build();
 

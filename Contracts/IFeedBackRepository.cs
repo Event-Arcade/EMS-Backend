@@ -4,7 +4,7 @@ using EMS.BACKEND.API.DTOs.ResponseDTOs;
 
 namespace Contracts
 {
-    public interface IFeedBackRepository : IBaseRepository<FeedBack, FeedBack>
+    public interface IFeedbackRepository : IBaseRepository<FeedBack, FeedBack>
     {
         Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByShopId(string shopId);
         Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByServiceId(string serviceId);

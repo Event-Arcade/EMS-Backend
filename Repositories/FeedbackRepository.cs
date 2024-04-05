@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IFeedBackRepository
+    public class FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IFeedbackRepository
     {
         public async Task<BaseResponseDTO> CreateAsync(FeedBack entity)
         {
@@ -170,7 +170,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByServiceId(string serviceId)
         {
             try
@@ -212,7 +211,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByShopId(string shopId)
         {
             try

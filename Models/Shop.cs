@@ -14,6 +14,6 @@ namespace EMS.BACKEND.API.Models
         [NotMapped]
         public IFormFile BackgroundImage { get; set; }
         public string BackgroundImagePath { get; set; }
-        public virtual ICollection<Service> Services  { get; set; }
+        public virtual ICollection<Service> Services { get; set; }
     }
 }

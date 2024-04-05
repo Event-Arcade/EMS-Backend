@@ -9,7 +9,7 @@ using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class ShopServiceRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration,
+    public class ShopServiceRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration, IUserAccountRepository userAccountRepository,
                                             IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor,
                                             ICloudProviderRepository cloudProvider, IServiceRepository serviceRepository) : IShopServiceRepository
     {
@@ -206,9 +206,96 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public Task<BaseResponseDTO> UpdateAsync(Shop entity)
+        public async Task<BaseResponseDTO<Shop>> GetShopByVendor()
         {
-            throw new NotImplementedException();
+            try
+            {
+                //get the user 
+                var result = await userAccountRepository.GetMe();
+                if (!result.Flag)
+                {
+                    return new BaseResponseDTO<Shop> { Message = "User not found", Flag = false };
+                }
+
+                var user = result.Data;
+                //get the shop
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id ).FirstOrDefaultAsync();
+
+                    if (shop == null)
+                    {
+                        return new BaseResponseDTO<Shop> { Message = "Service not found", Flag = false };
+                    }
+
+                    //convert the background image path to a url
+                    var url = cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
+                    shop.BackgroundImagePath = url;
+
+                    //get the service associated with the shop
+                    var servicesResponse = await serviceRepository.GetServicesByShopId(shop.Id);
+                    if (servicesResponse.Flag)
+                    {
+                        foreach (var service in servicesResponse.Data)
+                        {
+                            shop.Services.Add(service);
+                        }
+                    }
+
+                    return new BaseResponseDTO<Shop> { Data = shop, Flag = true, Message = "Shop found" };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
+            }
+        }
+
+        public async Task<BaseResponseDTO> UpdateAsync(Shop entity)
+        {
+            try
+            {
+                using (var scope = serviceScopeFactory.CreateScope())
+                {
+                    //check if the entity is null
+                    if (entity == null)
+                    {
+                        throw new ArgumentNullException(nameof(entity));
+                    }
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var shop = await dbContext.Shops.FindAsync(entity.Id);
+
+                    if (shop == null)
+                    {
+                        return new BaseResponseDTO { Message = "Shop not found", Flag = false };
+                    }
+
+                    //upload the background image
+                    if (entity.BackgroundImage != null)
+                    {
+                        var (flag, path) = await cloudProvider
+                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"],shop.BackgroundImagePath);
+                        if (!flag)
+                        {
+                            throw new Exception("Failed to upload the file to the cloud");
+                        }
+                        entity.BackgroundImagePath = path;
+                    }
+
+                    shop.Name = entity.Name;
+                    shop.Description = entity.Description;
+                    shop.BackgroundImagePath = entity.BackgroundImagePath;
+
+                    dbContext.Shops.Update(shop);
+                    await dbContext.SaveChangesAsync();
+                    return new BaseResponseDTO { Message = "Shop updated successfully", Flag = true };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO { Message = ex.Message, Flag = false };
+            }
         }
     }
 }

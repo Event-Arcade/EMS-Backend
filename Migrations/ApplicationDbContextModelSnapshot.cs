@@ -198,6 +198,7 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -464,7 +465,9 @@ namespace EMS.BACKEND.API.Migrations
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
