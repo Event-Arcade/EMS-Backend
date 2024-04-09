@@ -11,6 +11,7 @@ namespace EMS.BACKEND.API.Models
         public double Rating { get; set; }
         public string? ShopId { get; set; }
         public string? CategoryId { get; set; }
+        public virtual Category Category {get; set;}
         public virtual ICollection<ServiceStaticResources>? StaticResourcesPaths { get; set; }
         public virtual ICollection<FeedBack>? FeedBacks { get; set; }
         [NotMapped]
