@@ -14,10 +14,12 @@ using EMS.BACKEND.API.Contracts;
 using Amazon.S3;
 using Contracts;
 using EMS.BACKEND.API.Controllers;
+using EMS.BACKEND.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 //aws s3 configuration
@@ -28,7 +30,7 @@ builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         //get connection string from appsettings.json
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
+        options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDbConnection") ??
             throw new InvalidOperationException("Connection string is not found"));
     });
 
@@ -97,7 +99,7 @@ if (app.Environment.IsDevelopment())
 
     app.UseCors(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173")
         .AllowAnyMethod()
         .AllowAnyHeader()
         .WithHeaders(HeaderNames.ContentType);
@@ -110,7 +112,11 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+
 app.MapControllers();
+app.MapHub<PersonalChatHub>("/personalChatHub");
+
+
 
 //seeding user-roles
 using (var scope = app.Services.CreateScope())
