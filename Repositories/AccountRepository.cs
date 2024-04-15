@@ -41,8 +41,8 @@ namespace EMS.BACKEND.API.Repositories
                 City = userDTO.City,
                 PostalCode = userDTO.PostalCode,
                 Province = userDTO.Province,
-                Longitude = double.Parse(userDTO.Longitude),
-                Latitude = double.Parse(userDTO.Latitude),
+                Longitude = userDTO.Longitude,
+                Latitude = userDTO.Latitude,
             };
 
             //store profile-picture in storage
@@ -172,8 +172,8 @@ namespace EMS.BACKEND.API.Repositories
             user.City = userDTO.City;
             user.PostalCode = userDTO.PostalCode;
             user.Province = userDTO.Province;
-            user.Longitude = double.Parse(userDTO.Longitude);
-            user.Latitude = double.Parse(userDTO.Latitude);
+            user.Longitude = userDTO.Longitude;
+            user.Latitude = userDTO.Latitude;
 
             //Store updated image
             if (userDTO.ProfilePicture != null)

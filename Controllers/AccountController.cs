@@ -10,21 +10,22 @@ namespace EMS.BACKEND.API.Controllers
     public class AccountController(IUserAccountRepository userAccount) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<IActionResult> Register(UserRequestDTO userDTO)
+        public async Task<IActionResult> Register([FromForm] UserRequestDTO userDTO)
         {
             var response = await userAccount.CreateAccount(userDTO);
             return Ok(response);
         }
 
+
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
         {
             var response = await userAccount.LoginAccount(loginDTO);
             return Ok(response);
         }
 
         [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update(UserRequestDTO userDTO)
+        public async Task<IActionResult> Update([FromBody] UserRequestDTO userDTO)
         {
             var response = await userAccount.UpdateAccount(userDTO);
             return Ok(response);
