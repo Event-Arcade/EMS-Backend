@@ -10,8 +10,8 @@ namespace EMS.BACKEND.API.DTOs.RequestDTOs
         [Required] public string City { get; set; }
         [Required] public string PostalCode { get; set; }
         [Required] public string Province { get; set; }
-        [Required] public double Longitude { get; set; }
-        [Required] public double Latitude { get; set; }
+        [Required] public string Longitude { get; set; }
+        [Required] public string Latitude { get; set; }
 
         [Required]
         [EmailAddress]

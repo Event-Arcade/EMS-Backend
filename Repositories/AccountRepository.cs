@@ -36,17 +36,17 @@ namespace EMS.BACKEND.API.Repositories
             var newUser = new ApplicationUser()
             {
                 Email = userDTO.Email,
-                UserName = userDTO.FirstName + " " + userDTO.LastName,
+                UserName = userDTO.FirstName,
                 Street = userDTO.Street,
                 City = userDTO.City,
                 PostalCode = userDTO.PostalCode,
                 Province = userDTO.Province,
-                Longitude = userDTO.Longitude,
-                Latitude = userDTO.Latitude,
+                Longitude = double.Parse(userDTO.Longitude),
+                Latitude = double.Parse(userDTO.Latitude),
             };
 
             //store profile-picture in storage
-            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture,config["StorageDirectories:ProfileImages"]);
+            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, config["StorageDirectories:ProfileImages"]);
             if (condition)
             {
                 newUser.ProfilePicture = filepath;
@@ -167,13 +167,13 @@ namespace EMS.BACKEND.API.Repositories
                 };
 
             //Assing new values
-            user.UserName = userDTO.FirstName + " " + userDTO.LastName;
+            user.UserName = userDTO.FirstName;
             user.Street = userDTO.Street;
             user.City = userDTO.City;
             user.PostalCode = userDTO.PostalCode;
             user.Province = userDTO.Province;
-            user.Longitude = userDTO.Longitude;
-            user.Latitude = userDTO.Latitude;
+            user.Longitude = double.Parse(userDTO.Longitude);
+            user.Latitude = double.Parse(userDTO.Latitude);
 
             //Store updated image
             if (userDTO.ProfilePicture != null)
@@ -275,6 +275,5 @@ namespace EMS.BACKEND.API.Repositories
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
     }
 }
