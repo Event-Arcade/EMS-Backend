@@ -14,10 +14,10 @@ namespace EMS.BACKEND.API.Repositories
     public class AccountRepository(UserManager<ApplicationUser> userManager,
         IConfiguration config, IHttpContextAccessor httpContextAccessor, ICloudProviderRepository cloudProvider) : IUserAccountRepository
     {
-        public async Task<BaseResponseDTO> CreateAccount(UserRequestDTO userDTO)
+        public async Task<BaseResponseDTO<String>> CreateAccount(UserRequestDTO userDTO)
         {
             //Check model is empty
-            if (userDTO is null) return new BaseResponseDTO
+            if (userDTO is null) return new BaseResponseDTO<String>
             {
                 Flag = false,
                 Message = "Model is empty"
@@ -26,7 +26,7 @@ namespace EMS.BACKEND.API.Repositories
             //check weather user already registered
             var user = await userManager.FindByEmailAsync(userDTO.Email);
             if (user is not null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "User already registered"
@@ -35,8 +35,10 @@ namespace EMS.BACKEND.API.Repositories
             //create new user object
             var newUser = new ApplicationUser()
             {
+                FirstName = userDTO.FirstName,
+                LastName = userDTO.LastName,
                 Email = userDTO.Email,
-                UserName = userDTO.FirstName,
+                UserName = userDTO.Email,
                 Street = userDTO.Street,
                 City = userDTO.City,
                 PostalCode = userDTO.PostalCode,
@@ -53,7 +55,7 @@ namespace EMS.BACKEND.API.Repositories
             }
             else
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = filepath
@@ -63,7 +65,7 @@ namespace EMS.BACKEND.API.Repositories
             var createUser = await userManager.CreateAsync(newUser, userDTO.Password);
             //Check user created
             if (!createUser.Succeeded)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = createUser.ToString()
@@ -93,20 +95,20 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
 
-            return new BaseResponseDTO
+            return new BaseResponseDTO<String>
             {
                 Flag = false,
                 Message = "Error occured while creating account"
             };
         }
-        public async Task<BaseResponseDTO> LoginAccount(LoginDTO loginDTO)
+        public async Task<BaseResponseDTO<String>> LoginAccount(LoginDTO loginDTO)
         {
             //Check login container is empty
             if (loginDTO == null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
-                    Message = "Model is empty"
+                    Message = "Model is empty",
                 };
 
             //Get user by email
@@ -114,7 +116,7 @@ namespace EMS.BACKEND.API.Repositories
 
             //Check user is not null
             if (getUser is null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "User not found"
@@ -123,7 +125,7 @@ namespace EMS.BACKEND.API.Repositories
             //Check user password is correct
             bool checkUserPasswords = await userManager.CheckPasswordAsync(getUser, loginDTO.Password);
             if (!checkUserPasswords)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "Incorrect password/username"
@@ -146,8 +148,7 @@ namespace EMS.BACKEND.API.Repositories
                 Data = token
             };
         }
-        //Update Account Details
-        public async Task<BaseResponseDTO> UpdateAccount(UserRequestDTO userDTO)
+        public async Task<BaseResponseDTO> UpdateAccount(UpdateUserRequestDTO userDTO)
         {
             //Check model is empty
             if (userDTO is null) return new BaseResponseDTO
@@ -166,14 +167,15 @@ namespace EMS.BACKEND.API.Repositories
                     Message = "User not found"
                 };
 
-            //Assing new values
-            user.UserName = userDTO.FirstName;
-            user.Street = userDTO.Street;
-            user.City = userDTO.City;
-            user.PostalCode = userDTO.PostalCode;
-            user.Province = userDTO.Province;
-            user.Longitude = userDTO.Longitude;
-            user.Latitude = userDTO.Latitude;
+            //Assign non empty updated values into user model
+            if(userDTO.FirstName != null) user.FirstName = userDTO.FirstName;
+            if(userDTO.LastName != null) user.LastName = userDTO.LastName;
+            if(userDTO.Street != null) user.Street = userDTO.Street;
+            if(userDTO.City != null) user.City = userDTO.City;
+            if(userDTO.PostalCode != null) user.PostalCode = userDTO.PostalCode;
+            if(userDTO.Province != null) user.Province = userDTO.Province;
+            if(userDTO.Longitude != 0) user.Longitude = userDTO.Longitude;
+            if(userDTO.Latitude != 0) user.Latitude = userDTO.Latitude;     
 
             //Store updated image
             if (userDTO.ProfilePicture != null)
@@ -219,7 +221,7 @@ namespace EMS.BACKEND.API.Repositories
         //Reset Password
         //public async Task<GeneralResponse> ResetUserPassowrd(UserRequestDTO userDTO);
         //Get currrent logged in user details
-        public async Task<BaseResponseDTO<ApplicationUser>> GetMe()
+        public async Task<BaseResponseDTO<UserResponseDTO>> GetMe()
         {
             var result = string.Empty;
             if (httpContextAccessor.HttpContext != null)
@@ -234,21 +236,35 @@ namespace EMS.BACKEND.API.Repositories
                     //Check user if exist
                     if (currentUser != null)
                     {
+                        UserResponseDTO userResponse = new UserResponseDTO
+                        {
+                            Id = currentUser.Id,
+                            FirstName = currentUser.FirstName,
+                            LastName = currentUser.LastName,
+                            Street = currentUser.Street,
+                            City = currentUser.City,
+                            PostalCode = currentUser.PostalCode,
+                            Province = currentUser.Province,
+                            Longitude = currentUser.Longitude,
+                            Latitude = currentUser.Latitude,
+                            Email = currentUser.Email,
+                        };
                         //Get user Profile Picture URL
                         if (currentUser.ProfilePicture != null)
                         {
-                            currentUser.ProfilePicture = cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicture);
+                            userResponse.ProfilePictureURL = cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicture);
                         }
-                        return new BaseResponseDTO<ApplicationUser>
+                        return new BaseResponseDTO<UserResponseDTO>
                         {
                             Flag = true,
                             Message = "User found",
-                            Data = currentUser
+                            Data = userResponse
+
                         };
                     }
                 }
             }
-            return new BaseResponseDTO<ApplicationUser>
+            return new BaseResponseDTO<UserResponseDTO>
             {
                 Flag = false,
                 Message = "User not found",

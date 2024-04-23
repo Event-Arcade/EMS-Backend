@@ -1,6 +1,7 @@
 ﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Controllers
@@ -13,22 +14,42 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> Register([FromForm] UserRequestDTO userDTO)
         {
             var response = await userAccount.CreateAccount(userDTO);
-            return Ok(response);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
         {
             var response = await userAccount.LoginAccount(loginDTO);
-            return Ok(response);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update([FromBody] UserRequestDTO userDTO)
+        public async Task<IActionResult> Update([FromBody] UpdateUserRequestDTO userDTO)
         {
             var response = await userAccount.UpdateAccount(userDTO);
-            return Ok(response);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         //return current user details
@@ -36,7 +57,14 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> GetMe()
         {
             var result = await userAccount.GetMe();
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
     }
 }

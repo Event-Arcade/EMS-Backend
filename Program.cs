@@ -136,8 +136,16 @@ using (var scope = app.Services.CreateScope())
     //seeding admin user
     var adminUser = new ApplicationUser
     {
-        UserName = "admin",
-        Email = "admin@gmail.com"
+        FirstName = "admin",
+        LastName = "admin",
+        Email = "admin@gmail.com",
+        UserName = "admin@gmail.com",
+        Street = "admin street",
+        City = "admin city",
+        PostalCode = "admin postal code",
+        Province = "admin province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
@@ -151,8 +159,16 @@ using (var scope = app.Services.CreateScope())
     //seeding client user
     var clientUser = new ApplicationUser
     {
-        UserName = "client",
-        Email = "client@gmail.com"
+        FirstName = "client",
+        LastName = "client",
+        UserName = "client@gmail.com",
+        Email = "client@gmail.com",
+        Street = "client street",
+        City = "client city",
+        PostalCode = "client postal code",
+        Province = "client province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(clientUser.Email) == null)
     {
@@ -166,8 +182,16 @@ using (var scope = app.Services.CreateScope())
     //seeding vendor user
     var vendorUser = new ApplicationUser
     {
-        UserName = "vendor",
-        Email = "vendor@gmail.com"
+        FirstName = "vendor",
+        LastName = "vendor",
+        UserName = "vendor@gmail.com",
+        Email = "vendor@gmail.com",
+        Street = "vendor street",
+        City = "vendor city",
+        PostalCode = "vendor postal code",
+        Province = "vendor province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
     {

@@ -7,9 +7,9 @@ namespace SharedClassLibrary.Contracts
 {
     public interface IUserAccountRepository
     {
-        Task<BaseResponseDTO> CreateAccount(UserRequestDTO userDTO);
-        Task<BaseResponseDTO> UpdateAccount(UserRequestDTO userDTO);
-        Task<BaseResponseDTO> LoginAccount(LoginDTO loginDTO);
-        Task<BaseResponseDTO<ApplicationUser>> GetMe();
+        Task<BaseResponseDTO<String>> CreateAccount(UserRequestDTO userDTO);
+        Task<BaseResponseDTO> UpdateAccount(UpdateUserRequestDTO userDTO);
+        Task<BaseResponseDTO<String>> LoginAccount(LoginDTO loginDTO);
+        Task<BaseResponseDTO<UserResponseDTO>> GetMe();
     }
 }
