@@ -63,7 +63,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO> DeleteAsync(string id)
         {
             try
@@ -244,8 +243,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
-        public async Task<BaseResponseDTO> UpdateAsync(PackageRequestDTO entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, PackageRequestDTO entity)
         {
             try
             {
@@ -286,7 +284,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     foreach (var subPackage in response.Data)
                     {
-                        var subPackageResponse = await subPackageRepository.UpdateAsync(subPackage);
+                        var subPackageResponse = await subPackageRepository.UpdateAsync(subPackage.Id, subPackage);
                         if (!subPackageResponse.Flag)
                         {
                             return new BaseResponseDTO

@@ -68,7 +68,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO> DeleteAsync(string id)
         {
             try
@@ -131,7 +130,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<Service>>> FindAllAsync()
         {
             try
@@ -185,7 +183,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<Service>> FindByIdAsync(string id)
         {
             try
@@ -236,7 +233,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<Service>>> GetServicesByShopId(string shopId)
         {
             try
@@ -295,8 +291,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
-        public async Task<BaseResponseDTO> UpdateAsync(Service entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, Service entity)
         {
             try
             {

@@ -139,7 +139,7 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO<AdminStaticResource> { Message = ex.Message, Flag = false };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(AdminStaticResource entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id,AdminStaticResource entity)
         {
             try{
                 using (var scope = serviceProvider.CreateScope())

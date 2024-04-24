@@ -195,7 +195,7 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<BaseResponseDTO> UpdateAsync(SubPackage entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, SubPackage entity)
         {
             try
             {

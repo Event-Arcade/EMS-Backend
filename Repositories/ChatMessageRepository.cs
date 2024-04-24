@@ -30,7 +30,6 @@ namespace EMS.BACKEND.API.Repositories
                 throw new Exception(e.Message);
             }
         }
-
         public async Task<IEnumerable<ChatMessage>> GetMessage(string senderId, string receiverId)
         {
             try{

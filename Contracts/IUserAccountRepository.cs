@@ -1,7 +1,6 @@
 ﻿
 using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
-using EMS.BACKEND.API.Models;
 
 namespace SharedClassLibrary.Contracts
 {

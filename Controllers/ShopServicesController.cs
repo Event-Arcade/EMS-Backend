@@ -38,9 +38,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("updatemyshop"), Authorize(Roles = "vendor")]
-        public async Task<IActionResult> UpdateShop(Shop shop)
+        public async Task<IActionResult> UpdateShop([FromQuery] String shopId, [FromForm] Shop shop)
         {
-            var response = await shopServiceRepository.UpdateAsync(shop);
+            var response = await shopServiceRepository.UpdateAsync(shopId, shop);
             if (response.Flag)
             {
                 return Ok(response);

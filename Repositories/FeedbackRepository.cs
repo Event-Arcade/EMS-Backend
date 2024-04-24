@@ -262,7 +262,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(FeedBack entity)
+        public async Task<BaseResponseDTO> UpdateAsync(string id, FeedBack entity)
         {
             try
             {

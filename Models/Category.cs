@@ -8,8 +8,6 @@ namespace EMS.BACKEND.API.Models
         public string Name { get; set; }
         public string Description {get;set;}
         public string CategoryImagePath {get; set;}
-        [NotMapped]
-        public IFormFile CategoryImage {get; set;}
         public string UserId{get; set;}
         public virtual ApplicationUser User{get;set;}
 

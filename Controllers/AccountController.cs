@@ -25,7 +25,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromForm] LoginDTO loginDTO)
         {
             var response = await userAccount.LoginAccount(loginDTO);
             if (response.Flag)
@@ -39,7 +39,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update([FromBody] UpdateUserRequestDTO userDTO)
+        public async Task<IActionResult> Update([FromForm] UpdateUserRequestDTO userDTO)
         {
             var response = await userAccount.UpdateAccount(userDTO);
             if (response.Flag)

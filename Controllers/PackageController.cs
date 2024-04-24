@@ -9,7 +9,7 @@ namespace EMS.BACKEND.API.Controllers
     [ApiController]
     public class PackageController(IPackageRepository packageRepository) : Controller
     {
-        [HttpGet("GetAllPackages/{userId}"),Authorize]
+        [HttpGet("GetAllPackages/{userId}"), Authorize]
         public async Task<IActionResult> GetAllPackages(string userId)
         {
             var result = await packageRepository.GetAllPackagesByUser(userId);
@@ -23,7 +23,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("GetPackageById"),Authorize]
+        [HttpGet("GetPackageById"), Authorize]
         public async Task<IActionResult> GetPackageById(string id)
         {
             var result = await packageRepository.FindByIdAsync(id);
@@ -52,9 +52,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("UpdatePackage"), Authorize(Roles = "Client")]
-        public async Task<IActionResult> UpdatePackage(PackageRequestDTO packageRequestDTO)
+        public async Task<IActionResult> UpdatePackage([FromQuery] String packageId, [FromForm] PackageRequestDTO packageRequestDTO)
         {
-            var result = await packageRepository.UpdateAsync(packageRequestDTO);
+            var result = await packageRepository.UpdateAsync(packageId, packageRequestDTO);
             if (result.Flag)
             {
                 return Ok(result);

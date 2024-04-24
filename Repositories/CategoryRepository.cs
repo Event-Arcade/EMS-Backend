@@ -1,15 +1,17 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
+using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.EntityFrameworkCore;
+using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
     public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider,
-                                        IConfiguration configuration) : ICategoryRepository
+                                        IConfiguration configuration, IUserAccountRepository accountRepository) : ICategoryRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(Category entity)
+        public async Task<BaseResponseDTO> CreateAsync(CategoryRequestDTO entity)
         {
             // Check entity is null
             if (entity == null)
@@ -17,11 +19,15 @@ namespace EMS.BACKEND.API.Repositories
                 throw new Exception("Request is null");
             }
 
+            //TODO: Check if the user is admin and validated by the token
             using (var scope = serviceScopeFactory.CreateScope())
             {
+
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
+                    //Get current user
+                    var user = await accountRepository.GetMe();
                     // Check if category already exists
                     var category = await context.Categories.FirstOrDefaultAsync(x => x.Name == entity.Name);
                     if (category != null)
@@ -32,16 +38,22 @@ namespace EMS.BACKEND.API.Repositories
                     // Upload category image to S3
                     var (flag, filePath) = await cloudProvider.UploadFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"]);
 
-                    if (flag)
-                    {
-                        entity.CategoryImagePath = filePath;
-                    }
-                    else
+                    if (!flag)
                     {
                         throw new Exception("Failed to upload category image");
                     }
+
+                    // Create new category
+                    var newCategory = new Category
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = entity.Name,
+                        Description = entity.Description,
+                        CategoryImagePath = filePath,
+                        UserId = user.Data.Id
+                    };
                     // Save category
-                    await context.Categories.AddAsync(entity);
+                    await context.Categories.AddAsync(newCategory);
                     await context.SaveChangesAsync();
 
                     return new BaseResponseDTO
@@ -69,26 +81,20 @@ namespace EMS.BACKEND.API.Repositories
                 throw new Exception("Requested id is null");
             }
 
-            // Find category by id
-            var category = await FindByIdAsync(id);
-            if (category == null)
-            {
-               throw new Exception("Category not found");
-            }
-
             using (var scope = serviceScopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    //Check whether any service is using the category
-                    if (context.Services.Any(x => x.CategoryId == id))
+                    // Find category by id
+                    var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
+                    if (category == null)
                     {
-                        throw new Exception("Category is in use");
+                        throw new Exception("Category not found");
                     }
 
                     // Remove category image from S3
-                    var flag = await cloudProvider.RemoveFile(category.Data.CategoryImagePath);
+                    var flag = await cloudProvider.RemoveFile(category.CategoryImagePath);
 
                     if (!flag)
                     {
@@ -96,7 +102,7 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Delete category
-                    context.Categories.Remove(category.Data);
+                    context.Categories.Remove(category);
                     await context.SaveChangesAsync();
 
                     return new BaseResponseDTO
@@ -125,6 +131,11 @@ namespace EMS.BACKEND.API.Repositories
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     var categories = await context.Categories.ToListAsync();
 
+                    // Assign pre signed URL to each category
+                    foreach (var category in categories)
+                    {
+                        category.CategoryImagePath = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
+                    }
 
                     return new BaseResponseDTO<IEnumerable<Category>>
                     {
@@ -161,8 +172,11 @@ namespace EMS.BACKEND.API.Repositories
 
                     if (category == null)
                     {
-                        throw  new Exception("Category not found");
+                        throw new Exception("Category not found");
                     }
+
+                    // Asiign pre signed URL to category
+                    category.CategoryImagePath = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
 
                     return new BaseResponseDTO<Category>
                     {
@@ -181,20 +195,12 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(Category entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id,CategoryRequestDTO entity)
         {
             // Check entity is null
             if (entity == null)
             {
                 throw new Exception("Reqest is null");
-            }
-
-            // Find category by id
-            var responseDTO =await FindByIdAsync(entity.Id);
-            var category = responseDTO.Data;
-            if (category == null)
-            {
-                throw new Exception("Category not found");
             }
 
             // Update category
@@ -203,19 +209,35 @@ namespace EMS.BACKEND.API.Repositories
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    //Update the category image
-                    var (flag, newFilePath) = await cloudProvider.UpdateFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"], category.CategoryImagePath);
-                    if (flag)
+                    // Find category by name
+                    var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
+                    if (category == null)
                     {
-                        entity.CategoryImagePath = newFilePath;
+                        throw new Exception("Category not found");
                     }
-                    else
+
+                    // Create new category
+                    if (entity.Name != null)
                     {
-                        throw new Exception("Failed to update category image");
+                        category.Name = entity.Name;
+                    }
+                    if (entity.Description != null)
+                    {
+                        category.Description = entity.Description;
+                    }
+                    if (entity.CategoryImage != null)
+                    {
+                        //Remove the old category image and upload the new one
+                        var (flag, filePath) = await cloudProvider.UpdateFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"], category.CategoryImagePath);
+                        if (!flag)
+                        {
+                            throw new Exception("Failed to update category image");
+                        }
+                        category.CategoryImagePath = filePath;
                     }
 
                     // Update category
-                    context.Categories.Update(entity);
+                    context.Categories.Update(category);
                     await context.SaveChangesAsync();
 
                     return new BaseResponseDTO

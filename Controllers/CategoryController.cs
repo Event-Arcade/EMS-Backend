@@ -1,6 +1,5 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.RequestDTOs;
-using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +9,8 @@ namespace EMS.BACKEND.API.Controllers
     [ApiController]
     public class CategoryController(ICategoryRepository categoryRepository) : Controller
     {
-        [HttpPost("add"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddCategory(Category category)
+        [HttpPost("create"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> AddCategory([FromForm] CategoryRequestDTO category)
         {
             var result = await categoryRepository.CreateAsync(category);
             if (result.Flag)
@@ -24,8 +23,8 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpDelete("delete/{categoryId}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> DeleteCategory(string categoryId)
+        [HttpDelete("delete"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> DeleteCategory([FromForm] string categoryId)
         {
             var result = await categoryRepository.DeleteAsync(categoryId);
             if (result.Flag)
@@ -52,8 +51,8 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("getbyid/{categoryId}")]
-        public async Task<IActionResult> GetCategoryById(string categoryId)
+        [HttpGet("get")]
+        public async Task<IActionResult> GetCategoryById([FromForm] string categoryId)
         {
             var result = await categoryRepository.FindByIdAsync(categoryId);
             if (result.Flag)
@@ -67,9 +66,10 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("update"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateCategory(Category categoryRequestDTO)
+        public async Task<IActionResult> UpdateCategory([FromQuery] string categotyId,[FromForm] CategoryRequestDTO categoryRequestDTO)
         {
-            var result = await categoryRepository.UpdateAsync(categoryRequestDTO);
+            Console.WriteLine(categotyId);
+            var result = await categoryRepository.UpdateAsync(categotyId,categoryRequestDTO);
             if (result.Flag)
             {
                 return Ok(result);

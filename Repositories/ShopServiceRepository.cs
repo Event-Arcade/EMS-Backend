@@ -222,7 +222,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id ).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -252,7 +252,7 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        public async Task<BaseResponseDTO> UpdateAsync(Shop entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, Shop entity)
         {
             try
             {
@@ -275,7 +275,7 @@ namespace EMS.BACKEND.API.Repositories
                     if (entity.BackgroundImage != null)
                     {
                         var (flag, path) = await cloudProvider
-                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"],shop.BackgroundImagePath);
+                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"], shop.BackgroundImagePath);
                         if (!flag)
                         {
                             throw new Exception("Failed to upload the file to the cloud");
