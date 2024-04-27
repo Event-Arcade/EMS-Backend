@@ -9,7 +9,7 @@ namespace EMS.BACKEND.API.Repositories
     public class PackageRepository(IServiceScopeFactory scopeFactory,
                                 ISubPackageRepository subPackageRepository) : IPackageRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(PackageRequestDTO entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(PackageRequestDTO entity)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace EMS.BACKEND.API.Repositories
                         var subPackageResponse = await subPackageRepository.CreateAsync(subPackage);
                         if (!subPackageResponse.Flag)
                         {
-                            return new BaseResponseDTO
+                            return new BaseResponseDTO<String>
                             {
                                 Flag = false,
                                 Message = "An error occured while creating subpackage"
@@ -47,7 +47,7 @@ namespace EMS.BACKEND.API.Repositories
                     await context.Packages.AddAsync(package);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Flag = true,
                         Message = "Package created successfully"
@@ -56,14 +56,14 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = ex.Message
                 };
             }
         }
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace EMS.BACKEND.API.Repositories
                     var package = await context.Packages.FindAsync(id);
                     if (package == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<String>
                         {
                             Flag = false,
                             Message = "Package not found"
@@ -86,7 +86,7 @@ namespace EMS.BACKEND.API.Repositories
                         var subPackageResponse = await subPackageRepository.DeleteAsync(subPackage.Id);
                         if (!subPackageResponse.Flag)
                         {
-                            return new BaseResponseDTO
+                            return new BaseResponseDTO<String>
                             {
                                 Flag = false,
                                 Message = "An error occured while deleting subpackage"
@@ -98,7 +98,7 @@ namespace EMS.BACKEND.API.Repositories
                     context.Packages.Remove(package);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Flag = true,
                         Message = "Package deleted successfully"
@@ -107,7 +107,7 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = ex.Message

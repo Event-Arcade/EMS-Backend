@@ -11,7 +11,7 @@ namespace EMS.BACKEND.API.Repositories
     public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider,
                                         IConfiguration configuration, IUserAccountRepository accountRepository) : ICategoryRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(CategoryRequestDTO entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(CategoryRequestDTO entity)
         {
             // Check entity is null
             if (entity == null)
@@ -56,7 +56,7 @@ namespace EMS.BACKEND.API.Repositories
                     await context.Categories.AddAsync(newCategory);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Category created successfully",
                         Flag = true
@@ -64,7 +64,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO<Category>
+                    return new BaseResponseDTO<String>
                     {
                         Message = ex.Message,
                         Flag = false
@@ -73,7 +73,7 @@ namespace EMS.BACKEND.API.Repositories
             }
 
         }
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             // Check id is null
             if (id == null)
@@ -105,7 +105,7 @@ namespace EMS.BACKEND.API.Repositories
                     context.Categories.Remove(category);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Category deleted successfully",
                         Flag = true
@@ -113,7 +113,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = ex.Message,
                         Flag = false

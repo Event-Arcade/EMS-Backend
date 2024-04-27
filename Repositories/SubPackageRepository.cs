@@ -9,7 +9,7 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class SubPackageRepository(IServiceScopeFactory serviceScope) : ISubPackageRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(SubPackage entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(SubPackage entity)
         {
             try
             {
@@ -30,7 +30,7 @@ namespace EMS.BACKEND.API.Repositories
                     await context.SubPackages.AddAsync(entity);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Flag = true,
                         Message = "SubPackage created successfully!"
@@ -39,11 +39,11 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO { Flag = false, Message = ex.Message };
+                return new BaseResponseDTO<String> { Flag = false, Message = ex.Message };
             }
         }
 
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     if (subPackage == null)
                     {
-                        return new BaseResponseDTO
+                        return new BaseResponseDTO<String>
                         {
                             Flag = false,
                             Message = "SubPackage not found!"
@@ -70,7 +70,7 @@ namespace EMS.BACKEND.API.Repositories
                     context.SubPackages.Remove(subPackage);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Flag = true,
                         Message = "SubPackage deleted successfully!"
@@ -79,7 +79,7 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = ex.Message

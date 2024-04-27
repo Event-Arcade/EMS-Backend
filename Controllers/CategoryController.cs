@@ -23,8 +23,8 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpDelete("delete"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> DeleteCategory([FromForm] string categoryId)
+        [HttpDelete("delete/{categoryId}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> DeleteCategory(string categoryId)
         {
             var result = await categoryRepository.DeleteAsync(categoryId);
             if (result.Flag)
@@ -51,8 +51,8 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("get")]
-        public async Task<IActionResult> GetCategoryById([FromForm] string categoryId)
+        [HttpGet("get/{categoryId}")]
+        public async Task<IActionResult> GetCategoryById(string categoryId)
         {
             var result = await categoryRepository.FindByIdAsync(categoryId);
             if (result.Flag)
@@ -65,8 +65,8 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPut("update"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateCategory([FromQuery] string categotyId,[FromForm] CategoryRequestDTO categoryRequestDTO)
+        [HttpPut("update/{categotyId}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateCategory( string categotyId,[FromForm] CategoryRequestDTO categoryRequestDTO)
         {
             Console.WriteLine(categotyId);
             var result = await categoryRepository.UpdateAsync(categotyId,categoryRequestDTO);

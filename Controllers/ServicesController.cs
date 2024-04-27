@@ -53,7 +53,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("create"), Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> CreateService(Service service)
+        public async Task<IActionResult> CreateService([FromForm]Service service)
         {
             var response = await serviceRepository.CreateAsync(service);
             if (response.Flag)

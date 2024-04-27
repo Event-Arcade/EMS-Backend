@@ -168,14 +168,14 @@ namespace EMS.BACKEND.API.Repositories
                 };
 
             //Assign non empty updated values into user model
-            if(userDTO.FirstName != null) user.FirstName = userDTO.FirstName;
-            if(userDTO.LastName != null) user.LastName = userDTO.LastName;
-            if(userDTO.Street != null) user.Street = userDTO.Street;
-            if(userDTO.City != null) user.City = userDTO.City;
-            if(userDTO.PostalCode != null) user.PostalCode = userDTO.PostalCode;
-            if(userDTO.Province != null) user.Province = userDTO.Province;
-            if(userDTO.Longitude != 0) user.Longitude = userDTO.Longitude;
-            if(userDTO.Latitude != 0) user.Latitude = userDTO.Latitude;     
+            if (userDTO.FirstName != null) user.FirstName = userDTO.FirstName;
+            if (userDTO.LastName != null) user.LastName = userDTO.LastName;
+            if (userDTO.Street != null) user.Street = userDTO.Street;
+            if (userDTO.City != null) user.City = userDTO.City;
+            if (userDTO.PostalCode != null) user.PostalCode = userDTO.PostalCode;
+            if (userDTO.Province != null) user.Province = userDTO.Province;
+            if (userDTO.Longitude != 0) user.Longitude = userDTO.Longitude;
+            if (userDTO.Latitude != 0) user.Latitude = userDTO.Latitude;
 
             //Store updated image
             if (userDTO.ProfilePicture != null)
@@ -272,7 +272,7 @@ namespace EMS.BACKEND.API.Repositories
         }
 
         //Generate JWT token
-        private string GenerateToken(UserSession user)
+        public string GenerateToken(UserSession user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
