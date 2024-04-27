@@ -126,10 +126,13 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Remove the background image from the cloud
-                    var flag = await cloudProvider.RemoveFile(shop.BackgroundImagePath);
-                    if (!flag)
+                    if (shop.BackgroundImagePath != "images/shop-images/default.png")
                     {
-                        throw new Exception("Failed to delete the file from the cloud");
+                        var flag = await cloudProvider.RemoveFile(shop.BackgroundImagePath);
+                        if (!flag)
+                        {
+                            throw new Exception("Failed to delete the file from the cloud");
+                        }
                     }
 
                     //delete the shop
