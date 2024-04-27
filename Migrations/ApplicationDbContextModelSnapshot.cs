@@ -73,14 +73,12 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Latitude")
+                    b.Property<double?>("Latitude")
                         .HasColumnType("float");
 
                     b.Property<bool>("LockoutEnabled")
@@ -89,7 +87,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<double>("Longitude")
+                    b.Property<double?>("Longitude")
                         .HasColumnType("float");
 
                     b.Property<string>("NormalizedEmail")
@@ -112,13 +110,13 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<string>("PostalCode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProfilePicture")
+                    b.Property<string>("ProfilePicturePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Province")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Rating")
+                    b.Property<double?>("Rating")
                         .HasColumnType("float");
 
                     b.Property<string>("SecurityStamp")
@@ -153,19 +151,15 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CategoryImagePath")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -323,7 +317,6 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("BackgroundImagePath")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
@@ -335,10 +328,9 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OwnerId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Rating")
+                    b.Property<double?>("Rating")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
@@ -525,9 +517,7 @@ namespace EMS.BACKEND.API.Migrations
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

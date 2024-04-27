@@ -1,6 +1,5 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 
@@ -9,7 +8,7 @@ namespace EMS.BACKEND.API.Repositories
     public class PackageRepository(IServiceScopeFactory scopeFactory,
                                 ISubPackageRepository subPackageRepository) : IPackageRepository
     {
-        public async Task<BaseResponseDTO<String>> CreateAsync(PackageRequestDTO entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(Package entity)
         {
             try
             {
@@ -243,7 +242,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(String id, PackageRequestDTO entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, Package entity)
         {
             try
             {

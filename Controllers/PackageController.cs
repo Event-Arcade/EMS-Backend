@@ -1,5 +1,5 @@
 ﻿using EMS.BACKEND.API.Contracts;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
+using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,9 +38,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("CreatePackage"), Authorize(Roles = "Client")]
-        public async Task<IActionResult> CreatePackage(PackageRequestDTO packageRequestDTO)
+        public async Task<IActionResult> CreatePackage(Package package)
         {
-            var response = await packageRepository.CreateAsync(packageRequestDTO);
+            var response = await packageRepository.CreateAsync(package);
             if (response.Flag)
             {
                 return Ok(response);
@@ -52,9 +52,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("UpdatePackage"), Authorize(Roles = "Client")]
-        public async Task<IActionResult> UpdatePackage([FromQuery] String packageId, [FromForm] PackageRequestDTO packageRequestDTO)
+        public async Task<IActionResult> UpdatePackage([FromQuery] String packageId, [FromForm] Package package)
         {
-            var result = await packageRepository.UpdateAsync(packageId, packageRequestDTO);
+            var result = await packageRepository.UpdateAsync(packageId, package);
             if (result.Flag)
             {
                 return Ok(result);

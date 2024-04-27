@@ -1,6 +1,5 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +10,7 @@ namespace EMS.BACKEND.API.Repositories
     public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider,
                                         IConfiguration configuration, IUserAccountRepository accountRepository) : ICategoryRepository
     {
-        public async Task<BaseResponseDTO<String>> CreateAsync(CategoryRequestDTO entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(Category entity)
         {
             // Check entity is null
             if (entity == null)
@@ -195,7 +194,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(String id,CategoryRequestDTO entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id,Category entity)
         {
             // Check entity is null
             if (entity == null)
