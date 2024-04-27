@@ -93,11 +93,9 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Remove category image from S3
-                    var flag = await cloudProvider.RemoveFile(category.CategoryImagePath);
-
-                    if (!flag)
+                    if(category.CategoryImagePath != "images/category-images/default.png")
                     {
-                        throw new Exception("Failed to delete category image");
+                        await cloudProvider.RemoveFile(category.CategoryImagePath);
                     }
 
                     // Delete category
