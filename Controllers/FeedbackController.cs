@@ -65,9 +65,9 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
         [HttpPut("update"),Authorize]
-        public async Task<IActionResult> UpdateFeedback(FeedBack feedback)
+        public async Task<IActionResult> UpdateFeedback([FromQuery] String feedbackid ,[FromForm]FeedBack feedback)
         {
-            var result = await feedbackRepository.UpdateAsync(feedback);
+            var result = await feedbackRepository.UpdateAsync(feedbackid,feedback);
             if (result.Flag)
             {
                 return Ok(result);

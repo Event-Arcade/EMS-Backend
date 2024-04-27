@@ -4,6 +4,6 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface ICategoryRepository : IBaseRepository<Category, Category>
     {
-        
+
     }
 }

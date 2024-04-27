@@ -1,8 +1,9 @@
 ﻿using EMS.BACKEND.API.Contracts;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
+using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedClassLibrary.Contracts;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,21 +13,21 @@ using System.Text;
 namespace EMS.BACKEND.API.Repositories
 {
     public class AccountRepository(UserManager<ApplicationUser> userManager,
-        IConfiguration config, IHttpContextAccessor httpContextAccessor, ICloudProviderRepository cloudProvider) : IUserAccountRepository
+        IConfiguration config, IHttpContextAccessor httpContextAccessor, ICloudProviderRepository cloudProvider, IServiceScopeFactory scopeFactory) : IUserAccountRepository
     {
-        public async Task<BaseResponseDTO> CreateAccount(UserRequestDTO userDTO)
+        public async Task<BaseResponseDTO<String>> CreateAccount(ApplicationUser applicationUser)
         {
             //Check model is empty
-            if (userDTO is null) return new BaseResponseDTO
+            if (applicationUser is null) return new BaseResponseDTO<String>
             {
                 Flag = false,
                 Message = "Model is empty"
             };
 
             //check weather user already registered
-            var user = await userManager.FindByEmailAsync(userDTO.Email);
+            var user = await userManager.FindByEmailAsync(applicationUser.Email);
             if (user is not null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "User already registered"
@@ -35,35 +36,37 @@ namespace EMS.BACKEND.API.Repositories
             //create new user object
             var newUser = new ApplicationUser()
             {
-                Email = userDTO.Email,
-                UserName = userDTO.FirstName + " " + userDTO.LastName,
-                Street = userDTO.Street,
-                City = userDTO.City,
-                PostalCode = userDTO.PostalCode,
-                Province = userDTO.Province,
-                Longitude = userDTO.Longitude,
-                Latitude = userDTO.Latitude,
+                FirstName = applicationUser.FirstName,
+                LastName = applicationUser.LastName,
+                Email = applicationUser.Email,
+                UserName = applicationUser.Email,
+                Street = applicationUser.Street,
+                City = applicationUser.City,
+                PostalCode = applicationUser.PostalCode,
+                Province = applicationUser.Province,
+                Longitude = applicationUser.Longitude,
+                Latitude = applicationUser.Latitude,
             };
 
             //store profile-picture in storage
-            var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture,config["StorageDirectories:ProfileImages"]);
+            var (condition, filepath) = await cloudProvider.UploadFile(applicationUser.ProfilePicture, config["StorageDirectories:ProfileImages"]);
             if (condition)
             {
-                newUser.ProfilePicture = filepath;
+                newUser.ProfilePicturePath = filepath;
             }
             else
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = filepath
                 };
             }
 
-            var createUser = await userManager.CreateAsync(newUser, userDTO.Password);
+            var createUser = await userManager.CreateAsync(newUser, applicationUser.Password);
             //Check user created
             if (!createUser.Succeeded)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = createUser.ToString()
@@ -93,20 +96,20 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
 
-            return new BaseResponseDTO
+            return new BaseResponseDTO<String>
             {
                 Flag = false,
                 Message = "Error occured while creating account"
             };
         }
-        public async Task<BaseResponseDTO> LoginAccount(LoginDTO loginDTO)
+        public async Task<BaseResponseDTO<String>> LoginAccount(ApplicationUser loginDTO)
         {
             //Check login container is empty
             if (loginDTO == null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
-                    Message = "Model is empty"
+                    Message = "Model is empty",
                 };
 
             //Get user by email
@@ -114,7 +117,7 @@ namespace EMS.BACKEND.API.Repositories
 
             //Check user is not null
             if (getUser is null)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "User not found"
@@ -123,7 +126,7 @@ namespace EMS.BACKEND.API.Repositories
             //Check user password is correct
             bool checkUserPasswords = await userManager.CheckPasswordAsync(getUser, loginDTO.Password);
             if (!checkUserPasswords)
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Flag = false,
                     Message = "Incorrect password/username"
@@ -146,8 +149,7 @@ namespace EMS.BACKEND.API.Repositories
                 Data = token
             };
         }
-        //Update Account Details
-        public async Task<BaseResponseDTO> UpdateAccount(UserRequestDTO userDTO)
+        public async Task<BaseResponseDTO> UpdateAccount(ApplicationUser userDTO)
         {
             //Check model is empty
             if (userDTO is null) return new BaseResponseDTO
@@ -166,14 +168,15 @@ namespace EMS.BACKEND.API.Repositories
                     Message = "User not found"
                 };
 
-            //Assing new values
-            user.UserName = userDTO.FirstName + " " + userDTO.LastName;
-            user.Street = userDTO.Street;
-            user.City = userDTO.City;
-            user.PostalCode = userDTO.PostalCode;
-            user.Province = userDTO.Province;
-            user.Longitude = userDTO.Longitude;
-            user.Latitude = userDTO.Latitude;
+            //Assign non empty updated values into user model
+            if (userDTO.FirstName != null) user.FirstName = userDTO.FirstName;
+            if (userDTO.LastName != null) user.LastName = userDTO.LastName;
+            if (userDTO.Street != null) user.Street = userDTO.Street;
+            if (userDTO.City != null) user.City = userDTO.City;
+            if (userDTO.PostalCode != null) user.PostalCode = userDTO.PostalCode;
+            if (userDTO.Province != null) user.Province = userDTO.Province;
+            if (userDTO.Longitude != 0) user.Longitude = userDTO.Longitude;
+            if (userDTO.Latitude != 0) user.Latitude = userDTO.Latitude;
 
             //Store updated image
             if (userDTO.ProfilePicture != null)
@@ -182,12 +185,33 @@ namespace EMS.BACKEND.API.Repositories
                 if (condition)
                 {
                     //remove previous image from storage
-                    if (user.ProfilePicture != null)
+                    if (user.ProfilePicturePath != null)
                     {
-                        await cloudProvider.RemoveFile(user.ProfilePicture);
+                        await cloudProvider.RemoveFile(user.ProfilePicturePath);
                     }
                     //assign new image
-                    user.ProfilePicture = filepath;
+                    user.ProfilePicturePath = filepath;
+                }
+                else
+                {
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = filepath
+                    };
+                }
+            }
+            {
+                var (condition, filepath) = await cloudProvider.UploadFile(userDTO.ProfilePicture, config["StorageDirectories:ProfileImages"]);
+                if (condition)
+                {
+                    //remove previous image from storage
+                    if (user.ProfilePicturePath != null)
+                    {
+                        await cloudProvider.RemoveFile(user.ProfilePicturePath);
+                    }
+                    //assign new image
+                    user.ProfilePicturePath = filepath;
                 }
                 else
                 {
@@ -216,10 +240,8 @@ namespace EMS.BACKEND.API.Repositories
                 Message = "Account updated"
             };
         }
-        //Reset Password
-        //public async Task<GeneralResponse> ResetUserPassowrd(UserRequestDTO userDTO);
         //Get currrent logged in user details
-        public async Task<BaseResponseDTO<ApplicationUser>> GetMe()
+        public async Task<BaseResponseDTO<UserResponseDTO>> GetMe()
         {
             var result = string.Empty;
             if (httpContextAccessor.HttpContext != null)
@@ -234,27 +256,40 @@ namespace EMS.BACKEND.API.Repositories
                     //Check user if exist
                     if (currentUser != null)
                     {
-                        //Get user Profile Picture URL
-                        if (currentUser.ProfilePicture != null)
+                        UserResponseDTO userResponse = new UserResponseDTO
                         {
-                            currentUser.ProfilePicture = cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicture);
+                            Id = currentUser.Id,
+                            FirstName = currentUser.FirstName,
+                            LastName = currentUser.LastName,
+                            Street = currentUser.Street,
+                            City = currentUser.City,
+                            PostalCode = currentUser.PostalCode,
+                            Province = currentUser.Province,
+                            Longitude = currentUser.Longitude,
+                            Latitude = currentUser.Latitude,
+                            Email = currentUser.Email,
+                        };
+                        //Get user Profile Picture URL
+                        if (currentUser.ProfilePicturePath != null)
+                        {
+                            userResponse.ProfilePictureURL = cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicturePath);
                         }
-                        return new BaseResponseDTO<ApplicationUser>
+                        return new BaseResponseDTO<UserResponseDTO>
                         {
                             Flag = true,
                             Message = "User found",
-                            Data = currentUser
+                            Data = userResponse
+
                         };
                     }
                 }
             }
-            return new BaseResponseDTO<ApplicationUser>
+            return new BaseResponseDTO<UserResponseDTO>
             {
                 Flag = false,
                 Message = "User not found",
             };
         }
-
         //Generate JWT token
         private string GenerateToken(UserSession user)
         {
@@ -275,6 +310,147 @@ namespace EMS.BACKEND.API.Repositories
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public async Task<BaseResponseDTO> DeleteAccount(string userId)
+        {
+            //Check user id is empty
+            if (userId == null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
 
+            //Get user by id
+            var user = await userManager.FindByIdAsync(userId);
+
+            //Check user is not null
+            if (user is null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
+            
+            // Check if user has any shops
+            using (var scope = scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var shop = await context.Shops.FirstOrDefaultAsync(x => x.OwnerId == userId);
+                if (shop != null)
+                {
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = "User has shops"
+                    };
+                }
+            }
+
+            // Check user has ordered any services
+            using (var scope = scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var package = await context.Packages.FirstOrDefaultAsync(x => x.UserId == userId);
+                if (package != null)
+                {
+                    return new BaseResponseDTO
+                    {
+                        Flag = false,
+                        Message = "User has ordered services"
+                    };
+                }
+            }
+
+            // Remove user profile picture from storage
+            if (user.ProfilePicturePath != null && user.ProfilePicturePath != "images/profile-images/default.png")
+            {
+                await cloudProvider.RemoveFile(user.ProfilePicturePath);
+            }
+
+            // Delete user
+            var deletedUser = await userManager.DeleteAsync(user);
+            if (!deletedUser.Succeeded)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = deletedUser.ToString()
+                };
+            }
+
+            return new BaseResponseDTO
+            {
+                Flag = true,
+                Message = "Account deleted"
+            };
+
+
+        }
+        public async Task<BaseResponseDTO> UpdatePassword(string userId, string oldPassword, string newPassword)
+        {
+            //Check user id is empty
+            if (userId == null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
+
+            // Check old password  and new password is empty or same
+            if (oldPassword == null || newPassword == null || oldPassword == newPassword)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Invalid password"
+                };
+            }
+
+            //Get user by id
+            var user = userManager.FindByIdAsync(userId).Result;
+            if (user == null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
+
+            //Check old password is correct
+            var checkPassword = await userManager.CheckPasswordAsync(user, oldPassword);
+            if (!checkPassword)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Incorrect password"
+                };
+            }
+
+            //Change password
+            var changePassword = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+            if (!changePassword.Succeeded)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = changePassword.ToString()
+                };
+            }
+
+            return new BaseResponseDTO
+            {
+                Flag = true,
+                Message = "Password updated"
+            };
+
+        }
     }
 }

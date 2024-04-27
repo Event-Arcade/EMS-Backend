@@ -14,6 +14,7 @@ namespace EMS.BACKEND.API.DbContext
         public DbSet<AdminStaticResource> AdminStaticResources { get; set; }
         public DbSet<FeedBack> FeedBacks { get; set; }
         public DbSet<ServiceStaticResources> ServiceStaticResources { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
     }
 }

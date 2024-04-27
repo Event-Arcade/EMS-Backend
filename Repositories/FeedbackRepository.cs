@@ -9,7 +9,7 @@ namespace EMS.BACKEND.API.Repositories
 {
     public class FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IFeedbackRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(FeedBack entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(FeedBack entity)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace EMS.BACKEND.API.Repositories
                     await context.FeedBacks.AddAsync(entity);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Feedback created successfully",
                         Flag = true
@@ -53,14 +53,14 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Message = ex.Message,
                     Flag = false
                 };
             }
         }
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace EMS.BACKEND.API.Repositories
                     context.FeedBacks.Remove(feedback);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Feedback deleted successfully",
                         Flag = true
@@ -89,7 +89,7 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Message = ex.Message,
                     Flag = false
@@ -262,7 +262,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(FeedBack entity)
+        public async Task<BaseResponseDTO> UpdateAsync(string id, FeedBack entity)
         {
             try
             {

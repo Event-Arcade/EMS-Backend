@@ -2,6 +2,8 @@ using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using EMS.BACKEND.API.Contracts;
+using Microsoft.CodeAnalysis.FlowAnalysis;
+using NuGet.Protocol;
 
 namespace EMS.BACKEND.API.Repositories
 {
@@ -21,7 +23,7 @@ namespace EMS.BACKEND.API.Repositories
             string url = amazonS3.GetPreSignedURL(request);
             return url;
         }
-        public async Task<(bool, string)> UploadFile(IFormFile file, string subDirectory)
+        public async Task<(bool, string)> UploadFile(IFormFile? file, string subDirectory)
         {
             try
             {
@@ -30,7 +32,7 @@ namespace EMS.BACKEND.API.Repositories
                 if (file == null)
                 {
                     //assign default image path
-                    filePath = $"{subDirectory}/default";
+                    filePath = $"{subDirectory}/default.png";
                     return (true, filePath);
 
                 }
@@ -71,10 +73,11 @@ namespace EMS.BACKEND.API.Repositories
                 };
 
                 var result = await amazonS3.DeleteObjectAsync(request);
-                if (result.HttpStatusCode == HttpStatusCode.OK)
+                if (result.HttpStatusCode == HttpStatusCode.NoContent)
                 {
                     return true;
                 }
+                Console.WriteLine(result.ToJson());
                 return false;
             }
             catch (Exception)

@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
+      - name: Clone 
         uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
@@ -27,6 +27,7 @@ jobs:
           push: true
           dockerfile: ./Dockerfile
           tags: bhanuka2500/ems-backend-api:latest
+
   deploy:
     needs: build
     runs-on: ubuntu-latest

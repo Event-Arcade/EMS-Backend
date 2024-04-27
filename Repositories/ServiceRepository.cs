@@ -11,7 +11,7 @@ namespace EMS.BACKEND.API.Repositories
     public class ServiceRepository(IUserAccountRepository userAccountRepository, IFeedbackRepository feedBackRepository,
     IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IServiceRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(Service entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(Service entity)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     await context.Services.AddAsync(entity);
                     await context.SaveChangesAsync();
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Service created successfully",
                         Flag = true
@@ -61,15 +61,14 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Message = ex.Message,
                     Flag = false
                 };
             }
         }
-
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -115,7 +114,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     context.Services.Remove(service);
                     await context.SaveChangesAsync();
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<String>
                     {
                         Message = "Service deleted successfully",
                         Flag = true
@@ -124,14 +123,13 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO
+                return new BaseResponseDTO<String>
                 {
                     Message = ex.Message,
                     Flag = false
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<Service>>> FindAllAsync()
         {
             try
@@ -185,7 +183,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<Service>> FindByIdAsync(string id)
         {
             try
@@ -236,7 +233,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<Service>>> GetServicesByShopId(string shopId)
         {
             try
@@ -295,8 +291,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
-        public async Task<BaseResponseDTO> UpdateAsync(Service entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, Service entity)
         {
             try
             {

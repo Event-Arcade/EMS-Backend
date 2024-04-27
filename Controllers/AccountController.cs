@@ -1,6 +1,8 @@
 ﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
+using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Controllers
@@ -10,24 +12,45 @@ namespace EMS.BACKEND.API.Controllers
     public class AccountController(IUserAccountRepository userAccount) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<IActionResult> Register(UserRequestDTO userDTO)
+        public async Task<IActionResult> Register([FromForm] ApplicationUser userDTO)
         {
             var response = await userAccount.CreateAccount(userDTO);
-            return Ok(response);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromForm] ApplicationUser userDTO)
         {
-            var response = await userAccount.LoginAccount(loginDTO);
-            return Ok(response);
+            var response = await userAccount.LoginAccount(userDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update(UserRequestDTO userDTO)
+        public async Task<IActionResult> Update([FromForm] ApplicationUser userDTO)
         {
             var response = await userAccount.UpdateAccount(userDTO);
-            return Ok(response);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         //return current user details
@@ -35,7 +58,42 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> GetMe()
         {
             var result = await userAccount.GetMe();
-            return Ok(result);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+
+        [HttpDelete("delete/{userId}"), Authorize]
+        public async Task<IActionResult> Delete(string userId)
+        {
+            var result = await userAccount.DeleteAccount(userId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+    
+        [HttpPut("updatepassword/{userId}"), Authorize]
+        public async Task<IActionResult> UpdatePassword(string userId, [FromForm] UpdatePasswordDTO updatePassword)
+        {
+            var result = await userAccount.UpdatePassword(userId, updatePassword.OldPassword, updatePassword.NewPassword);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
     }
 }

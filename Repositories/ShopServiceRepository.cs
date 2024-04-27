@@ -1,19 +1,22 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
     public class ShopServiceRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration, IUserAccountRepository userAccountRepository,
-                                            IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor,
+                                        IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor,
                                             ICloudProviderRepository cloudProvider, IServiceRepository serviceRepository) : IShopServiceRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(Shop entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(Shop entity)
         {
             try
             {
@@ -25,7 +28,22 @@ namespace EMS.BACKEND.API.Repositories
                         throw new ArgumentNullException(nameof(entity));
                     }
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    //get the user
                     var user = await userManager.FindByEmailAsync(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value);
+
+                    // Check Weather the user is a vendor already
+                    var userRole = await userManager.GetRolesAsync(user);
+                    if (userRole.Contains("vendor"))
+                    {
+                        return new BaseResponseDTO<String>
+                        {
+                            Message = "User is already a vendor",
+                            Flag = false
+                        };
+                    }
+
+                    // Assign the shop id and owner id
                     entity.Id = Guid.NewGuid().ToString();
                     entity.OwnerId = user.Id;
 
@@ -41,16 +59,38 @@ namespace EMS.BACKEND.API.Repositories
 
                     await dbContext.Shops.AddAsync(entity);
                     await dbContext.SaveChangesAsync();
-                    return new BaseResponseDTO { Message = "Shop created successfully", Flag = true };
+
+                    // upgrade user role "client" to "vendor"
+                    await userManager.AddToRoleAsync(user, "vendor");
+                    await userManager.RemoveFromRoleAsync(user, "client");
+
+                    // Generate a new token for the user
+                    var getUserRole = await userManager.GetRolesAsync(user);
+                    var userSession = new UserSession()
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        Role = getUserRole.First()
+                    };
+                    var token = GenerateToken(userSession);
+                    return new BaseResponseDTO<String>
+                    {
+                        Message = "Shop created successfully",
+                        Flag = true,
+                        Data = token
+                    };
                 }
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO { Message = ex.Message, Flag = false };
+                return new BaseResponseDTO<String>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
             }
         }
-
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -62,31 +102,68 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    // get current user
+                    var shopOwner = await userAccountRepository.GetMe();
+
                     var shop = await dbContext.Shops.FindAsync(id);
 
                     if (shop == null)
                     {
-                        return new BaseResponseDTO { Message = "Shop not found", Flag = false };
+                        return new BaseResponseDTO<String> { Message = "Shop not found", Flag = false };
                     }
 
+                    //check if the user is the owner of the shop
+                    if (shop.OwnerId != shopOwner.Data.Id)
+                    {
+                        return new BaseResponseDTO<String> { Message = "You are not the owner of the shop", Flag = false };
+                    }
                     //check if there any services associated with the shop
                     var services = await dbContext.Services.Where(s => s.ShopId == id).ToListAsync();
                     if (services.Count > 0)
                     {
-                        return new BaseResponseDTO { Message = "Shop has services associated with it", Flag = false };
+                        return new BaseResponseDTO<String> { Message = "Shop has services associated with it", Flag = false };
                     }
 
+                    // Remove the background image from the cloud
+                    var flag = await cloudProvider.RemoveFile(shop.BackgroundImagePath);
+                    if (!flag)
+                    {
+                        throw new Exception("Failed to delete the file from the cloud");
+                    }
+
+                    //delete the shop
                     dbContext.Shops.Remove(shop);
                     dbContext.SaveChanges();
-                    return new BaseResponseDTO { Message = "Shop deleted successfully", Flag = true };
+
+                    // assign the user role "vendor" to "client"
+                    var user = await userManager.FindByIdAsync(shop.OwnerId);
+                    await userManager.AddToRoleAsync(user, "client");
+                    await userManager.RemoveFromRoleAsync(user, "vendor");
+
+                    // Generate a new token for the user
+                    var getUserRole = await userManager.GetRolesAsync(user);
+                    var userSession = new UserSession()
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        Role = getUserRole.First()
+                    };
+                    var token = GenerateToken(userSession);
+
+                    return new BaseResponseDTO<String>
+                    {
+                        Message = "Shop deleted successfully",
+                        Flag = true,
+                        Data = token
+                    };
                 }
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO { Message = ex.Message, Flag = false };
+                return new BaseResponseDTO<String> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<Shop>>> FindAllAsync()
         {
             try
@@ -126,7 +203,6 @@ namespace EMS.BACKEND.API.Repositories
                 return new BaseResponseDTO<IEnumerable<Shop>> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<Shop>> FindByIdAsync(string id)
         {
             try
@@ -173,7 +249,6 @@ namespace EMS.BACKEND.API.Repositories
                 return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<Shop>> GetShopByServiceId(string serviceId)
         {
             try
@@ -205,9 +280,9 @@ namespace EMS.BACKEND.API.Repositories
                 return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
             }
         }
-
         public async Task<BaseResponseDTO<Shop>> GetShopByVendor()
         {
+            //TODO: services are not add with response
             try
             {
                 //get the user 
@@ -218,11 +293,12 @@ namespace EMS.BACKEND.API.Repositories
                 }
 
                 var user = result.Data;
+
                 //get the shop
                 using (var scope = serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id ).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -251,8 +327,7 @@ namespace EMS.BACKEND.API.Repositories
                 return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
             }
         }
-
-        public async Task<BaseResponseDTO> UpdateAsync(Shop entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id, Shop entity)
         {
             try
             {
@@ -264,28 +339,45 @@ namespace EMS.BACKEND.API.Repositories
                         throw new ArgumentNullException(nameof(entity));
                     }
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.FindAsync(entity.Id);
+                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
                         return new BaseResponseDTO { Message = "Shop not found", Flag = false };
                     }
 
+                    //get the user
+                    var user = await userManager.FindByEmailAsync(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value);
+
+                    //check if the user is the owner of the shop
+                    if (shop.OwnerId != user.Id)
+                    {
+                        return new BaseResponseDTO { Message = "You are not the owner of the shop", Flag = false };
+                    }
+
+                    //update the shop
+                    if (entity.Name != null)
+                    {
+                        shop.Name = entity.Name;
+                    }
+                    if (entity.Description != null)
+                    {
+                        shop.Description = entity.Description;
+                    }
+                    //TODO: calculate the rating automatically
+
                     //upload the background image
                     if (entity.BackgroundImage != null)
                     {
                         var (flag, path) = await cloudProvider
-                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"],shop.BackgroundImagePath);
+                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"], shop.BackgroundImagePath);
                         if (!flag)
                         {
                             throw new Exception("Failed to upload the file to the cloud");
                         }
-                        entity.BackgroundImagePath = path;
+                        shop.BackgroundImagePath = path;
                     }
 
-                    shop.Name = entity.Name;
-                    shop.Description = entity.Description;
-                    shop.BackgroundImagePath = entity.BackgroundImagePath;
 
                     dbContext.Shops.Update(shop);
                     await dbContext.SaveChangesAsync();
@@ -297,5 +389,26 @@ namespace EMS.BACKEND.API.Repositories
                 return new BaseResponseDTO { Message = ex.Message, Flag = false };
             }
         }
+        //Generate JWT token
+        private string GenerateToken(UserSession user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var userClaims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role),
+            };
+            var token = new JwtSecurityToken(
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
+                claims: userClaims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: credentials
+                );
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
     }
 }

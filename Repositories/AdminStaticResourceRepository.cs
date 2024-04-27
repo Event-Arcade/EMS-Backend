@@ -8,7 +8,7 @@ namespace EMS.BACKEND.API.Controllers
 {
     public class AdminStaticResourceRepository(IServiceProvider serviceProvider, ICloudProviderRepository cloudProvider, IConfiguration configuration) : IAdminStaticResourceRepository
     {
-        public async Task<BaseResponseDTO> CreateAsync(AdminStaticResource entity)
+        public async Task<BaseResponseDTO<String>> CreateAsync(AdminStaticResource entity)
         {
             try
             {
@@ -40,17 +40,17 @@ namespace EMS.BACKEND.API.Controllers
                     await dbContext.AdminStaticResources.AddAsync(entity);
                     await dbContext.SaveChangesAsync();
 
-                    return new BaseResponseDTO { Message = "Resource uploaded successfully", Flag = true };
+                    return new BaseResponseDTO<String> { Message = "Resource uploaded successfully", Flag = true };
                 }
 
 
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO { Message = ex.Message, Flag = false };
+                return new BaseResponseDTO <String>{ Message = ex.Message, Flag = false };
             }
         }
-        public async Task<BaseResponseDTO> DeleteAsync(string id)
+        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
         {
             try
             {
@@ -79,12 +79,12 @@ namespace EMS.BACKEND.API.Controllers
                     dbContext.AdminStaticResources.Remove(entity);
                     await dbContext.SaveChangesAsync();
 
-                    return new BaseResponseDTO { Message = "Resource deleted successfully", Flag = true };
+                    return new BaseResponseDTO<String> { Message = "Resource deleted successfully", Flag = true };
                 }
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO { Message = ex.Message, Flag = false };
+                return new BaseResponseDTO<String> { Message = ex.Message, Flag = false };
             }
         }
         public async Task<BaseResponseDTO<IEnumerable<AdminStaticResource>>> FindAllAsync()
@@ -139,7 +139,7 @@ namespace EMS.BACKEND.API.Controllers
                 return new BaseResponseDTO<AdminStaticResource> { Message = ex.Message, Flag = false };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(AdminStaticResource entity)
+        public async Task<BaseResponseDTO> UpdateAsync(String id,AdminStaticResource entity)
         {
             try{
                 using (var scope = serviceProvider.CreateScope())

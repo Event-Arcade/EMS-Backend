@@ -24,7 +24,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("createmyshop"), Authorize(Roles = "client")]
-        public async Task<IActionResult> CreateShop(Shop shop)
+        public async Task<IActionResult> CreateShop([FromForm] Shop shop)
         {
             var response = await shopServiceRepository.CreateAsync(shop);
             if (response.Flag)
@@ -37,10 +37,10 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPut("updatemyshop"), Authorize(Roles = "vendor")]
-        public async Task<IActionResult> UpdateShop(Shop shop)
+        [HttpPut("updatemyshop/{shopId}"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> UpdateShop(string shopId, [FromForm] Shop shop)
         {
-            var response = await shopServiceRepository.UpdateAsync(shop);
+            var response = await shopServiceRepository.UpdateAsync(shopId, shop);
             if (response.Flag)
             {
                 return Ok(response);
@@ -64,7 +64,6 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(response);
             }
         }
-
         //get all shops
         [HttpGet("allshops")]
         public async Task<IActionResult> GetAllShops()

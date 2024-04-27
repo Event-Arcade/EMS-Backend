@@ -1,5 +1,4 @@
 ﻿using EMS.BACKEND.API.Contracts;
-using EMS.BACKEND.API.DTOs.RequestDTOs;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -53,7 +52,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("create"), Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> CreateService(Service service)
+        public async Task<IActionResult> CreateService([FromForm]Service service)
         {
             var response = await serviceRepository.CreateAsync(service);
             if (response.Flag)
@@ -67,9 +66,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("update"), Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> UpdateService(Service service)
+        public async Task<IActionResult> UpdateService([FromQuery] String serviceId, [FromForm] Service service)
         {
-            var response = await serviceRepository.UpdateAsync(service);
+            var response = await serviceRepository.UpdateAsync(serviceId, service);
             if (response.Flag)
             {
                 return Ok(response);
