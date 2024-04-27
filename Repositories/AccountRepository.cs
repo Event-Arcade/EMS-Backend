@@ -334,7 +334,7 @@ namespace EMS.BACKEND.API.Repositories
                     Message = "User not found"
                 };
             }
-
+            
             // Check if user has any shops
             using (var scope = scopeFactory.CreateScope())
             {
