@@ -240,8 +240,6 @@ namespace EMS.BACKEND.API.Repositories
                 Message = "Account updated"
             };
         }
-        //Reset Password
-        //public async Task<GeneralResponse> ResetUserPassowrd(UserRequestDTO userDTO);
         //Get currrent logged in user details
         public async Task<BaseResponseDTO<UserResponseDTO>> GetMe()
         {
@@ -390,6 +388,68 @@ namespace EMS.BACKEND.API.Repositories
                 Message = "Account deleted"
             };
 
+
+        }
+        public async Task<BaseResponseDTO> UpdatePassword(string userId, string oldPassword, string newPassword)
+        {
+            //Check user id is empty
+            if (userId == null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
+
+            // Check old password  and new password is empty or same
+            if (oldPassword == null || newPassword == null || oldPassword == newPassword)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Invalid password"
+                };
+            }
+
+            //Get user by id
+            var user = userManager.FindByIdAsync(userId).Result;
+            if (user == null)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "User not found"
+                };
+            }
+
+            //Check old password is correct
+            var checkPassword = await userManager.CheckPasswordAsync(user, oldPassword);
+            if (!checkPassword)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = "Incorrect password"
+                };
+            }
+
+            //Change password
+            var changePassword = await userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+            if (!changePassword.Succeeded)
+            {
+                return new BaseResponseDTO
+                {
+                    Flag = false,
+                    Message = changePassword.ToString()
+                };
+            }
+
+            return new BaseResponseDTO
+            {
+                Flag = true,
+                Message = "Password updated"
+            };
 
         }
     }

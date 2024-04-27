@@ -1,4 +1,5 @@
-﻿using EMS.BACKEND.API.Models;
+﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
+using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
@@ -71,6 +72,20 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> Delete(string userId)
         {
             var result = await userAccount.DeleteAccount(userId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+    
+        [HttpPut("updatepassword/{userId}"), Authorize]
+        public async Task<IActionResult> UpdatePassword(string userId, [FromForm] UpdatePasswordDTO updatePassword)
+        {
+            var result = await userAccount.UpdatePassword(userId, updatePassword.OldPassword, updatePassword.NewPassword);
             if (result.Flag)
             {
                 return Ok(result);

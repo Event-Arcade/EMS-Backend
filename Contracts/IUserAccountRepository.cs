@@ -10,5 +10,6 @@ namespace SharedClassLibrary.Contracts
         Task<BaseResponseDTO<String>> LoginAccount(ApplicationUser userDTO);
         Task<BaseResponseDTO<UserResponseDTO>> GetMe();
         Task<BaseResponseDTO> DeleteAccount(string userId);
+        Task<BaseResponseDTO> UpdatePassword(string userId, string oldPassword, string newPassword);
     }
 }
