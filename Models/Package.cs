@@ -5,8 +5,7 @@ namespace EMS.BACKEND.API.Models
 {
     public class Package
     {
-        public string Id { get; set; }
-        [NotMapped]
+        public int Id { get; set; }
         public PackageStatus Status
         {
             get
@@ -34,9 +33,8 @@ namespace EMS.BACKEND.API.Models
             }
         }
         public DateTime CreatedAt { get; set; }
-        public virtual ICollection<SubPackage> SubPackages { get; set; }
-        [ForeignKey("User")]
+        public ICollection<SubPackage> SubPackages { get; set; } = new List<SubPackage>();
         public string UserId { get; set; }
-        public virtual ApplicationUser User { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }

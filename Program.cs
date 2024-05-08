@@ -15,6 +15,7 @@ using Amazon.S3;
 using Contracts;
 using EMS.BACKEND.API.Controllers;
 using EMS.BACKEND.API.Hubs;
+using EMS.BACKEND.API.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,12 +83,13 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 builder.Services.AddScoped<IUserAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
-builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 

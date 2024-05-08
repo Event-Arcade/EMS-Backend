@@ -1,4 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
+using EMS.BACKEND.API.DTOs.Category;
+using EMS.BACKEND.API.Extensions;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +12,16 @@ namespace EMS.BACKEND.API.Controllers
     public class CategoryController(ICategoryRepository categoryRepository) : Controller
     {
         [HttpPost("create"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddCategory([FromForm] Category category)
+        public async Task<IActionResult> AddCategory([FromForm] CategoryRequestDTO categoryRequestDTO)
         {
-            var result = await categoryRepository.CreateAsync(category);
+            // validate model
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.GetUserId();
+            var result = await categoryRepository.CreateAsync(userId, categoryRequestDTO);
             if (result.Flag)
             {
                 return Ok(result);
@@ -24,9 +33,16 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpDelete("delete/{categoryId}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> DeleteCategory(string categoryId)
+        public async Task<IActionResult> DeleteCategory(int categoryId)
         {
-            var result = await categoryRepository.DeleteAsync(categoryId);
+            // validate model
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.GetUserId();
+            var result = await categoryRepository.DeleteAsync(userId, categoryId);
             if (result.Flag)
             {
                 return Ok(result);
@@ -52,7 +68,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpGet("get/{categoryId}")]
-        public async Task<IActionResult> GetCategoryById(string categoryId)
+        public async Task<IActionResult> GetCategoryById(int categoryId)
         {
             var result = await categoryRepository.FindByIdAsync(categoryId);
             if (result.Flag)
@@ -66,10 +82,16 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPut("update/{categotyId}"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateCategory( string categotyId,[FromForm] Category category)
+        public async Task<IActionResult> UpdateCategory(int categotyId, [FromForm] CategoryRequestDTO category)
         {
-            Console.WriteLine(categotyId);
-            var result = await categoryRepository.UpdateAsync(categotyId,category);
+            // validate model
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.GetUserId();
+            var result = await categoryRepository.UpdateAsync(userId, categotyId, category);
             if (result.Flag)
             {
                 return Ok(result);

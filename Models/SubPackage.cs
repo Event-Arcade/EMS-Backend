@@ -1,15 +1,16 @@
-﻿    using EMS.BACKEND.API.Enums;
+﻿using EMS.BACKEND.API.Enums;
 
 namespace EMS.BACKEND.API.Models
 {
     public class SubPackage
     {
-        public string Id { get; set; }
-        public string Description { get; set; }
-        public string PackageId { get; set; }
+        public int Id { get; set; }
+        public string? Description { get; set; }
+        public int PackageId { get; set; }
+        public Package Package { get; set; }
         public PackageStatus Status { get; set; }
-        public  string ServiceId { get; set; }
-        public virtual Service Service{get;set;}
+        public int ServiceId { get; set; }
+        public ShopService Service { get; set; }
 
     }
 }

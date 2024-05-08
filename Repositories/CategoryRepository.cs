@@ -1,32 +1,49 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
+using EMS.BACKEND.API.DTOs.Category;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider,
-                                        IConfiguration configuration, IUserAccountRepository accountRepository) : ICategoryRepository
+    public class CategoryRepository : ICategoryRepository
     {
-        public async Task<BaseResponseDTO<String>> CreateAsync(Category entity)
-        {
-            // Check entity is null
-            if (entity == null)
-            {
-                throw new Exception("Request is null");
-            }
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ICloudProviderRepository _cloudProvider;
+        private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-            //TODO: Check if the user is admin and validated by the token
-            using (var scope = serviceScopeFactory.CreateScope())
+        public CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        {
+            _serviceScopeFactory = serviceScopeFactory;
+            _cloudProvider = cloudProvider;
+            _configuration = configuration;
+            _userManager = userManager;
+        }
+
+        public async Task<BaseResponseDTO<CategoryResponseDTO>> CreateAsync(string userId, CategoryRequestDTO entity)
+        {
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
 
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    //Get current user
-                    var user = await accountRepository.GetMe();
+                    //Get the user and check if the user is admin
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        throw new Exception("User not found");
+                    }
+
+                    if (!await _userManager.IsInRoleAsync(user, "admin"))
+                    {
+                        throw new Exception("User is not an admin");
+                    }
+
                     // Check if category already exists
                     var category = await context.Categories.FirstOrDefaultAsync(x => x.Name == entity.Name);
                     if (category != null)
@@ -35,7 +52,7 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Upload category image to S3
-                    var (flag, filePath) = await cloudProvider.UploadFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"]);
+                    var (flag, filePath) = await _cloudProvider.UploadFile(entity.CategoryImage, _configuration["StorageDirectories:CategoryImages"]);
 
                     if (!flag)
                     {
@@ -43,27 +60,24 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Create new category
-                    var newCategory = new Category
-                    {
-                        Id = Guid.NewGuid().ToString(),
-                        Name = entity.Name,
-                        Description = entity.Description,
-                        CategoryImagePath = filePath,
-                        UserId = user.Data.Id
-                    };
+                    var newCategory = entity.ToCategory(filePath, user);
                     // Save category
                     await context.Categories.AddAsync(newCategory);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO<String>
+                    // Assign pre signed URL to category
+                    var url = _cloudProvider.GeneratePreSignedUrlForDownload(newCategory.CategoryImagePath);
+
+                    return new BaseResponseDTO<CategoryResponseDTO>
                     {
                         Message = "Category created successfully",
-                        Flag = true
+                        Flag = true,
+                        Data = newCategory.ToCategoryResponseDTO(url)
                     };
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO<String>
+                    return new BaseResponseDTO<CategoryResponseDTO>
                     {
                         Message = ex.Message,
                         Flag = false
@@ -72,19 +86,25 @@ namespace EMS.BACKEND.API.Repositories
             }
 
         }
-        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
+        public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
         {
-            // Check id is null
-            if (id == null)
-            {
-                throw new Exception("Requested id is null");
-            }
-
-            using (var scope = serviceScopeFactory.CreateScope())
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
+                    //Get the user and check if the user is admin
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        throw new Exception("User not found");
+                    }
+
+                    if (!await _userManager.IsInRoleAsync(user, "admin"))
+                    {
+                        throw new Exception("User is not an admin");
+                    }
+
                     // Find category by id
                     var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
                     if (category == null)
@@ -93,16 +113,16 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Remove category image from S3
-                    if(category.CategoryImagePath != "images/category-images/default.png")
+                    if (category.CategoryImagePath != "images/category-images/default.png")
                     {
-                        await cloudProvider.RemoveFile(category.CategoryImagePath);
+                        await _cloudProvider.RemoveFile(category.CategoryImagePath);
                     }
 
                     // Delete category
                     context.Categories.Remove(category);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO<String>
+                    return new BaseResponseDTO
                     {
                         Message = "Category deleted successfully",
                         Flag = true
@@ -110,7 +130,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO<String>
+                    return new BaseResponseDTO
                     {
                         Message = ex.Message,
                         Flag = false
@@ -118,12 +138,12 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
-        public async Task<BaseResponseDTO<IEnumerable<Category>>> FindAllAsync()
+        public async Task<BaseResponseDTO<IEnumerable<CategoryResponseDTO>>> FindAllAsync()
         {
             try
             {
                 // Find all categories
-                using (var scope = serviceScopeFactory.CreateScope())
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     var categories = await context.Categories.ToListAsync();
@@ -131,12 +151,14 @@ namespace EMS.BACKEND.API.Repositories
                     // Assign pre signed URL to each category
                     foreach (var category in categories)
                     {
-                        category.CategoryImagePath = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
+                        category.CategoryImagePath = _cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
                     }
 
-                    return new BaseResponseDTO<IEnumerable<Category>>
+                    var categoryDtos = categories.Select(x => x.ToCategoryResponseDTO(x.CategoryImagePath));
+
+                    return new BaseResponseDTO<IEnumerable<CategoryResponseDTO>>
                     {
-                        Data = categories,
+                        Data = categoryDtos,
                         Message = "Categories found",
                         Flag = true
                     };
@@ -144,25 +166,19 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO<IEnumerable<Category>>
+                return new BaseResponseDTO<IEnumerable<CategoryResponseDTO>>
                 {
                     Message = ex.Message,
                     Flag = false
                 };
             }
         }
-        public async Task<BaseResponseDTO<Category>> FindByIdAsync(string id)
+        public async Task<BaseResponseDTO<CategoryResponseDTO>> FindByIdAsync(int id)
         {
-            // Check id is null
-            if (id == null)
-            {
-                throw new Exception("Requested id is null");
-            }
-
             try
             {
                 // Find category by id
-                using (var scope = serviceScopeFactory.CreateScope())
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
@@ -173,11 +189,11 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // Asiign pre signed URL to category
-                    category.CategoryImagePath = cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
+                    var url = _cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
 
-                    return new BaseResponseDTO<Category>
+                    return new BaseResponseDTO<CategoryResponseDTO>
                     {
-                        Data = category,
+                        Data = category.ToCategoryResponseDTO(url),
                         Message = "Category found",
                         Flag = true
                     };
@@ -185,28 +201,34 @@ namespace EMS.BACKEND.API.Repositories
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO<Category>
+                return new BaseResponseDTO<CategoryResponseDTO>
                 {
                     Message = ex.Message,
                     Flag = false
                 };
             }
         }
-        public async Task<BaseResponseDTO> UpdateAsync(String id,Category entity)
+        public async Task<BaseResponseDTO<CategoryResponseDTO>> UpdateAsync(string userId, int id, CategoryRequestDTO entity)
         {
-            // Check entity is null
-            if (entity == null)
-            {
-                throw new Exception("Reqest is null");
-            }
-
             // Update category
-            using (var scope = serviceScopeFactory.CreateScope())
+            using (var scope = _serviceScopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 try
                 {
-                    // Find category by name
+                    //Get the user and check if the user is admin
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        throw new Exception("User not found");
+                    }
+
+                    if (!await _userManager.IsInRoleAsync(user, "admin"))
+                    {
+                        throw new Exception("User is not an admin");
+                    }
+
+                    // Find category by id
                     var category = await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
                     if (category == null)
                     {
@@ -225,7 +247,7 @@ namespace EMS.BACKEND.API.Repositories
                     if (entity.CategoryImage != null)
                     {
                         //Remove the old category image and upload the new one
-                        var (flag, filePath) = await cloudProvider.UpdateFile(entity.CategoryImage, configuration["StorageDirectories:CategoryImages"], category.CategoryImagePath);
+                        var (flag, filePath) = await _cloudProvider.UpdateFile(entity.CategoryImage, _configuration["StorageDirectories:CategoryImages"], category.CategoryImagePath);
                         if (!flag)
                         {
                             throw new Exception("Failed to update category image");
@@ -237,15 +259,19 @@ namespace EMS.BACKEND.API.Repositories
                     context.Categories.Update(category);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    // Assign pre signed URL to category
+                    var url = _cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
+
+                    return new BaseResponseDTO<CategoryResponseDTO>
                     {
                         Message = "Category updated successfully",
-                        Flag = true
+                        Flag = true,
+                        Data = category.ToCategoryResponseDTO(url)
                     };
                 }
                 catch (Exception ex)
                 {
-                    return new BaseResponseDTO
+                    return new BaseResponseDTO<CategoryResponseDTO>
                     {
                         Message = ex.Message,
                         Flag = false
@@ -253,5 +279,6 @@ namespace EMS.BACKEND.API.Repositories
                 }
             }
         }
+
     }
 }

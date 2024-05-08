@@ -1,4 +1,4 @@
-namespace EMS.BACKEND.API.DTOs.RequestDTOs
+namespace EMS.BACKEND.API.DTOs.Account
 {
     public class UpdatePasswordDTO
     {

@@ -1,18 +1,20 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EMS.BACKEND.API.Models
 {
+    [Table("FeedBacks")]
     public class FeedBack
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
         public string Comment { get; set; }
-        public DateTime Date { get; set; }
+        public DateTime PostedOn { get; set; }
         public double Rating { get; set; }
-        public string ServiceId { get; set; }
-        public string UserId { get; set; }
-        public virtual ApplicationUser User{get; set;}
-        public string FeedbackStaticResourcePath { get; set; }
-        [NotMapped]
-        public IFormFile FeedbackImage { get; set; }
+        public int ServiceId { get; set; }
+        public ShopService Service { get; set; }
+        public string ApplicationUserId { get; set; }
+        public ApplicationUser User { get; set; }
+        [MaxLength(5)]
+        public ICollection<FeedBackStaticResource> FeedBackStaticResources { get; set; } = new List<FeedBackStaticResource>();
     }
 }
