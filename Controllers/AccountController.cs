@@ -105,5 +105,20 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(result);
             }
         }
+        //signin with google
+        [HttpPost("googlelogin")]
+        public async Task<IActionResult> GoogleLogin([FromForm] GoogleLoginDTO googleLoginDTO)
+        {
+            var response = await _userAccount.GoogleLoginAsync(googleLoginDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
+        
     }
 }

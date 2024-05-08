@@ -13,6 +13,7 @@ namespace SharedClassLibrary.Contracts
         Task<BaseResponseDTO> UpdateAccountPasswordAsync(string userId, UpdatePasswordDTO updatePasswordDTO);
         Task<BaseResponseDTO> DeleteAccountAsync(string userId);
         Task<BaseResponseDTO<string,UserAccountResponseDTO>> LoginAccountAsync(LoginDTO loginDTO);
+        Task<BaseResponseDTO<string,UserAccountResponseDTO>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO);
 
     }
 }

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "k2n5IrXjSZOtCD3KOiwgoA/FyPraKcBkre5jnzUaY8mwoMbaoeDl78a1cONkmMnbeViRWl11YbANx8LayxB+sA==",
+  "dgSpecHash": "aJJqSq5nH2XWS+NJ2f56ZS+bioSmLtbRN4t6+ID0EDXgQMd+5fFF3Qsxho7LJAQTh6viQcPHoPTeIBKeWHzK/A==",
   "success": true,
   "projectFilePath": "C:\\Users\\bhanu\\Desktop\\6th Sem\\Software Project\\EMS Backend\\EMS-Backend\\EMS.BACKEND.API.csproj",
   "expectedPackageFiles": [
@@ -59,6 +59,7 @@
     "C:\\Users\\bhanu\\.nuget\\packages\\humanizer.core.zh-cn\\2.14.1\\humanizer.core.zh-cn.2.14.1.nupkg.sha512",
     "C:\\Users\\bhanu\\.nuget\\packages\\humanizer.core.zh-hans\\2.14.1\\humanizer.core.zh-hans.2.14.1.nupkg.sha512",
     "C:\\Users\\bhanu\\.nuget\\packages\\humanizer.core.zh-hant\\2.14.1\\humanizer.core.zh-hant.2.14.1.nupkg.sha512",
+    "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.authentication.google\\8.0.4\\microsoft.aspnetcore.authentication.google.8.0.4.nupkg.sha512",
     "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.1\\microsoft.aspnetcore.authentication.jwtbearer.8.0.1.nupkg.sha512",
     "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.authorization\\8.0.1\\microsoft.aspnetcore.authorization.8.0.1.nupkg.sha512",
     "C:\\Users\\bhanu\\.nuget\\packages\\microsoft.aspnetcore.components\\8.0.1\\microsoft.aspnetcore.components.8.0.1.nupkg.sha512",

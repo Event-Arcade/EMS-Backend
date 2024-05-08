@@ -5,8 +5,11 @@ using EMS.BACKEND.API.DTOs.Account;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Models.User;
+using Newtonsoft.Json;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
@@ -382,5 +385,62 @@ namespace EMS.BACKEND.API.Repositories
 
         }
 
+        public async Task<BaseResponseDTO<string, UserAccountResponseDTO>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO)
+        {
+            var token = googleLoginDTO.Token;
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=" + token);
+            var response = await client.SendAsync(request);
+            var payload = await response.Content.ReadAsStringAsync();
+            var googleUser = JsonConvert.DeserializeObject<GoogleUser>(payload);
+
+            if (googleUser is null)
+            {
+                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                {
+                    Flag = false,
+                    Message = "Invalid google token"
+                };
+            }
+
+            var user = await _userManager.FindByEmailAsync(googleUser.Email);
+            if (user is null)
+            {
+                var newUser = new ApplicationUser
+                {
+                    Email = googleUser.Email,
+                    UserName = googleUser.Email,
+                    FirstName = googleUser.GivenName,
+                    LastName = googleUser.FamilyName,
+                    EmailConfirmed = true,
+                    ProfilePicturePath = googleUser.Picture
+                };
+
+                var createUser = await _userManager.CreateAsync(newUser);
+                if (!createUser.Succeeded)
+                {
+                    return new BaseResponseDTO<string, UserAccountResponseDTO>
+                    {
+                        Flag = false,
+                        Message = createUser.ToString()
+                    };
+                }
+
+                await _userManager.AddToRoleAsync(newUser, "client");
+                user = newUser;
+            }
+
+            var userRole = await _userManager.GetRolesAsync(user);
+            var jwtToken = _tokenService.CreateToken(user, userRole.First());
+
+            return new BaseResponseDTO<string, UserAccountResponseDTO>
+            {
+                Flag = true,
+                Message = "Login successful",
+                Data1 = jwtToken,
+                Data2 = user.MapUserToUserAccountResponseDTO()
+            };
+
+        }
     }
 }

@@ -555,3 +555,4 @@ C:\Users\bhanu\Desktop\6th Sem\Software Project\EMS Backend\EMS-Backend\obj\Debu
 C:\Users\bhanu\Desktop\6th Sem\Software Project\EMS Backend\EMS-Backend\obj\Debug\net8.0\EMS.BACKEND.API.pdb
 C:\Users\bhanu\Desktop\6th Sem\Software Project\EMS Backend\EMS-Backend\obj\Debug\net8.0\EMS.BACKEND.API.genruntimeconfig.cache
 C:\Users\bhanu\Desktop\6th Sem\Software Project\EMS Backend\EMS-Backend\obj\Debug\net8.0\ref\EMS.BACKEND.API.dll
+C:\Users\bhanu\Desktop\6th Sem\Software Project\EMS Backend\EMS-Backend\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.Google.dll
