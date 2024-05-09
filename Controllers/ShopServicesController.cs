@@ -1,66 +1,90 @@
-﻿
-using EMS.BACKEND.API.DTOs.RequestDTOs;
+﻿using EMS.BACKEND.API.Contracts;
+using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.DTOs.Shop;
+using EMS.BACKEND.API.DTOs.ShopService;
+using EMS.BACKEND.API.Extensions;
+using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Controllers
 {
-
-    [Route("api/[controller]"), ApiController]
-    public class ShopServicesController(IShopServiceRepository shopServiceRepository) : ControllerBase
+    [Route("api/services")]
+    [ApiController]
+    public class ShopServicesController(IShopServiceRepository serviceRepository) : Controller
     {
-        [HttpGet("myshop"), Authorize(Roles ="vendor")]
-        public async Task<IActionResult> GetMyShop()
+        [HttpGet("servicesbyshop")]
+        public async Task<IActionResult> GetAllServices()
         {
-            var response = await shopServiceRepository.GetMyShop();
-            if (response == null)
+            var response = await serviceRepository.FindAllAsync();
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
             {
                 return BadRequest(response);
             }
-            return Ok(response);
         }
 
-        [HttpPost("createmyshop"), Authorize(Roles = "client")]
-        public async Task<IActionResult> CreateShop(ShopRequestDTO shopRequestDTO)
+        [HttpGet("getservice/{id}"), Authorize]
+        public async Task<IActionResult> GetService(int id)
         {
-            var response = await shopServiceRepository.CreateShop(shopRequestDTO);
-            return Ok(response);
-        }
 
-        [HttpPut("updatemyshop"), Authorize(Roles = "vendor")]
-        public async Task<IActionResult> UpdateShop(ShopRequestDTO shopRequestDTO)
-        {
-            var response = await shopServiceRepository.UpdateShop(shopRequestDTO);
-            if (response == null)
+            var response = await serviceRepository.FindByIdAsync(id);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
             {
                 return BadRequest(response);
             }
-            return Ok(response);
         }
 
-        [HttpDelete("deletemyshop"), Authorize(Roles = "vendor")]
-        public async Task<IActionResult> DeleteShop()
+        [HttpDelete("delete/{id}"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> DeleteService(int id)
         {
-            var response = await shopServiceRepository.DeleteShop();
-            if (response == null)
+            var userId = User.GetUserId();
+            var response = await serviceRepository.DeleteAsync(userId, id);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
             {
                 return BadRequest(response);
             }
-            return Ok(response);
         }
 
-        //get all shops
-        [HttpGet("allshops")]
-        public async Task<IActionResult> GetAllShops()
+        [HttpPost("create"), Authorize(Roles = "vendor"), RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
+        public async Task<IActionResult> CreateService([FromForm] ShopServiceRequestDTO service)
         {
-            var response = await shopServiceRepository.GetAllShops();
-            if (response == null)
+            var userId = User.GetUserId();
+            var response = await serviceRepository.CreateAsync(userId,service);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
             {
                 return BadRequest(response);
             }
-            return Ok(response);
         }
 
+        [HttpPut("update/{serviceId}"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> UpdateService(int serviceId, [FromForm] ShopServiceRequestDTO service)
+        {
+            var userId = User.GetUserId();
+            var response = await serviceRepository.UpdateAsync(userId,serviceId, service);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
     }
 }

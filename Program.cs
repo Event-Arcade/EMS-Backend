@@ -12,10 +12,15 @@ using EMS.BACKEND.API.Repositories;
 using SharedClassLibrary.Contracts;
 using EMS.BACKEND.API.Contracts;
 using Amazon.S3;
+using Contracts;
+using EMS.BACKEND.API.Controllers;
+using EMS.BACKEND.API.Hubs;
+using EMS.BACKEND.API.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 //aws s3 configuration
@@ -26,7 +31,7 @@ builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         //get connection string from appsettings.json
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
+        options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDbConnection") ??
             throw new InvalidOperationException("Connection string is not found"));
     });
 
@@ -49,6 +54,7 @@ builder.Services.AddHttpContextAccessor();
 //JWT
 builder.Services.AddAuthentication(options =>
 {
+    //options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
@@ -63,6 +69,13 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+})
+
+// Add google authentication
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
 
 //Add authentication to Swagger UI
@@ -78,10 +91,13 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 builder.Services.AddScoped<IUserAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
-builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 
@@ -93,7 +109,7 @@ if (app.Environment.IsDevelopment())
 
     app.UseCors(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173")
         .AllowAnyMethod()
         .AllowAnyHeader()
         .WithHeaders(HeaderNames.ContentType);
@@ -106,7 +122,11 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+
 app.MapControllers();
+app.MapHub<PersonalChatHub>("/personalChatHub");
+
+
 
 //seeding user-roles
 using (var scope = app.Services.CreateScope())
@@ -126,11 +146,16 @@ using (var scope = app.Services.CreateScope())
     //seeding admin user
     var adminUser = new ApplicationUser
     {
-        FirstName = "admin1",
-        LastName = "admin2",
-        PasswordHash = "Admin@123",
+        FirstName = "admin",
+        LastName = "admin",
+        Email = "admin@gmail.com",
         UserName = "admin@gmail.com",
-        Email = "admin@gmail.com"
+        Street = "admin street",
+        City = "admin city",
+        PostalCode = "admin postal code",
+        Province = "admin province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
@@ -146,9 +171,14 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "client",
         LastName = "client",
-        PasswordHash = "Client@123",
         UserName = "client@gmail.com",
-        Email = "client@gmail.com"
+        Email = "client@gmail.com",
+        Street = "client street",
+        City = "client city",
+        PostalCode = "client postal code",
+        Province = "client province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(clientUser.Email) == null)
     {
@@ -164,9 +194,14 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "vendor",
         LastName = "vendor",
-        PasswordHash = "Vendor@123",
         UserName = "vendor@gmail.com",
-        Email = "vendor@gmail.com"
+        Email = "vendor@gmail.com",
+        Street = "vendor street",
+        City = "vendor city",
+        PostalCode = "vendor postal code",
+        Province = "vendor province",
+        Longitude = 0,
+        Latitude = 0
     };
     if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
     {
@@ -177,92 +212,89 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    //seeding categories
-    if (!dbContext.Categories.Any())
-    {
-        var categories = new[] { "Entertainment", "Decoration", "Catering", "Transport" };
-        foreach (var category in categories)
-        {
-            dbContext.Categories.Add(new Category
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = category
-            });
-        }
-        dbContext.SaveChanges();
-    }
+    // //seeding categories
+    // if (!dbContext.Categories.Any())
+    // {
+    //     var categories = new[] { "Entertainment", "Decoration", "Catering", "Transport" };
+    //     foreach (var category in categories)
+    //     {
+    //         dbContext.Categories.Add(new Category
+    //         {
+    //             Id = Guid.NewGuid().ToString(),
+    //             Name = category
+    //         });
+    //     }
+    //     dbContext.SaveChanges();
+    // }
 
     //seeding shop for vendorUser
-    if (!dbContext.Shops.Any())
-    {
-        var shop = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
-        try
-        {
-            var exsistedVendor = await userManager.FindByEmailAsync("vendor@gmail.com");
-            var newShop = new Shop()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = "shop1",
-                Description = "shop1 description",
-                Rating = 4,
-                OwnerId = exsistedVendor.Id
-            };
+    // if (!dbContext.Shops.Any())
+    // {
+    //     var shop = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
+    //     try
+    //     {
+    //         var exsistedVendor = await userManager.FindByEmailAsync("vendor@gmail.com");
+    //         var newShop = new Shop()
+    //         {
+    //             Id = Guid.NewGuid().ToString(),
+    //             Name = "shop1",
+    //             Description = "shop1 description",
+    //             Rating = 4,
+    //             OwnerId = exsistedVendor.Id
+    //         };
 
-            await dbContext.Shops.AddAsync(newShop);
-            await dbContext.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error occurd when seeeding a new shop: {ex}");
-        }
-    }
-
+    //         await dbContext.Shops.AddAsync(newShop);
+    //         await dbContext.SaveChangesAsync();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error occurd when seeeding a new shop: {ex}");
+    //     }
+    // }
 
     //seeding services
-    if (!dbContext.Services.Any())
-    {
-        var transportCategory = dbContext.Categories.FirstOrDefault(c => c.Name == "Transport");
-        var shop1 = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
-        try
-        {
-            var services = new List<Service>
-                    {
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service1",
-                            Price = 1000,
-                            ShopId = shop1.Id,
-                            CategoryId = transportCategory.Id
-                        },
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service2",
-                            Price = 2000,
-                            ShopId =    shop1.Id,
-                            CategoryId = transportCategory.Id
-                        },
-                        new Service
-                        {
-                            Id = Guid.NewGuid().ToString(),
-                            Name = "Service3",
-                            Price = 3000,
-                            ShopId = shop1.Id,
-                            CategoryId = transportCategory.Id
-                        }
-                    };
+    // if (!dbContext.Services.Any())
+    // {
+    //     var transportCategory = dbContext.Categories.FirstOrDefault(c => c.Name == "Transport");
+    //     var shop1 = await dbContext.Shops.Where(s => s.Name == "shop1").FirstOrDefaultAsync();
+    //     try
+    //     {
+    //         var services = new List<Service>
+    //                 {
+    //                     new Service
+    //                     {
+    //                         Id = Guid.NewGuid().ToString(),
+    //                         Name = "Service1",
+    //                         Price = 1000,
+    //                         ShopId = shop1.Id,
+    //                         Category = transportCategory
+    //                     },
+    //                     new Service
+    //                     {
+    //                         Id = Guid.NewGuid().ToString(),
+    //                         Name = "Service2",
+    //                         Price = 2000,
+    //                         ShopId =    shop1.Id,
+    //                         Category = transportCategory
+    //                     },
+    //                     new Service
+    //                     {
+    //                         Id = Guid.NewGuid().ToString(),
+    //                         Name = "Service3",
+    //                         Price = 3000,
+    //                         ShopId = shop1.Id,
+    //                         Category = transportCategory
+    //                     }
+    //                 };
 
-            dbContext.Services.AddRange(services);
-            dbContext.SaveChanges();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
-    }
-
-
+    //         dbContext.Services.AddRange(services);
+    //         dbContext.SaveChanges();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine(ex.Message);
+    //     }
+    // }
 }
 
 app.Run();

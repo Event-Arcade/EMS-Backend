@@ -10,11 +10,11 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("938925cc-b216-4af6-80dc-57ddc2850947")]
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("c23796d8-bf5d-4f70-af66-d46320c6347e")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6dc1255cda2c49b508a85a72e3e094d888c03ff5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2acb653ce250e6903f79881dcc64178701a276a8")]
 [assembly: System.Reflection.AssemblyProductAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EMS.BACKEND.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

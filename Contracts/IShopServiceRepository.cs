@@ -1,14 +1,11 @@
-using EMS.BACKEND.API.DTOs.RequestDTOs;
-using EMS.BACKEND.API.DTOs.ResponseDTOs;
+﻿using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.DTOs.ShopService;
+using EMS.BACKEND.API.Models;
 
-namespace SharedClassLibrary.Contracts
+namespace EMS.BACKEND.API.Contracts
 {
-    public interface IShopServiceRepository
+    public interface IShopServiceRepository : IBaseRepository<ShopServiceResponseDTO, ShopServiceRequestDTO>
     {
-        Task<ShopResponse> CreateShop(ShopRequestDTO shopRequestDTO);
-        Task<ShopResponse> UpdateShop(ShopRequestDTO shopRequestDTO);
-        Task<GeneralResponse> DeleteShop();
-        Task<ShopResponse> GetMyShop();
-        Task<ShopListResponse> GetAllShops();
+        Task<BaseResponseDTO<IEnumerable<ShopService>>> GetServicesByShopId(string shopId);
     }
 }

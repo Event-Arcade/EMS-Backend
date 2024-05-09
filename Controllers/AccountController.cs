@@ -1,4 +1,5 @@
-﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
+﻿using EMS.BACKEND.API.DTOs.Account;
+using EMS.BACKEND.API.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedClassLibrary.Contracts;
@@ -7,35 +8,117 @@ namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController(IUserAccountRepository userAccount) : ControllerBase
+    public class AccountController : ControllerBase
     {
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(UserRequestDTO userDTO)
+        private readonly IUserAccountRepository _userAccount;
+
+        public AccountController(IUserAccountRepository userAccount)
         {
-            var response = await userAccount.CreateAccount(userDTO);
-            return Ok(response);
+            _userAccount = userAccount;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromForm] RegisterUserDTO registerUserDTO)
+        {
+            var response = await _userAccount.CreateAccountAsync(registerUserDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        public async Task<IActionResult> Login([FromForm] LoginDTO loginDTO)
         {
-            var response = await userAccount.LoginAccount(loginDTO);
-            return Ok(response);
+            var response = await _userAccount.LoginAccountAsync(loginDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
-        [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update(UserRequestDTO userDTO)
+        [HttpPut("updateaccount"), Authorize]
+        public async Task<IActionResult> Update([FromForm] UpdateUserDTO userDTO)
         {
-            var response = await userAccount.UpdateAccount(userDTO);
-            return Ok(response);
+            var userId = User.GetUserId();
+            var response = await _userAccount.UpdateAccountAsync(userId, userDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
 
         //return current user details
-        [HttpGet("getme"), Authorize]
+        [HttpGet(), Authorize]
         public async Task<IActionResult> GetMe()
         {
-            var result = await userAccount.GetMe();
-            return Ok(result);
+            var userId = User.GetUserId();
+            var result = await _userAccount.GetAccountByIdAsync(userId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
         }
+
+        [HttpDelete(), Authorize]
+        public async Task<IActionResult> Delete()
+        {
+            var userId = User.GetUserId();
+            var result = await _userAccount.DeleteAccountAsync(userId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+
+        [HttpPut("updatepassword"), Authorize]
+        public async Task<IActionResult> UpdatePassword([FromForm] UpdatePasswordDTO updatePassword)
+        {
+            var userId = User.GetUserId();
+            var result = await _userAccount.UpdateAccountPasswordAsync(userId, updatePassword);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+        //signin with google
+        [HttpPost("googlelogin")]
+        public async Task<IActionResult> GoogleLogin([FromForm] GoogleLoginDTO googleLoginDTO)
+        {
+            var response = await _userAccount.GoogleLoginAsync(googleLoginDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
+        
     }
 }
