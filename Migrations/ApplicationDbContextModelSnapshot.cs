@@ -17,15 +17,18 @@ namespace EMS.BACKEND.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.AdminStaticResource", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -73,12 +76,14 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Latitude")
+                    b.Property<double>("Latitude")
                         .HasColumnType("float");
 
                     b.Property<bool>("LockoutEnabled")
@@ -87,7 +92,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<double?>("Longitude")
+                    b.Property<double>("Longitude")
                         .HasColumnType("float");
 
                     b.Property<string>("NormalizedEmail")
@@ -147,24 +152,30 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Category", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("CategoryImagePath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Categories");
                 });
@@ -203,44 +214,67 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Comment")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("PostedOn")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("FeedbackStaticResourcePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Rating")
                         .HasColumnType("float");
 
-                    b.Property<string>("ServiceId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ServiceId");
+                    b.HasIndex("ApplicationUserId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ServiceId");
 
                     b.ToTable("FeedBacks");
                 });
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBackStaticResource", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FeedBackId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResourceUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeedBackId");
+
+                    b.ToTable("FeedBackStaticResource");
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -256,18 +290,55 @@ namespace EMS.BACKEND.API.Migrations
                     b.ToTable("Packages");
                 });
 
-            modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
+            modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Property<string>("CategoryId")
-                        .HasColumnType("nvarchar(450)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BackgroundImagePath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double?>("Rating")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Shops");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ShopService", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Price")
@@ -276,8 +347,8 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<double>("Rating")
                         .HasColumnType("float");
 
-                    b.Property<string>("ShopId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ShopId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -285,77 +356,47 @@ namespace EMS.BACKEND.API.Migrations
 
                     b.HasIndex("ShopId");
 
-                    b.ToTable("Services");
+                    b.ToTable("ShopServices");
                 });
 
-            modelBuilder.Entity("EMS.BACKEND.API.Models.ServiceStaticResources", b =>
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ShopServiceStaticResources", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ResourceUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ServiceId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("ServiceStaticResources");
-                });
-
-            modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("BackgroundImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OwnerId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("Rating")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
-
-                    b.ToTable("Shops");
+                    b.ToTable("ShopServiceStaticResources");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.SubPackage", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PackageId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("PackageId")
+                        .HasColumnType("int");
 
-                    b.Property<string>("ServiceId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -517,7 +558,9 @@ namespace EMS.BACKEND.API.Migrations
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -543,19 +586,32 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.Service", null)
-                        .WithMany("FeedBacks")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
+                        .WithMany("FeedBacks")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBackStaticResource", b =>
+                {
+                    b.HasOne("EMS.BACKEND.API.Models.FeedBack", "FeedBack")
+                        .WithMany("FeedBackStaticResources")
+                        .HasForeignKey("FeedBackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FeedBack");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
@@ -569,48 +625,62 @@ namespace EMS.BACKEND.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
-                {
-                    b.HasOne("EMS.BACKEND.API.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId");
-
-                    b.HasOne("EMS.BACKEND.API.Models.Shop", null)
-                        .WithMany("Services")
-                        .HasForeignKey("ShopId");
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("EMS.BACKEND.API.Models.ServiceStaticResources", b =>
-                {
-                    b.HasOne("EMS.BACKEND.API.Models.Service", null)
-                        .WithMany("StaticResourcesPaths")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", null)
+                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Owner")
                         .WithMany("Shops")
-                        .HasForeignKey("ApplicationUserId");
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ShopService", b =>
+                {
+                    b.HasOne("EMS.BACKEND.API.Models.Category", "Category")
+                        .WithMany("ShopServices")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EMS.BACKEND.API.Models.Shop", "Shop")
+                        .WithMany("Services")
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Shop");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ShopServiceStaticResources", b =>
+                {
+                    b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
+                        .WithMany("ShopServiceStaticResources")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.SubPackage", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.Package", null)
+                    b.HasOne("EMS.BACKEND.API.Models.Package", "Package")
                         .WithMany("SubPackages")
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("EMS.BACKEND.API.Models.Service", "Service")
+                    b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
                         .WithMany()
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Package");
 
                     b.Navigation("Service");
                 });
@@ -671,21 +741,31 @@ namespace EMS.BACKEND.API.Migrations
                     b.Navigation("Shops");
                 });
 
+            modelBuilder.Entity("EMS.BACKEND.API.Models.Category", b =>
+                {
+                    b.Navigation("ShopServices");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
+                {
+                    b.Navigation("FeedBackStaticResources");
+                });
+
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
                     b.Navigation("SubPackages");
                 });
 
-            modelBuilder.Entity("EMS.BACKEND.API.Models.Service", b =>
-                {
-                    b.Navigation("FeedBacks");
-
-                    b.Navigation("StaticResourcesPaths");
-                });
-
             modelBuilder.Entity("EMS.BACKEND.API.Models.Shop", b =>
                 {
                     b.Navigation("Services");
+                });
+
+            modelBuilder.Entity("EMS.BACKEND.API.Models.ShopService", b =>
+                {
+                    b.Navigation("FeedBacks");
+
+                    b.Navigation("ShopServiceStaticResources");
                 });
 #pragma warning restore 612, 618
         }

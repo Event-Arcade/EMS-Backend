@@ -7,8 +7,15 @@ using NuGet.Protocol;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class CloudProviderRepository(IConfiguration configuration, IAmazonS3 amazonS3) : ICloudProviderRepository
+    public class CloudProviderRepository : ICloudProviderRepository
     {
+        private readonly IConfiguration configuration;
+        private readonly IAmazonS3 amazonS3;
+        public CloudProviderRepository(IConfiguration configuration, IAmazonS3 amazonS3)
+        {
+            configuration = configuration;
+            amazonS3 = amazonS3;
+        }
         public string GeneratePreSignedUrlForDownload(string filepath)
         {
             var request = new GetPreSignedUrlRequest

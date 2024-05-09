@@ -1,20 +1,26 @@
-﻿using EMS.BACKEND.API.DTOs.RequestDTOs;
-using EMS.BACKEND.API.Models;
+﻿using EMS.BACKEND.API.DTOs.Account;
+using EMS.BACKEND.API.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController(IUserAccountRepository userAccount) : ControllerBase
+    public class AccountController : ControllerBase
     {
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromForm] ApplicationUser userDTO)
+        private readonly IUserAccountRepository _userAccount;
+
+        public AccountController(IUserAccountRepository userAccount)
         {
-            var response = await userAccount.CreateAccount(userDTO);
+            _userAccount = userAccount;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromForm] RegisterUserDTO registerUserDTO)
+        {
+            var response = await _userAccount.CreateAccountAsync(registerUserDTO);
             if (response.Flag)
             {
                 return Ok(response);
@@ -26,9 +32,9 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromForm] ApplicationUser userDTO)
+        public async Task<IActionResult> Login([FromForm] LoginDTO loginDTO)
         {
-            var response = await userAccount.LoginAccount(userDTO);
+            var response = await _userAccount.LoginAccountAsync(loginDTO);
             if (response.Flag)
             {
                 return Ok(response);
@@ -39,10 +45,11 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPut("update"), Authorize]
-        public async Task<IActionResult> Update([FromForm] ApplicationUser userDTO)
+        [HttpPut("updateaccount"), Authorize]
+        public async Task<IActionResult> Update([FromForm] UpdateUserDTO userDTO)
         {
-            var response = await userAccount.UpdateAccount(userDTO);
+            var userId = User.GetUserId();
+            var response = await _userAccount.UpdateAccountAsync(userId, userDTO);
             if (response.Flag)
             {
                 return Ok(response);
@@ -54,10 +61,11 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         //return current user details
-        [HttpGet("getme"), Authorize]
+        [HttpGet(), Authorize]
         public async Task<IActionResult> GetMe()
         {
-            var result = await userAccount.GetMe();
+            var userId = User.GetUserId();
+            var result = await _userAccount.GetAccountByIdAsync(userId);
             if (result.Flag)
             {
                 return Ok(result);
@@ -68,10 +76,11 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpDelete("delete/{userId}"), Authorize]
-        public async Task<IActionResult> Delete(string userId)
+        [HttpDelete(), Authorize]
+        public async Task<IActionResult> Delete()
         {
-            var result = await userAccount.DeleteAccount(userId);
+            var userId = User.GetUserId();
+            var result = await _userAccount.DeleteAccountAsync(userId);
             if (result.Flag)
             {
                 return Ok(result);
@@ -81,11 +90,12 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(result);
             }
         }
-    
-        [HttpPut("updatepassword/{userId}"), Authorize]
-        public async Task<IActionResult> UpdatePassword(string userId, [FromForm] UpdatePasswordDTO updatePassword)
+
+        [HttpPut("updatepassword"), Authorize]
+        public async Task<IActionResult> UpdatePassword([FromForm] UpdatePasswordDTO updatePassword)
         {
-            var result = await userAccount.UpdatePassword(userId, updatePassword.OldPassword, updatePassword.NewPassword);
+            var userId = User.GetUserId();
+            var result = await _userAccount.UpdateAccountPasswordAsync(userId, updatePassword);
             if (result.Flag)
             {
                 return Ok(result);
@@ -95,5 +105,20 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(result);
             }
         }
+        //signin with google
+        [HttpPost("googlelogin")]
+        public async Task<IActionResult> GoogleLogin([FromForm] GoogleLoginDTO googleLoginDTO)
+        {
+            var response = await _userAccount.GoogleLoginAsync(googleLoginDTO);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
+        
     }
 }

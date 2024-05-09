@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EMS.BACKEND.API.Migrations
 {
     /// <inheritdoc />
-    public partial class updatedusermodel : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,15 +30,15 @@ namespace EMS.BACKEND.API.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Street = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     City = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Province = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Rating = table.Column<double>(type: "float", nullable: true),
-                    Longitude = table.Column<double>(type: "float", nullable: true),
-                    Latitude = table.Column<double>(type: "float", nullable: true),
+                    Longitude = table.Column<double>(type: "float", nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: false),
                     ProfilePicturePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -85,7 +85,8 @@ namespace EMS.BACKEND.API.Migrations
                 name: "AdminStaticResources",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -191,20 +192,22 @@ namespace EMS.BACKEND.API.Migrations
                 name: "Categories",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CategoryImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    CategoryImagePath = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Categories_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Categories_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -239,7 +242,8 @@ namespace EMS.BACKEND.API.Migrations
                 name: "Packages",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -258,108 +262,114 @@ namespace EMS.BACKEND.API.Migrations
                 name: "Shops",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Rating = table.Column<double>(type: "float", nullable: true),
-                    OwnerId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    BackgroundImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    BackgroundImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Shops", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Shops_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_Shops_AspNetUsers_OwnerId",
+                        column: x => x.OwnerId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Services",
+                name: "ShopServices",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Price = table.Column<double>(type: "float", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Rating = table.Column<double>(type: "float", nullable: false),
-                    ShopId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    ShopId = table.Column<int>(type: "int", nullable: false),
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Services", x => x.Id);
+                    table.PrimaryKey("PK_ShopServices", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Services_Categories_CategoryId",
+                        name: "FK_ShopServices_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Services_Shops_ShopId",
+                        name: "FK_ShopServices_Shops_ShopId",
                         column: x => x.ShopId,
                         principalTable: "Shops",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "FeedBacks",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PostedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Rating = table.Column<double>(type: "float", nullable: false),
-                    ServiceId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FeedbackStaticResourcePath = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    ServiceId = table.Column<int>(type: "int", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FeedBacks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FeedBacks_AspNetUsers_UserId",
-                        column: x => x.UserId,
+                        name: "FK_FeedBacks_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_FeedBacks_Services_ServiceId",
+                        name: "FK_FeedBacks_ShopServices_ServiceId",
                         column: x => x.ServiceId,
-                        principalTable: "Services",
+                        principalTable: "ShopServices",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ServiceStaticResources",
+                name: "ShopServiceStaticResources",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ServiceId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ServiceId = table.Column<int>(type: "int", nullable: false),
                     ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ServiceStaticResources", x => x.Id);
+                    table.PrimaryKey("PK_ShopServiceStaticResources", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ServiceStaticResources_Services_ServiceId",
+                        name: "FK_ShopServiceStaticResources_ShopServices_ServiceId",
                         column: x => x.ServiceId,
-                        principalTable: "Services",
+                        principalTable: "ShopServices",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "SubPackages",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PackageId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PackageId = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    ServiceId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    ServiceId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -369,11 +379,31 @@ namespace EMS.BACKEND.API.Migrations
                         column: x => x.PackageId,
                         principalTable: "Packages",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_SubPackages_Services_ServiceId",
+                        name: "FK_SubPackages_ShopServices_ServiceId",
                         column: x => x.ServiceId,
-                        principalTable: "Services",
+                        principalTable: "ShopServices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FeedBackStaticResource",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FeedBackId = table.Column<int>(type: "int", nullable: false),
+                    ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FeedBackStaticResource", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FeedBackStaticResource_FeedBacks_FeedBackId",
+                        column: x => x.FeedBackId,
+                        principalTable: "FeedBacks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -423,9 +453,9 @@ namespace EMS.BACKEND.API.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Categories_UserId",
+                name: "IX_Categories_ApplicationUserId",
                 table: "Categories",
-                column: "UserId");
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatMessages_ReceiverId",
@@ -438,14 +468,19 @@ namespace EMS.BACKEND.API.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_FeedBacks_ApplicationUserId",
+                table: "FeedBacks",
+                column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FeedBacks_ServiceId",
                 table: "FeedBacks",
                 column: "ServiceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FeedBacks_UserId",
-                table: "FeedBacks",
-                column: "UserId");
+                name: "IX_FeedBackStaticResource_FeedBackId",
+                table: "FeedBackStaticResource",
+                column: "FeedBackId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Packages_UserId",
@@ -453,24 +488,24 @@ namespace EMS.BACKEND.API.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Services_CategoryId",
-                table: "Services",
+                name: "IX_Shops_OwnerId",
+                table: "Shops",
+                column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShopServices_CategoryId",
+                table: "ShopServices",
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Services_ShopId",
-                table: "Services",
+                name: "IX_ShopServices_ShopId",
+                table: "ShopServices",
                 column: "ShopId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ServiceStaticResources_ServiceId",
-                table: "ServiceStaticResources",
+                name: "IX_ShopServiceStaticResources_ServiceId",
+                table: "ShopServiceStaticResources",
                 column: "ServiceId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Shops_ApplicationUserId",
-                table: "Shops",
-                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubPackages_PackageId",
@@ -508,10 +543,10 @@ namespace EMS.BACKEND.API.Migrations
                 name: "ChatMessages");
 
             migrationBuilder.DropTable(
-                name: "FeedBacks");
+                name: "FeedBackStaticResource");
 
             migrationBuilder.DropTable(
-                name: "ServiceStaticResources");
+                name: "ShopServiceStaticResources");
 
             migrationBuilder.DropTable(
                 name: "SubPackages");
@@ -520,10 +555,13 @@ namespace EMS.BACKEND.API.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "FeedBacks");
+
+            migrationBuilder.DropTable(
                 name: "Packages");
 
             migrationBuilder.DropTable(
-                name: "Services");
+                name: "ShopServices");
 
             migrationBuilder.DropTable(
                 name: "Categories");

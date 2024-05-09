@@ -15,6 +15,7 @@ using Amazon.S3;
 using Contracts;
 using EMS.BACKEND.API.Controllers;
 using EMS.BACKEND.API.Hubs;
+using EMS.BACKEND.API.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,7 @@ builder.Services.AddHttpContextAccessor();
 //JWT
 builder.Services.AddAuthentication(options =>
 {
+    //options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
@@ -67,6 +69,13 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+})
+
+// Add google authentication
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
 
 //Add authentication to Swagger UI
@@ -82,12 +91,13 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 builder.Services.AddScoped<IUserAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IShopRepository, ShopRepository>();
 builder.Services.AddScoped<IShopServiceRepository, ShopServiceRepository>();
-builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
 

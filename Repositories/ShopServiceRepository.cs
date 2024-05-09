@@ -1,414 +1,414 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+﻿using Contracts;
 using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.DTOs.ShopService;
+using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Repositories
 {
-    public class ShopServiceRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration, IUserAccountRepository userAccountRepository,
-                                        IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor,
-                                            ICloudProviderRepository cloudProvider, IServiceRepository serviceRepository) : IShopServiceRepository
+    public class ShopServiceRepository : IShopServiceRepository
     {
-        public async Task<BaseResponseDTO<String>> CreateAsync(Shop entity)
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ICloudProviderRepository _cloudProvider;
+        private readonly IConfiguration _configuration;
+        private readonly IFeedbackRepository _feedBackRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public ShopServiceRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, IFeedbackRepository feedBackRepository, UserManager<ApplicationUser> userManager)
         {
-            try
-            {
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    //check if the entity is null
-                    if (entity == null)
-                    {
-                        throw new ArgumentNullException(nameof(entity));
-                    }
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-                    //get the user
-                    var user = await userManager.FindByEmailAsync(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value);
-
-                    // Check Weather the user is a vendor already
-                    var userRole = await userManager.GetRolesAsync(user);
-                    if (userRole.Contains("vendor"))
-                    {
-                        return new BaseResponseDTO<String>
-                        {
-                            Message = "User is already a vendor",
-                            Flag = false
-                        };
-                    }
-
-                    // Assign the shop id and owner id
-                    entity.Id = Guid.NewGuid().ToString();
-                    entity.OwnerId = user.Id;
-
-                    //upload the background image
-                    var (flag, path) = await cloudProvider
-                    .UploadFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"]);
-                    if (!flag)
-                    {
-                        throw new Exception("Failed to upload the file to the cloud");
-                    }
-                    entity.BackgroundImagePath = path;
-
-
-                    await dbContext.Shops.AddAsync(entity);
-                    await dbContext.SaveChangesAsync();
-
-                    // upgrade user role "client" to "vendor"
-                    await userManager.AddToRoleAsync(user, "vendor");
-                    await userManager.RemoveFromRoleAsync(user, "client");
-
-                    // Generate a new token for the user
-                    var getUserRole = await userManager.GetRolesAsync(user);
-                    var userSession = new UserSession()
-                    {
-                        Id = user.Id,
-                        Email = user.Email,
-                        Role = getUserRole.First()
-                    };
-                    var token = GenerateToken(userSession);
-                    return new BaseResponseDTO<String>
-                    {
-                        Message = "Shop created successfully",
-                        Flag = true,
-                        Data = token
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<String>
-                {
-                    Message = ex.Message,
-                    Flag = false
-                };
-            }
+            _serviceScopeFactory = serviceScopeFactory;
+            _cloudProvider = cloudProvider;
+            _configuration = configuration;
+            _feedBackRepository = feedBackRepository;
+            _userManager = userManager;
         }
-        public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
+
+        public Task<BaseResponseDTO<ShopServiceResponseDTO>> CreateAsync(string userId, ShopServiceRequestDTO entity)
         {
-            try
-            {
-                //check if the id is null
-                if (id == null)
-                {
-                    throw new ArgumentNullException(nameof(id));
-                }
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-                    // get current user
-                    var shopOwner = await userAccountRepository.GetMe();
-
-                    var shop = await dbContext.Shops.FindAsync(id);
-
-                    if (shop == null)
-                    {
-                        return new BaseResponseDTO<String> { Message = "Shop not found", Flag = false };
-                    }
-
-                    //check if the user is the owner of the shop
-                    if (shop.OwnerId != shopOwner.Data.Id)
-                    {
-                        return new BaseResponseDTO<String> { Message = "You are not the owner of the shop", Flag = false };
-                    }
-                    //check if there any services associated with the shop
-                    var services = await dbContext.Services.Where(s => s.ShopId == id).ToListAsync();
-                    if (services.Count > 0)
-                    {
-                        return new BaseResponseDTO<String> { Message = "Shop has services associated with it", Flag = false };
-                    }
-
-                    // Remove the background image from the cloud
-                    var flag = await cloudProvider.RemoveFile(shop.BackgroundImagePath);
-                    if (!flag)
-                    {
-                        throw new Exception("Failed to delete the file from the cloud");
-                    }
-
-                    //delete the shop
-                    dbContext.Shops.Remove(shop);
-                    dbContext.SaveChanges();
-
-                    // assign the user role "vendor" to "client"
-                    var user = await userManager.FindByIdAsync(shop.OwnerId);
-                    await userManager.AddToRoleAsync(user, "client");
-                    await userManager.RemoveFromRoleAsync(user, "vendor");
-
-                    // Generate a new token for the user
-                    var getUserRole = await userManager.GetRolesAsync(user);
-                    var userSession = new UserSession()
-                    {
-                        Id = user.Id,
-                        Email = user.Email,
-                        Role = getUserRole.First()
-                    };
-                    var token = GenerateToken(userSession);
-
-                    return new BaseResponseDTO<String>
-                    {
-                        Message = "Shop deleted successfully",
-                        Flag = true,
-                        Data = token
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<String> { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        public async Task<BaseResponseDTO<IEnumerable<Shop>>> FindAllAsync()
+
+        public Task<BaseResponseDTO> DeleteAsync(string userId, int id)
         {
-            try
-            {
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shops = await dbContext.Shops.ToListAsync();
-
-                    //convert the background image path to a url
-                    foreach (var shop in shops)
-                    {
-                        var url = cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
-                        shop.BackgroundImagePath = url;
-                    }
-
-                    //get services associated with the shop
-                    foreach (var s in shops)
-                    {
-                        var servicesResponse = await serviceRepository.GetServicesByShopId(s.Id);
-                        if (servicesResponse.Flag)
-                        {
-                            List<Service> services = new List<Service>();
-                            foreach (var service in servicesResponse.Data)
-                            {
-                                services.Add(service);
-                            }
-                            s.Services = services;
-                        }
-                    }
-
-                    return new BaseResponseDTO<IEnumerable<Shop>> { Data = shops, Flag = true, Message = "Shops found" };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<IEnumerable<Shop>> { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        public async Task<BaseResponseDTO<Shop>> FindByIdAsync(string id)
+
+        public Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindAllAsync()
         {
-            try
-            {
-                //check if the id is null
-                if (id == null)
-                {
-                    throw new ArgumentNullException(nameof(id));
-                }
-
-                //get the shop
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
-
-                    if (shop == null)
-                    {
-                        return new BaseResponseDTO<Shop> { Message = "Shop not found", Flag = false };
-                    }
-
-                    //convert the background image path to a url
-                    var url = cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
-                    shop.BackgroundImagePath = url;
-
-                    //get services associated with the shop
-                    var servicesResponse = await serviceRepository.GetServicesByShopId(shop.Id);
-                    if (servicesResponse.Flag)
-                    {
-                        List<Service> services = new List<Service>();
-                        foreach (var service in servicesResponse.Data)
-                        {
-                            services.Add(service);
-                        }
-                        shop.Services = services;
-                    }
-
-                    return new BaseResponseDTO<Shop> { Data = shop, Flag = true, Message = "Shop found" };
-                }
-
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        public async Task<BaseResponseDTO<Shop>> GetShopByServiceId(string serviceId)
+
+        public Task<BaseResponseDTO<ShopServiceResponseDTO>> FindByIdAsync(int id)
         {
-            try
-            {
-                //check if the serviceId is null
-                if (serviceId == null)
-                {
-                    throw new ArgumentNullException(nameof(serviceId));
-                }
-
-                //get the shop
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var service = await dbContext.Services.Where(s => s.Id == serviceId).FirstOrDefaultAsync();
-
-                    if (service == null)
-                    {
-                        return new BaseResponseDTO<Shop> { Message = "Service not found", Flag = false };
-                    }
-
-                    //get the shop
-                    var response = await FindByIdAsync(service.ShopId);
-                    return response;
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        public async Task<BaseResponseDTO<Shop>> GetShopByVendor()
+
+        public Task<BaseResponseDTO<IEnumerable<ShopService>>> GetServicesByShopId(string shopId)
         {
-            //TODO: services are not add with response
-            try
-            {
-                //get the user 
-                var result = await userAccountRepository.GetMe();
-                if (!result.Flag)
-                {
-                    return new BaseResponseDTO<Shop> { Message = "User not found", Flag = false };
-                }
-
-                var user = result.Data;
-
-                //get the shop
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id).FirstOrDefaultAsync();
-
-                    if (shop == null)
-                    {
-                        return new BaseResponseDTO<Shop> { Message = "Service not found", Flag = false };
-                    }
-
-                    //convert the background image path to a url
-                    var url = cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
-                    shop.BackgroundImagePath = url;
-
-                    //get the service associated with the shop
-                    var servicesResponse = await serviceRepository.GetServicesByShopId(shop.Id);
-                    if (servicesResponse.Flag)
-                    {
-                        foreach (var service in servicesResponse.Data)
-                        {
-                            shop.Services.Add(service);
-                        }
-                    }
-
-                    return new BaseResponseDTO<Shop> { Data = shop, Flag = true, Message = "Shop found" };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<Shop> { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        public async Task<BaseResponseDTO> UpdateAsync(String id, Shop entity)
+
+        public Task<BaseResponseDTO<ShopServiceResponseDTO>> UpdateAsync(string userId, int id, ShopServiceRequestDTO entity)
         {
-            try
-            {
-                using (var scope = serviceScopeFactory.CreateScope())
-                {
-                    //check if the entity is null
-                    if (entity == null)
-                    {
-                        throw new ArgumentNullException(nameof(entity));
-                    }
-                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
-
-                    if (shop == null)
-                    {
-                        return new BaseResponseDTO { Message = "Shop not found", Flag = false };
-                    }
-
-                    //get the user
-                    var user = await userManager.FindByEmailAsync(httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value);
-
-                    //check if the user is the owner of the shop
-                    if (shop.OwnerId != user.Id)
-                    {
-                        return new BaseResponseDTO { Message = "You are not the owner of the shop", Flag = false };
-                    }
-
-                    //update the shop
-                    if (entity.Name != null)
-                    {
-                        shop.Name = entity.Name;
-                    }
-                    if (entity.Description != null)
-                    {
-                        shop.Description = entity.Description;
-                    }
-                    //TODO: calculate the rating automatically
-
-                    //upload the background image
-                    if (entity.BackgroundImage != null)
-                    {
-                        var (flag, path) = await cloudProvider
-                                .UpdateFile(entity.BackgroundImage, configuration["StorageDirectories:ShopImages"], shop.BackgroundImagePath);
-                        if (!flag)
-                        {
-                            throw new Exception("Failed to upload the file to the cloud");
-                        }
-                        shop.BackgroundImagePath = path;
-                    }
-
-
-                    dbContext.Shops.Update(shop);
-                    await dbContext.SaveChangesAsync();
-                    return new BaseResponseDTO { Message = "Shop updated successfully", Flag = true };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO { Message = ex.Message, Flag = false };
-            }
+            throw new NotImplementedException();
         }
-        //Generate JWT token
-        private string GenerateToken(UserSession user)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var userClaims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
-            };
-            var token = new JwtSecurityToken(
-                issuer: configuration["Jwt:Issuer"],
-                audience: configuration["Jwt:Audience"],
-                claims: userClaims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: credentials
-                );
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+
+        // public async Task<BaseResponseDTO<ShopServiceResponseDTO>> CreateAsync(string userId, ShopServiceRequestDTO entity)
+        // {
+        //     try
+        //     {
+        //         // check if user is vendor role
+        //         var user = await _userManager.FindByIdAsync(userId);
+        //         var userRole = await _userManager.GetRolesAsync(user);
+        //         if (!userRole.Contains("vendor"))
+        //         {
+        //             throw new Exception("You are not authorized to create service");
+        //         }
+
+        //         using (var scope = _serviceScopeFactory.CreateScope())
+        //         {
+        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        //             // check user is owner of the shop
+        //             var shop = await context.Shops.FirstOrDefaultAsync(x => x.OwnerId == userId);
+        //             if (shop == null)
+        //             {
+        //                 throw new Exception("Shop not found");
+        //             }
+        //             if (shop.Id != entity.ShopId)
+        //             {
+        //                 throw new Exception("You are not authorized to create service for this shop");
+        //             }
+        //             var shopService = entity.ToShopService();
+        //             //add into database
+        //             var newService = await context.ShopServices.AddAsync(shopService);
+
+        //             if (newService.State != EntityState.Added)
+        //             {
+        //                 throw new Exception("Error creating service");
+        //             }
+
+        //             var staticResources = new List<ShopServiceStaticResources>();
+        //             //add static resources
+        //             if (entity.ShopServiceStaticResources.Count > 0)
+        //             {
+        //                 foreach (var item in entity.ShopServiceStaticResources)
+        //                 {
+        //                     // upload to the cloud
+        //                     if (item.ContentType.Contains("image"))
+        //                     {
+        //                         var (flag, path) = await _cloudProvider.UploadFile(item, _configuration["StorageDirectories:ServiceImages"]);
+        //                         if (!flag)
+        //                         {
+        //                             throw new Exception("Error uploading file");
+        //                         }
+        //                         var staticResource = new ShopServiceStaticResources
+        //                         {
+        //                             ServiceId = newService.Entity.Id,
+        //                             ResourceUrl = path
+        //                         };
+        //                         //add into database
+        //                         var response = await context.ShopServiceStaticResources.AddAsync(staticResource);
+        //                         staticResources.Add(response.Entity);
+
+        //                     }
+        //                     else if (item.ContentType.Contains("video"))
+        //                     {
+        //                         var (flag, path) = await _cloudProvider.UploadFile(item, _configuration["StorageDirectories:ServiceVideos"]);
+        //                         if (!flag)
+        //                         {
+        //                             throw new Exception("Error uploading file");
+        //                         }
+        //                         var staticResource = new ShopServiceStaticResources
+        //                         {
+        //                             ServiceId = newService.Entity.Id,
+        //                             ResourceUrl = path
+        //                         };
+        //                         //add into database
+        //                         var response = await context.ShopServiceStaticResources.AddAsync(staticResource);
+        //                         staticResources.Add(response.Entity);
+        //                     }
+        //                     else
+        //                     {
+        //                         throw new Exception("Invalid file type");
+        //                     }
+        //                 }
+        //             }
+
+        //             newService.Entity.ShopServiceStaticResources = staticResources;
+
+        //             //Update service
+        //             context.Update(newService.Entity);
+        //             await context.SaveChangesAsync();
+
+        //             // convert resources into URLs
+        //             var staticResourcesURLs = new List<string>();
+        //             foreach (var item in staticResources)
+        //             {
+        //                 staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
+        //             }
+
+        //             return new BaseResponseDTO<ShopServiceResponseDTO>
+        //             {
+        //                 Message = "Service created successfully",
+        //                 Flag = true,
+        //                 Data = newService.Entity.ToShopServiceResponseDTO(staticResourcesURLs)
+        //             };
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return new BaseResponseDTO<ShopServiceResponseDTO>
+        //         {
+        //             Message = ex.Message,
+        //             Flag = false
+        //         };
+        //     }
+        // }
+        // public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
+        // {
+        //     try
+        //     {
+        //         using (var scope = _serviceScopeFactory.CreateScope())
+        //         {
+        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        //             var service = await context.ShopServices.Include(s => s.Shop).FirstOrDefaultAsync(x => x.Id == id);
+        //             if (service == null)
+        //             {
+        //                 throw new Exception("Service not found");
+        //             }
+
+        //             // check if user is vendor role
+        //             var user = await _userManager.FindByIdAsync(userId);
+        //             var userRole = await _userManager.GetRolesAsync(user);
+        //             if (!userRole.Contains("vendor"))
+        //             {
+        //                 throw new Exception("You are not authorized to delete service");
+        //             }
+
+        //             // check if user is owner of the shop
+        //             if (service.Shop.OwnerId != userId)
+        //             {
+        //                 throw new Exception("You are not authorized to delete service for this shop");
+        //             }
+
+        //             //check any sub package exist
+        //             if (context.SubPackages.Any(x => x.ServiceId == id))
+        //             {
+        //                 throw new Exception("Service can't be deleted because it has sub packages");
+        //             }
+
+        //             //delete all static resources
+        //             var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == id).ToListAsync();
+        //             foreach (var item in staticResources)
+        //             {
+        //                 //delete file from cloud
+        //                 await _cloudProvider.RemoveFile(item.ResourceUrl);
+
+        //                 //remove from database
+        //                 context.ShopServiceStaticResources.Remove(item);
+        //             }
+
+        //             //delete all feedbacks associated with service
+        //             var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == id).ToListAsync();
+        //             foreach (var item in feedbacks)
+        //             {
+        //                 await _feedBackRepository.DeleteAsync(user.Id, item.Id);
+        //             }
+
+        //             context.ShopServices.Remove(service);
+        //             await context.SaveChangesAsync();
+        //             return new BaseResponseDTO
+        //             {
+        //                 Message = "Service deleted successfully",
+        //                 Flag = true
+        //             };
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return new BaseResponseDTO
+        //         {
+        //             Message = ex.Message,
+        //             Flag = false
+        //         };
+        //     }
+        // }
+
+        // public Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindAllAsync()
+        // {
+        //     throw new NotImplementedException();
+        // }
+
+        // // public async Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindAllAsync()
+        // // {
+        // //     try
+        // //     {
+        // //         using (var scope = _serviceScopeFactory.CreateScope())
+        // //         {
+        // //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        // //             var services = await context.Services.Include(x => x.FormFiles).Include(x => x.FormFiles).ToListAsync();
+
+        // //             //get all feedbacks for each service
+        // //             foreach (var service in services)
+        // //             {
+        // //                 var feedbacksForService = await _feedBackRepository.GetFeedBacksByServiceId(service.Id);
+        // //                 if (feedbacksForService.Flag)
+        // //                 {
+        // //                     // foreach (var feedback in feedbacksForService.Data)
+        // //                     // {
+        // //                     //     service.FeedBacks.Add(feedback);
+
+        // //                     // }
+        // //                 }
+        // //             }
+
+        // //             //get all static resources for each service
+        // //             foreach (var s in services)
+        // //             {
+        // //                 var staticResourcesForService = await context.ServiceStaticResources.Where(x => x.ServiceId == s.Id).ToListAsync();
+        // //                 //assign url to each static resource
+        // //                 foreach (var item in staticResourcesForService)
+        // //                 {
+        // //                     item.ResourceUrl = _cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+        // //                 }
+        // //                 // s.StaticResourcesPaths = staticResourcesForService;
+        // //             }
+
+        // //             return new BaseResponseDTO<IEnumerable<Service>>
+        // //             {
+        // //                 Data = services,
+        // //                 Message = "Services fetched successfully",
+        // //                 Flag = true
+        // //             };
+
+        // //         }
+        // //     }
+        // //     catch (Exception ex)
+        // //     {
+        // //         return new BaseResponseDTO<IEnumerable<Service>>
+        // //         {
+        // //             Message = ex.Message,
+        // //             Flag = false
+        // //         };
+        // //     }
+        // // }
+        // public async Task<BaseResponseDTO<ShopServiceResponseDTO>> FindByIdAsync(string id)
+        // {
+        //     try
+        //     {
+        //         //check if id is null
+        //         if (id == null)
+        //         {
+        //             throw new ArgumentNullException(nameof(id));
+        //         }
+
+        //         using (var scope = _serviceScopeFactory.CreateScope())
+        //         {
+        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //             //var service = context.Services.Include(x => x.StaticResourcesPaths).Include(x => x.FeedBacks).FirstOrDefault(x => x.Id == id);
+
+        //             //get all feedbacks for service
+        //             var feedbacksForService = _feedBackRepository.GetFeedBacksByServiceId(id);
+        //             if (feedbacksForService.Result.Flag)
+        //             {
+        //                 // foreach (var feedback in feedbacksForService.Result.Data)
+        //                 // {
+        //                 //     service.FeedBacks.Add(feedback);
+        //                 // }
+        //             }
+
+        //             //get all static resources for service
+        //             var staticResourcesForService = context.ServiceStaticResources.Where(x => x.ServiceId == id).ToList();
+        //             //assign url to each static resource
+        //             foreach (var item in staticResourcesForService)
+        //             {
+        //                 item.ResourceUrl = _cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+        //             }
+        //             //service.StaticResourcesPaths = staticResourcesForService;
+
+        //             return new BaseResponseDTO<Service>
+        //             {
+        //                 //Data = service,
+        //                 Flag = true
+        //             };
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return new BaseResponseDTO<Service>
+        //         {
+        //             Message = ex.Message,
+        //             Flag = false
+        //         };
+        //     }
+        // }
+
+
+        // public async Task<BaseResponseDTO<IEnumerable<ShopService>>> GetServicesByShopId(string shopId)
+        // {
+        //     try
+        //     {
+        //         //check if shopId is null
+        //         if (shopId == null)
+        //         {
+        //             throw new ArgumentNullException(nameof(shopId));
+        //         }
+
+        //         using (var scope = _serviceScopeFactory.CreateScope())
+        //         {
+        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //             var services = context.Services.Where(x => x.ShopId == shopId).Include(x => x.FormFiles).Include(x => x.FormFiles).ToList();
+
+        //             //get all feedbacks for each service
+        //             foreach (var service in services)
+        //             {
+        //                 var feedbacksForService = _feedBackRepository.GetFeedBacksByServiceId(service.Id);
+        //                 if (feedbacksForService.Result.Flag)
+        //                 {
+        //                     foreach (var feedback in feedbacksForService.Result.Data)
+        //                     {
+        //                         //service.FeedBacks.Add(feedback);
+        //                     }
+        //                 }
+        //             }
+
+        //             //get all static resources for each service
+        //             foreach (var s in services)
+        //             {
+        //                 var staticResourcesForService = context.ServiceStaticResources.Where(x => x.ServiceId == s.Id).ToList();
+        //                 //assign url to each static resource
+        //                 foreach (var item in staticResourcesForService)
+        //                 {
+        //                     item.ResourceUrl = _cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl);
+        //                 }
+        //                 //s.StaticResourcesPaths = staticResourcesForService;
+        //             }
+
+        //             return new BaseResponseDTO<IEnumerable<Service>>
+        //             {
+        //                 Data = services,
+        //                 Message = "Services fetched successfully",
+        //                 Flag = true
+        //             };
+
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return new BaseResponseDTO<IEnumerable<Service>>
+        //         {
+        //             Message = ex.Message,
+        //             Flag = false
+        //         };
+        //     }
+        // }
+
 
     }
 }
