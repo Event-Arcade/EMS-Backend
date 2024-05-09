@@ -1,6 +1,6 @@
 # when the code is pushed to the master branch, the workflow will be triggered
-# 01. run all the xUnit tests
-# 02. build the docker image using the Dockerfile
+# 01. run all the xUnit tests if any test fails, the workflow will be stopped
+# 02. build the docker image using the Dockerfile/ do not neet to build the app. it is already built in the docker image
 # 03. push the docker image to the AWS ECR
 # 04. deploy the docker image to the AWS ECS
 name: Deployment
@@ -11,7 +11,7 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,20 +27,29 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build
 
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Login to AWS ECR
         run: aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.AWS_ECR_REPO }}:latest .
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }} .
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}
 
-      - name: Push Docker image
-        run: docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.AWS_ECR_REPO }}:latest
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service ${{ secrets.ECS_SERVICE_NAME }} --force-new-deployment
 
-      - name: Deploy to AWS ECS
-        run: aws ecs update-service --cluster ${{ secrets.AWS_ECS_CLUSTER }} --service ${{ secrets.AWS_ECS_SERVICE }} --force-new-deployment
+  
 
