@@ -142,7 +142,6 @@ namespace EMS.BACKEND.API.Tests.Repositories
             Assert.Equal("Invalid password", result.Message);
         }
 
-
         // Helper method to mock UserManager
         private Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
         {
