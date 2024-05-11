@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run xUnit tests
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test 
 
       - name: Build Docker image
         run: docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:latest .
