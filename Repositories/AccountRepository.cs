@@ -384,7 +384,6 @@ namespace EMS.BACKEND.API.Repositories
             };
 
         }
-
         public async Task<BaseResponseDTO<string, UserAccountResponseDTO>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO)
         {
             var token = googleLoginDTO.Token;

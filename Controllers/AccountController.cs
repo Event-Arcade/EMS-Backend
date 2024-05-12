@@ -61,7 +61,7 @@ namespace EMS.BACKEND.API.Controllers
         }
 
         //return current user details
-        [HttpGet(), Authorize]
+        [HttpGet("getme"), Authorize]
         public async Task<IActionResult> GetMe()
         {
             var userId = User.GetUserId();
