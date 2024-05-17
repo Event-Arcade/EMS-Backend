@@ -15,7 +15,13 @@ namespace EMS.BACKEND.API.Models
         public Double Longitude { get; set; }
         public Double Latitude { get; set; }
         public string? ProfilePicturePath { get; set; }
-        public ICollection<Shop> Shops { get; set; } = new List<Shop>();
+        public virtual ICollection<Shop>? Shops { get; set; }
+        public virtual ICollection<AdminStaticResource>? AdminStaticResources { get; set; }
+        public virtual ICollection<FeedBack>? FeedBacks { get; set; }
+        public virtual ICollection<ChatMessage>? SentMessages { get; set; }
+        public virtual ICollection<ChatMessage>? RecievedMessages { get; set; }
+        public virtual ICollection<Package>? Packages { get; set; }
+        public virtual ICollection<Category>? Categories { get; set; }
 
     }
 }

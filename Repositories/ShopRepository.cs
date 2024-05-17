@@ -29,18 +29,18 @@ namespace EMS.BACKEND.API.Repositories
             _tokenService = tokenService;
         }
 
-        public async Task<BaseResponseDTO<ShopResponseDTO>> CreateAsync(string userId, ShopCreateDTO entity)
+        public async Task<BaseResponseDTO<string,ShopResponseDTO>> CreateAsync(string userId, ShopCreateDTO entity)
         {
             try
             {
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     // get the user and check if the user is a vendor already
-                    var user = await _userManager.FindByEmailAsync(userId);
+                    var user = await _userManager.FindByIdAsync(userId);
                     var userRole = await _userManager.GetRolesAsync(user);
                     if (userRole.Contains("vendor"))
                     {
-                        return new BaseResponseDTO<ShopResponseDTO>
+                        return new BaseResponseDTO<string, ShopResponseDTO>
                         {
                             Message = "User is already a vendor",
                             Flag = false
@@ -79,18 +79,19 @@ namespace EMS.BACKEND.API.Repositories
                     // convert the background image path to a url
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(newShop.BackgroundImagePath);
 
-                    return new BaseResponseDTO<ShopResponseDTO>
+                    return new BaseResponseDTO<string, ShopResponseDTO>
                     {
                         Message = "Shop created successfully",
                         Flag = true,
-                        Data = newShop.MapToShopResponseDTO(url)
+                        Data2 = newShop.MapToShopResponseDTO(url),
+                        Data1 = token
                     };
 
                 }
             }
             catch (Exception ex)
             {
-                return new BaseResponseDTO<ShopResponseDTO>
+                return new BaseResponseDTO<string, ShopResponseDTO>
                 {
                     Message = ex.Message,
                     Flag = false
@@ -107,7 +108,7 @@ namespace EMS.BACKEND.API.Repositories
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
                     // get current user and check if the user is a vendor
-                    var user = await _userManager.FindByEmailAsync(userId);
+                    var user = await _userManager.FindByIdAsync(userId);
                     var userRole = await _userManager.GetRolesAsync(user);
                     if (!userRole.Contains("vendor"))
                     {

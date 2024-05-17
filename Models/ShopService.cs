@@ -11,10 +11,11 @@ namespace EMS.BACKEND.API.Models
         public string Description { get; set; } = string.Empty;
         public double Rating { get; set; }
         public int ShopId { get; set; }
-        public Shop Shop { get; set; }
+        public virtual Shop Shop { get; set; }
         public int CategoryId { get; set; }
-        public Category Category { get; set; }
-        public ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
-        public ICollection<ShopServiceStaticResources> ShopServiceStaticResources { get; set; } = new List<ShopServiceStaticResources>();
+        public virtual Category Category { get; set; }
+        public virtual ICollection<FeedBack>? FeedBacks { get; set; }
+        public virtual ICollection<ShopServiceStaticResources>? ShopServiceStaticResources { get; set; } 
+        public virtual ICollection<SubPackage>? SubPackages { get; set; }
     }
 }

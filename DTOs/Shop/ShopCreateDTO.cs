@@ -10,5 +10,4 @@ namespace EMS.BACKEND.API.DTOs.Shop
         public string? Description { get; set; }
         public IFormFile? BackGroundImage { get; set; }
     }
-    
 }

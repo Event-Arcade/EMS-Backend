@@ -10,8 +10,8 @@ namespace EMS.BACKEND.API.Models
         public string? Description { get; set; }
         public double? Rating { get; set; }
         public string OwnerId { get; set; }
-        public ApplicationUser Owner { get; set; }
+        public virtual ApplicationUser Owner { get; set; }
         public string? BackgroundImagePath { get; set; }
-        public ICollection<ShopService> Services { get; set; } = new List<ShopService>();
+        public virtual  ICollection<ShopService> Services { get; set; } = new List<ShopService>();
     }
 }

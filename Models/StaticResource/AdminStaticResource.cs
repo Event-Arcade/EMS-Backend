@@ -8,7 +8,7 @@ namespace EMS.BACKEND.API.Models
         public string Description { get; set; }
         [NotMapped]
         public IFormFile Resource { get; set; }
-        public string UserId{get;set;}
-        public virtual ApplicationUser User{get;set;}
+        public string AdminId{get;set;}
+        public virtual ApplicationUser Admin{get;set;}
     }
 }

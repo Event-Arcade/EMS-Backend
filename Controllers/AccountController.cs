@@ -119,6 +119,21 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(response);
             }
         }
+
+        [HttpGet("getaccountbyid/{id}")]
+        public async Task<IActionResult> GetAccountById(string id)
+        {
+            var result = await _userAccount.GetAccountByIdAsync(id);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
         
+           
     }
 }

@@ -32,12 +32,12 @@ namespace EMS.BACKEND.API.Repositories
             _tokenService = tokenService;
         }
 
-        public async Task<BaseResponseDTO<string, UserAccountResponseDTO>> CreateAccountAsync(RegisterUserDTO registerUser)
+        public async Task<BaseResponseDTO<string>> CreateAccountAsync(RegisterUserDTO registerUser)
         {
             //check weather user already registered
             var user = await _userManager.FindByEmailAsync(registerUser.Email);
             if (user is not null)
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = false,
                     Message = "User already registered"
@@ -56,7 +56,7 @@ namespace EMS.BACKEND.API.Repositories
                 }
                 else
                 {
-                    return new BaseResponseDTO<string, UserAccountResponseDTO>
+                    return new BaseResponseDTO<string>
                     {
                         Flag = false,
                         Message = filepath
@@ -68,7 +68,7 @@ namespace EMS.BACKEND.API.Repositories
             var createUser = await _userManager.CreateAsync(registerApplicationUser, registerUser.Password);
             //Check user created
             if (!createUser.Succeeded)
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = false,
                     Message = createUser.ToString()
@@ -92,29 +92,28 @@ namespace EMS.BACKEND.API.Repositories
                     getUser.ProfilePicturePath = url;
                 }
 
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = true,
                     Message = "Account created",
-                    Data1 = token,
-                    Data2 = getUser.MapUserToUserAccountResponseDTO()
+                    Data = token
                 };
             }
 
-            return new BaseResponseDTO<string, UserAccountResponseDTO>
+            return new BaseResponseDTO<string>
             {
                 Flag = false,
                 Message = "Error occured while creating account"
             };
         }
-        public async Task<BaseResponseDTO<string, UserAccountResponseDTO>> LoginAccountAsync(LoginDTO loginDTO)
+        public async Task<BaseResponseDTO<string>> LoginAccountAsync(LoginDTO loginDTO)
         {
             //Get user by email
             var getUser = await _userManager.FindByEmailAsync(loginDTO.Email);
 
             //Check user is not null
             if (getUser is null)
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = false,
                     Message = "User not found"
@@ -123,7 +122,7 @@ namespace EMS.BACKEND.API.Repositories
             //Check user password is correct
             bool checkUserPasswords = await _userManager.CheckPasswordAsync(getUser, loginDTO.Password);
             if (!checkUserPasswords)
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = false,
                     Message = "Incorrect password/username"
@@ -140,12 +139,11 @@ namespace EMS.BACKEND.API.Repositories
                 getUser.ProfilePicturePath = url;
             }
 
-            return new BaseResponseDTO<string, UserAccountResponseDTO>
+            return new BaseResponseDTO<string>
             {
                 Flag = true,
                 Message = "Login successful",
-                Data1 = token,
-                Data2 = getUser.MapUserToUserAccountResponseDTO()
+                Data = token
             };
         }
         public async Task<BaseResponseDTO<UserAccountResponseDTO>> UpdateAccountAsync(string userId, UpdateUserDTO userDTO)
@@ -223,11 +221,13 @@ namespace EMS.BACKEND.API.Repositories
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(user.ProfilePicturePath);
                     user.ProfilePicturePath = url;
                 }
+                // get the role of the user
+                var userRole = await _userManager.GetRolesAsync(user);
                 return new BaseResponseDTO<UserAccountResponseDTO>
                 {
                     Flag = true,
                     Message = "User updated",
-                    Data = user.MapUserToUserAccountResponseDTO()
+                    Data = user.MapUserToUserAccountResponseDTO(userRole.First().ToString())
                 };
             }
 
@@ -248,11 +248,14 @@ namespace EMS.BACKEND.API.Repositories
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(currentUser.ProfilePicturePath);
                     currentUser.ProfilePicturePath = url;
                 }
+                // get the role of the user
+                var userRole = await _userManager.GetRolesAsync(currentUser);
+
                 return new BaseResponseDTO<UserAccountResponseDTO>
                 {
                     Flag = true,
                     Message = "User found",
-                    Data = currentUser.MapUserToUserAccountResponseDTO()
+                    Data = currentUser.MapUserToUserAccountResponseDTO(userRole.First().ToString())
 
                 };
             }
@@ -384,7 +387,7 @@ namespace EMS.BACKEND.API.Repositories
             };
 
         }
-        public async Task<BaseResponseDTO<string, UserAccountResponseDTO>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO)
+        public async Task<BaseResponseDTO<string>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO)
         {
             var token = googleLoginDTO.Token;
             var client = new HttpClient();
@@ -395,7 +398,7 @@ namespace EMS.BACKEND.API.Repositories
 
             if (googleUser is null)
             {
-                return new BaseResponseDTO<string, UserAccountResponseDTO>
+                return new BaseResponseDTO<string>
                 {
                     Flag = false,
                     Message = "Invalid google token"
@@ -418,7 +421,7 @@ namespace EMS.BACKEND.API.Repositories
                 var createUser = await _userManager.CreateAsync(newUser);
                 if (!createUser.Succeeded)
                 {
-                    return new BaseResponseDTO<string, UserAccountResponseDTO>
+                    return new BaseResponseDTO<string>
                     {
                         Flag = false,
                         Message = createUser.ToString()
@@ -432,12 +435,11 @@ namespace EMS.BACKEND.API.Repositories
             var userRole = await _userManager.GetRolesAsync(user);
             var jwtToken = _tokenService.CreateToken(user, userRole.First());
 
-            return new BaseResponseDTO<string, UserAccountResponseDTO>
+            return new BaseResponseDTO<string>
             {
                 Flag = true,
                 Message = "Login successful",
-                Data1 = jwtToken,
-                Data2 = user.MapUserToUserAccountResponseDTO()
+                Data = jwtToken
             };
 
         }

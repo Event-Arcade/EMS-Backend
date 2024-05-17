@@ -12,7 +12,6 @@ namespace EMS.BACKEND.API.Mappers
                 Name = shopCreateDTO.Name,
                 Description = shopCreateDTO.Description,
                 OwnerId = user.Id,
-                Owner = user,
                 BackgroundImagePath = imagePath
             };
         }

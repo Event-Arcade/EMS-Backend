@@ -37,9 +37,30 @@ namespace EMS.BACKEND.API.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindAllAsync()
+        public async Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindAllAsync()
         {
-            throw new NotImplementedException();
+            try{
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var services = await context.ShopServices.Include(x => x.ShopServiceStaticResources).Include(x=>x.FeedBacks).ToListAsync();
+                    var response = services.Select(x => x.ToShopServiceResponseDTO()).ToList();
+                    return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
+                    {
+                        Data = response,
+                        Message = "Services fetched successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
         public Task<BaseResponseDTO<ShopServiceResponseDTO>> FindByIdAsync(int id)

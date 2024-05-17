@@ -23,8 +23,7 @@ namespace EMS.BACKEND.API.Mappers
                 Name = categoryRequestDTO.Name,
                 Description = categoryRequestDTO.Description,
                 CategoryImagePath = categoryImagePath,
-                ApplicationUserId = user.Id,
-                User = user
+                AdminId = user.Id
             };
         }
     }

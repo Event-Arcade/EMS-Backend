@@ -11,10 +11,10 @@ namespace EMS.BACKEND.API.Models
         public DateTime PostedOn { get; set; }
         public double Rating { get; set; }
         public int ServiceId { get; set; }
-        public ShopService Service { get; set; }
+        public virtual ShopService Service { get; set; }
         public string ApplicationUserId { get; set; }
-        public ApplicationUser User { get; set; }
+        public virtual ApplicationUser User { get; set; }
         [MaxLength(5)]
-        public ICollection<FeedBackStaticResource> FeedBackStaticResources { get; set; } = new List<FeedBackStaticResource>();
+        public virtual ICollection<FeedBackStaticResource> FeedBackStaticResources { get; set; } = new List<FeedBackStaticResource>();
     }
 }

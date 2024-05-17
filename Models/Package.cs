@@ -33,8 +33,8 @@ namespace EMS.BACKEND.API.Models
             }
         }
         public DateTime CreatedAt { get; set; }
-        public ICollection<SubPackage> SubPackages { get; set; } = new List<SubPackage>();
+        public virtual ICollection<SubPackage> SubPackages { get; set; } = new List<SubPackage>();
         public string UserId { get; set; }
-        public ApplicationUser User { get; set; }
+        public virtual ApplicationUser User { get; set; }
     }
 }

@@ -11,16 +11,17 @@ namespace EMS.BACKEND.API.Repositories
     {
         private readonly IConfiguration configuration;
         private readonly IAmazonS3 amazonS3;
-        public CloudProviderRepository(IConfiguration configuration, IAmazonS3 amazonS3)
+        public CloudProviderRepository(IConfiguration config, IAmazonS3 amazon)
         {
-            configuration = configuration;
-            amazonS3 = amazonS3;
+            configuration = config;
+            amazonS3 = amazon;
         }
         public string GeneratePreSignedUrlForDownload(string filepath)
         {
-            var request = new GetPreSignedUrlRequest
+           try{
+             var request = new GetPreSignedUrlRequest
             {
-                BucketName = configuration["AWS:BucketName"],
+                BucketName = configuration["StorageDirectories:BucketName"],
                 Key = filepath,
                 Verb = HttpVerb.GET,
                 Expires = DateTime.UtcNow.AddDays(1),
@@ -29,6 +30,11 @@ namespace EMS.BACKEND.API.Repositories
 
             string url = amazonS3.GetPreSignedURL(request);
             return url;
+           }catch(Exception ex){
+                //print the  error message
+                Console.WriteLine(ex.Message);
+                return filepath;
+           }
         }
         public async Task<(bool, string)> UploadFile(IFormFile? file, string subDirectory)
         {
@@ -49,11 +55,13 @@ namespace EMS.BACKEND.API.Repositories
                     filePath = $"{subDirectory}/{Guid.NewGuid().ToString()}";
                     var request = new PutObjectRequest
                     {
-                        BucketName = configuration["AWS:BucketName"],
+                        BucketName = configuration["StorageDirectories:BucketName"],
                         Key = filePath,
-                        InputStream = file.OpenReadStream(),
-                        ContentType = file.ContentType
+                        InputStream = file.OpenReadStream()
                     };
+
+                    request.Metadata.Add("content-Type", file.ContentType);
+
                     var result = await amazonS3.PutObjectAsync(request);
                     if (result.HttpStatusCode == HttpStatusCode.OK)
                     {
@@ -75,7 +83,7 @@ namespace EMS.BACKEND.API.Repositories
             {
                 var request = new DeleteObjectRequest
                 {
-                    BucketName = configuration["AWS:BucketName"],
+                    BucketName = configuration["StorageDirectories:BucketName"],
                     Key = filePath
                 };
 

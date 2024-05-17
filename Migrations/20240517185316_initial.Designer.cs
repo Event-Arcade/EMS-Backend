@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EMS.BACKEND.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240428152928_initial")]
+    [Migration("20240517185316_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -33,6 +33,10 @@ namespace EMS.BACKEND.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -45,13 +49,9 @@ namespace EMS.BACKEND.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("AdminId");
 
                     b.ToTable("AdminStaticResources");
                 });
@@ -161,7 +161,7 @@ namespace EMS.BACKEND.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
+                    b.Property<string>("AdminId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -178,7 +178,7 @@ namespace EMS.BACKEND.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("AdminId");
 
                     b.ToTable("Categories");
                 });
@@ -548,36 +548,36 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.AdminStaticResource", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Admin")
+                        .WithMany("AdminStaticResources")
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Admin");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.Category", b =>
                 {
-                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("ApplicationUserId")
+                    b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Admin")
+                        .WithMany("Categories")
+                        .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Admin");
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.ChatMessage", b =>
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Receiver")
-                        .WithMany()
+                        .WithMany("RecievedMessages")
                         .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Sender")
-                        .WithMany()
+                        .WithMany("SentMessages")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -590,7 +590,7 @@ namespace EMS.BACKEND.API.Migrations
             modelBuilder.Entity("EMS.BACKEND.API.Models.FeedBack", b =>
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("FeedBacks")
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -611,7 +611,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.FeedBack", "FeedBack")
                         .WithMany("FeedBackStaticResources")
                         .HasForeignKey("FeedBackId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("FeedBack");
@@ -620,9 +620,9 @@ namespace EMS.BACKEND.API.Migrations
             modelBuilder.Entity("EMS.BACKEND.API.Models.Package", b =>
                 {
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
-                        .WithMany()
+                        .WithMany("Packages")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -678,9 +678,9 @@ namespace EMS.BACKEND.API.Migrations
                         .IsRequired();
 
                     b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
-                        .WithMany()
+                        .WithMany("SubPackages")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Package");
@@ -741,6 +741,18 @@ namespace EMS.BACKEND.API.Migrations
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("AdminStaticResources");
+
+                    b.Navigation("Categories");
+
+                    b.Navigation("FeedBacks");
+
+                    b.Navigation("Packages");
+
+                    b.Navigation("RecievedMessages");
+
+                    b.Navigation("SentMessages");
+
                     b.Navigation("Shops");
                 });
 
@@ -769,6 +781,8 @@ namespace EMS.BACKEND.API.Migrations
                     b.Navigation("FeedBacks");
 
                     b.Navigation("ShopServiceStaticResources");
+
+                    b.Navigation("SubPackages");
                 });
 #pragma warning restore 612, 618
         }

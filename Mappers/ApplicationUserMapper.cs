@@ -8,7 +8,7 @@ namespace EMS.BACKEND.API.Mappers
 {
     public static class ApplicationUserMapper
     {
-        public static UserAccountResponseDTO MapUserToUserAccountResponseDTO(this ApplicationUser user)
+        public static UserAccountResponseDTO MapUserToUserAccountResponseDTO(this ApplicationUser user, string role)
         {
             return new UserAccountResponseDTO
             {
@@ -22,6 +22,7 @@ namespace EMS.BACKEND.API.Mappers
                 Longitude = user.Longitude,
                 Latitude = user.Latitude,
                 Email = user.Email,
+                Role = role,
                 ProfilePictureURL = user.ProfilePicturePath
             };
         }
