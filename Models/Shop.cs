@@ -12,6 +12,6 @@ namespace EMS.BACKEND.API.Models
         public string OwnerId { get; set; }
         public virtual ApplicationUser Owner { get; set; }
         public string? BackgroundImagePath { get; set; }
-        public virtual  ICollection<ShopService> Services { get; set; } = new List<ShopService>();
+        public virtual ICollection<ShopService>? Services { get; set; }
     }
 }

@@ -119,7 +119,7 @@ namespace EMS.BACKEND.API.Repositories
                         };
                     }
 
-                    var shop = await dbContext.Shops.Where(s => s.Id == id).Include(s => s.Services).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -130,11 +130,6 @@ namespace EMS.BACKEND.API.Repositories
                     if (shop.OwnerId != user.Id)
                     {
                         return new BaseResponseDTO { Message = "You are not the owner of the shop", Flag = false };
-                    }
-                    //check if there any services associated with the shop
-                    if (shop.Services.Count > 0)
-                    {
-                        return new BaseResponseDTO { Message = "Shop has services associated with it", Flag = false };
                     }
 
                     // Remove the background image from the cloud
@@ -179,7 +174,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shops = await dbContext.Shops.Include(s => s.Services).ToListAsync();
+                    var shops = await dbContext.Shops.ToListAsync();
 
                     //convert the background image path to a url
                     foreach (var shop in shops)
@@ -216,7 +211,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.Id == id).Include(s => s.Services).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -242,7 +237,6 @@ namespace EMS.BACKEND.API.Repositories
         }
         public async Task<BaseResponseDTO<ShopResponseDTO>> GetShopByVendor(string userId)
         {
-            //TODO: services are not add with response
             try
             {
                 // get the user and check if the user is a vendor already
@@ -261,7 +255,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id).Include(s => s.Services).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.OwnerId == user.Id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -299,7 +293,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shop = await dbContext.Shops.Where(s => s.Id == id).Include(s => s.Services).FirstOrDefaultAsync();
+                    var shop = await dbContext.Shops.Where(s => s.Id == id).FirstOrDefaultAsync();
 
                     if (shop == null)
                     {
@@ -307,7 +301,7 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     //get the user
-                    var user = await _userManager.FindByEmailAsync(userId);
+                    var user = await _userManager.FindByIdAsync(userId);
 
                     //check if the user is the owner of the shop
                     if (shop.OwnerId != user.Id)
@@ -344,11 +338,12 @@ namespace EMS.BACKEND.API.Repositories
 
                     dbContext.Shops.Update(shop);
                     await dbContext.SaveChangesAsync();
+                    string backgroundImageUrl = _cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
                     return new BaseResponseDTO<ShopResponseDTO>
                     {
                         Message = "Shop updated successfully",
                         Flag = true,
-                        Data = shop.MapToShopResponseDTO(shop.BackgroundImagePath)
+                        Data = shop.MapToShopResponseDTO(backgroundImageUrl)
                     };
                 }
             }

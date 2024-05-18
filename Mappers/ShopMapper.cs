@@ -25,7 +25,7 @@ namespace EMS.BACKEND.API.Mappers
                 Description = shop.Description,
                 Rating = shop.Rating,
                 OwnerId = shop.OwnerId,
-                BackgroundImageURL = imageURL
+                BackgroundImageURL = imageURL,
             };
         }
     }
