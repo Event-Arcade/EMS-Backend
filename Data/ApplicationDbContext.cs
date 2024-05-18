@@ -15,6 +15,7 @@ namespace EMS.BACKEND.API.DbContext
         public DbSet<FeedBack> FeedBacks { get; set; }
         public DbSet<ShopServiceStaticResources> ShopServiceStaticResources { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<FeedBackStaticResource> FeedBackStaticResources { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

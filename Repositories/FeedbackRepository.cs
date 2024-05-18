@@ -1,344 +1,312 @@
 using Contracts;
 using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
+using EMS.BACKEND.API.DTOs;
+using EMS.BACKEND.API.DTOs.Mappers;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
     public class FeedbackRepository : IFeedbackRepository
     {
-        // public async Task<BaseResponseDTO<String>> CreateAsync(FeedBack entity)
-        // {
-        //     try
-        //     {
-        //         // Check entity is null
-        //         if (entity == null)
-        //         {
-        //             throw new Exception("Request is null");
-        //         }
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ICloudProviderRepository _cloudProvider;
+        private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             // Check if feedback already exists
-        //             var feedback = context.FeedBacks.FirstOrDefault(x => x.ServiceId == entity.ServiceId && x.ApplicationUserId == entity.ApplicationUserId);
-        //             if (feedback != null)
-        //             {
-        //                 throw new Exception("Feedback already exists");
-        //             }
+        public FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration,  UserManager<ApplicationUser> userManager)
+        {
+            _serviceScopeFactory = serviceScopeFactory;
+            _cloudProvider = cloudProvider;
+            _configuration = configuration;
+            _userManager = userManager;
+        }
 
-        //             // Upload feedback image to S3
-        //             var (flag, filePath) = await cloudProvider.UploadFile(entity.FeedbackImage, configuration["StorageDirectories:FeedbackImages"]);
+        public async Task<BaseResponseDTO<FeedBackResponseDTO>> CreateAsync(string userId, FeedBackRequestDTO entity)
+        {
+            try{
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        //             if (flag)
-        //             {
-        //                 entity.FeedbackStaticResourcePath = filePath;
-        //             }
-        //             else
-        //             {
-        //                 throw new Exception("Failed to upload feedback image");
-        //             }
-        //             // Save feedback
-        //             await context.FeedBacks.AddAsync(entity);
-        //             await context.SaveChangesAsync();
+                    // get the user
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO<FeedBackResponseDTO>
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
 
-        //             return new BaseResponseDTO<String>
-        //             {
-        //                 Message = "Feedback created successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<String>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
-        // {
-        //     try
-        //     {
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             // Find feedback by id
-        //             var feedback = context.FeedBacks.FirstOrDefault(x => x.Id == id);
-        //             if (feedback == null)
-        //             {
-        //                 throw new Exception("Feedback not found");
-        //             }
+                    // check if the service exists
+                    var service = await context.ShopServices.FirstOrDefaultAsync(x => x.Id == entity.ServiceId);
+                    if (service == null)
+                    {
+                        return new BaseResponseDTO<FeedBackResponseDTO>
+                        {
+                            Message = "Service not found",
+                            Flag = false
+                        };
+                    }
 
-        //             // Delete feedback image from S3
-        //             await cloudProvider.RemoveFile(feedback.FeedbackStaticResourcePath);
+                    // check if the user has already given feedback
+                    var feedBack = await context.FeedBacks.FirstOrDefaultAsync(x => x.ApplicationUserId == userId && x.ServiceId == entity.ServiceId);
+                    if (feedBack != null)
+                    {
+                        return new BaseResponseDTO<FeedBackResponseDTO>
+                        {
+                            Message = "You have already given feedback for this service",
+                            Flag = false
+                        };
+                    }
 
-        //             context.FeedBacks.Remove(feedback);
-        //             await context.SaveChangesAsync();
+                    // create the feedback
+                    var feedBackEntity = entity.ToFeedBack(userId);
+                    //feedBackEntity.User = user;
+                    //feedBackEntity.Service = service;
+                    var newFeedback = await context.FeedBacks.AddAsync(feedBackEntity);
+                    await context.SaveChangesAsync();
 
-        //             return new BaseResponseDTO<String>
-        //             {
-        //                 Message = "Feedback deleted successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<String>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<IEnumerable<FeedBack>>> FindAllAsync()
-        // {
-        //     try
-        //     {
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var feedbacks = await context.FeedBacks.ToListAsync();
+                    if(newFeedback.State == EntityState.Added)
+                    {   
+                        throw new Exception("Feedback not created, please try again later");
+                    }
+                    
+                    // upload the iformfiles and create the feedBackStaticResources
+                    ICollection<FeedBackStaticResource> feedBackStaticResources = new List<FeedBackStaticResource>();
+                    if (entity.FeedBackStaticResources != null)
+                    {
+                        foreach (var file in entity.FeedBackStaticResources)
+                        {
+                            // file shoud be type image
+                            if (file.ContentType.Contains("image"))
+                            {
+                                var (flag, path) = await _cloudProvider.UploadFile(file, _configuration["StorageDirectories:FeedbackImages"]);
+                                if (flag)
+                                {
+                                    var feedBackStaticResource = new FeedBackStaticResource
+                                    {
+                                        FeedBackId = newFeedback.Entity.Id,
+                                        ResourceUrl = path
+                                    };
+                                    feedBackStaticResources.Add(feedBackStaticResource);
+                                }else{
+                                    throw new Exception("Error uploading file");
+                                }
+                            }
+                        }
+                    } 
 
-        //             //assing urls for static resource path in each feedback
-        //             foreach (var feedback in feedbacks)
-        //             {
-        //                 var url = cloudProvider.GeneratePreSignedUrlForDownload(feedback.FeedbackStaticResourcePath);
-        //                 feedback.FeedbackStaticResourcePath = url;
-        //             }
+                    // add the feedBackStaticResources to the feedback
+                    if (feedBackStaticResources.Count > 0)
+                    {
+                        await context.FeedBackStaticResources.AddRangeAsync(feedBackStaticResources);
+                        await context.SaveChangesAsync();
+                    }
 
-        //             return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //             {
-        //                 Data = feedbacks,
-        //                 Message = "Feedbacks fetched successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<FeedBack>> FindByIdAsync(string id)
-        // {
-        //     try
-        //     {
-        //         // Check id is null
-        //         if (string.IsNullOrEmpty(id))
-        //         {
-        //             throw new Exception("Requested Id is null");
-        //         }
+                    // generate presigned urls
+                    ICollection<string> feedBackStaticResourcesUrls = new List<string>();
+                    foreach (var feedBackStaticResource in feedBackStaticResources)
+                    {
+                        var url = _cloudProvider.GeneratePreSignedUrlForDownload(feedBackStaticResource.ResourceUrl);
+                        feedBackStaticResourcesUrls.Add(url);
+                    }
 
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var feedback = await context.FeedBacks.FirstOrDefaultAsync(x => x.Id == id);
+                    return new BaseResponseDTO<FeedBackResponseDTO>
+                    {
+                        Data = newFeedback.Entity.ToFeedBackResponseDTO(feedBackStaticResourcesUrls),
+                        Message = "Feedback created successfully",
+                        Flag = true
+                    };
+  
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<FeedBackResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
 
-        //             if (feedback == null)
-        //             {
-        //                 throw new Exception("Feedback not found");
-        //             }
+        public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        //             //assing urls for static resource path in feedback
-        //             var url = cloudProvider.GeneratePreSignedUrlForDownload(feedback.FeedbackStaticResourcePath);
-        //             feedback.FeedbackStaticResourcePath = url;
+                    // get the user
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
 
-        //             return new BaseResponseDTO<FeedBack>
-        //             {
-        //                 Data = feedback,
-        //                 Message = "Feedback fetched successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<FeedBack>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByServiceId(string serviceId)
-        // {
-        //     try
-        //     {
-        //         // Check shopId is null
-        //         if (string.IsNullOrEmpty(serviceId))
-        //         {
-        //             throw new Exception("Requested shopId is null");
-        //         }
+                    // check if the feedback exists
+                    var feedBack = await context.FeedBacks.FirstOrDefaultAsync(x => x.Id == id);
+                    if (feedBack == null)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "Feedback not found",
+                            Flag = false
+                        };
+                    }
 
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    // check if the user is the owner of the feedback
+                    if (feedBack.ApplicationUserId != userId)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "You are not the owner of the feedback",
+                            Flag = false
+                        };
+                    }
 
-        //             //get all feedbacks for service
-        //             var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == serviceId).ToListAsync();
+                    // delete the feedBackStaticResources
+                    var feedBackStaticResources = await context.FeedBackStaticResources.Where(x => x.FeedBackId == id).ToListAsync();
+                    if (feedBackStaticResources.Count > 0)
+                    {
+                        foreach (var feedBackStaticResource in feedBackStaticResources)
+                        {
+                            await _cloudProvider.RemoveFile(feedBackStaticResource.ResourceUrl);
+                        }
+                        context.FeedBackStaticResources.RemoveRange(feedBackStaticResources);
+                        await context.SaveChangesAsync();
+                    }
 
-        //             //assing urls for static resource path in each feedback
-        //             foreach (var feedback in feedbacks)
-        //             {
-        //                 var url = cloudProvider.GeneratePreSignedUrlForDownload(feedback.FeedbackStaticResourcePath);
-        //                 feedback.FeedbackStaticResourcePath = url;
-        //             }
+                    // delete the feedback
+                    context.FeedBacks.Remove(feedBack);
+                    await context.SaveChangesAsync();
 
-        //             return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //             {
-        //                 Data = feedbacks,
-        //                 Message = "Feedbacks fetched successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByShopId(string shopId)
-        // {
-        //     try
-        //     {
-        //         // Check shopId is null
-        //         if (string.IsNullOrEmpty(shopId))
-        //         {
-        //             throw new Exception("Requested shopId is null");
-        //         }
+                    return new BaseResponseDTO
+                    {
+                        Message = "Feedback deleted successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+       
+        public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> FindAllAsync()
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             //get all services in this shop
-        //             var services = await context.Services.Where(x => x.ShopId == shopId).ToListAsync();
+                    var feedBacks = await context.FeedBacks.ToListAsync();
+                    ICollection<FeedBackResponseDTO> feedBackResponseDTOs = new List<FeedBackResponseDTO>();
+                    foreach (var feedBack in feedBacks)
+                    {
+                        var feedBackStaticResources = await context.FeedBackStaticResources.Where(x => x.FeedBackId == feedBack.Id).ToListAsync();
+                        ICollection<string> feedBackStaticResourcesUrls = new List<string>();
+                        foreach (var feedBackStaticResource in feedBackStaticResources)
+                        {
+                            var url = _cloudProvider.GeneratePreSignedUrlForDownload(feedBackStaticResource.ResourceUrl);
+                            feedBackStaticResourcesUrls.Add(url);
+                        }
+                        feedBackResponseDTOs.Add(feedBack.ToFeedBackResponseDTO(feedBackStaticResourcesUrls));
+                    }
 
-        //             //get all feedbacks for each service
-        //             List<FeedBack> feedbacks = new List<FeedBack>();
-        //             foreach (var service in services)
-        //             {
-        //                 var feedback = await context.FeedBacks.FirstOrDefaultAsync(x => x.ServiceId == service.Id);
-        //                 if (feedback != null)
-        //                 {
-        //                     feedbacks.Add(feedback);
-        //                 }
-        //             }
+                    return new BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>
+                    {
+                        Data = feedBackResponseDTOs,
+                        Message = "FeedBacks found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
 
-        //             //assing urls for static resource path in each feedback
-        //             foreach (var feedback in feedbacks)
-        //             {
-        //                 var url = cloudProvider.GeneratePreSignedUrlForDownload(feedback.FeedbackStaticResourcePath);
-        //                 feedback.FeedbackStaticResourcePath = url;
-        //             }
+        public async Task<BaseResponseDTO<FeedBackResponseDTO>> FindByIdAsync(int id)
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        //             return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //             {
-        //                 Data = feedbacks,
-        //                 Message = "Feedbacks fetched successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<IEnumerable<FeedBack>>
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO> UpdateAsync(string id, FeedBack entity)
-        // {
-        //     try
-        //     {
-        //         // Check entity is null
-        //         if (entity == null)
-        //         {
-        //             throw new Exception("Request is null");
-        //         }
+                    var feedBack = await context.FeedBacks.FirstOrDefaultAsync(x => x.Id == id);
+                    if (feedBack == null)
+                    {
+                        return new BaseResponseDTO<FeedBackResponseDTO>
+                        {
+                            Message = "FeedBack not found",
+                            Flag = false
+                        };
+                    }
 
-        //         using (var scope = serviceScopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             // Check if feedback already exists
-        //             var feedback = context.FeedBacks.FirstOrDefault(x => x.Id == entity.Id);
-        //             if (feedback == null)
-        //             {
-        //                 throw new Exception("Feedback not found");
-        //             }
+                    var feedBackStaticResources = await context.FeedBackStaticResources.Where(x => x.FeedBackId == feedBack.Id).ToListAsync();
+                    ICollection<string> feedBackStaticResourcesUrls = new List<string>();
+                    foreach (var feedBackStaticResource in feedBackStaticResources)
+                    {
+                        var url = _cloudProvider.GeneratePreSignedUrlForDownload(feedBackStaticResource.ResourceUrl);
+                        feedBackStaticResourcesUrls.Add(url);
+                    }
 
-        //             //Update static-resource in s3
-        //             var (flag, filePath) = await cloudProvider.UpdateFile(entity.FeedbackImage, configuration["StorageDirectories:FeedbackImages"], feedback.FeedbackStaticResourcePath);
-        //             entity.FeedbackStaticResourcePath = filePath;
+                    return new BaseResponseDTO<FeedBackResponseDTO>
+                    {
+                        Data = feedBack.ToFeedBackResponseDTO(feedBackStaticResourcesUrls),
+                        Message = "FeedBack found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<FeedBackResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
 
-        //             // Update feedback
-        //             context.FeedBacks.Update(entity);
-        //             await context.SaveChangesAsync();
-
-        //             return new BaseResponseDTO
-        //             {
-        //                 Message = "Feedback updated successfully",
-        //                 Flag = true
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO
-        //         {
-        //             Message = ex.Message,
-        //             Flag = false
-        //         };
-        //     }
-        // }
-        public Task<BaseResponseDTO<FeedBack>> CreateAsync(string userId, FeedBack entity)
+        public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByServiceId(string serviceId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<BaseResponseDTO> DeleteAsync(string userId, int id)
+        public Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByShopId(string shopId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<BaseResponseDTO<IEnumerable<FeedBack>>> FindAllAsync()
+        public Task<BaseResponseDTO<FeedBackResponseDTO>> UpdateAsync(string userId, int id, FeedBackRequestDTO entity)
         {
             throw new NotImplementedException();
         }
 
-        public Task<BaseResponseDTO<FeedBack>> FindByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByServiceId(string serviceId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BaseResponseDTO<IEnumerable<FeedBack>>> GetFeedBacksByShopId(string shopId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BaseResponseDTO<FeedBack>> UpdateAsync(string userId, int id, FeedBack entity)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

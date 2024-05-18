@@ -1,4 +1,7 @@
 using Contracts;
+using EMS.BACKEND.API.DTOs;
+using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Extensions;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,12 +10,25 @@ namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FeedbackController(IFeedbackRepository feedbackRepository) : ControllerBase
+    public class FeedbackController : ControllerBase
     {
-        // [HttpPost("add"),Authorize]
-        // public async Task<IActionResult> AddFeedback(FeedBack feedback)
+        private readonly IFeedbackRepository _feedbackRepository;
+
+        public FeedbackController(IFeedbackRepository feedbackRepository)
+        {
+            _feedbackRepository = feedbackRepository;
+        }
+
+        // [HttpGet("GetFeedBacksByShopId")]
+        // public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByShopId(string shopId)
         // {
-        //     var result = await feedbackRepository.CreateAsync(feedback);
+        //     return await _feedbackRepository.GetFeedBacksByShopId(shopId);
+        // }
+
+        // [HttpGet("GetFeedBacksByServiceId")]
+        // public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByServiceId(string serviceId)
+        // {
+        //     var result = await _feedbackRepository.GetFeedBacksByServiceId(serviceId);
         //     if (result.Flag)
         //     {
         //         return Ok(result);
@@ -23,10 +39,26 @@ namespace EMS.BACKEND.API.Controllers
         //     }
         // }
 
-        // [HttpDelete("delete/{feedbackId}"),Authorize]
-        // public async Task<IActionResult> DeleteFeedback(string feedbackId)
+        [HttpPost("create"), Authorize]
+        public async Task<IActionResult> AddFeedBack([FromForm]FeedBackRequestDTO feedBackRequestDTO)
+        {
+            var userId = User.GetUserId(); 
+
+            var result = await _feedbackRepository.CreateAsync(userId, feedBackRequestDTO);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
+        // TODO: Try to do implement otherwise delete
+        // [HttpPut("UpdateFeedBack")]
+        // public async Task<BaseResponseDTO<FeedBackResponseDTO>> UpdateFeedBack(FeedBackRequestDTO feedBackRequestDTO)
         // {
-        //     var result = await feedbackRepository.DeleteAsync(feedbackId);
+        //     var result = await _feedbackRepository.Update(feedBackRequestDTO);
         //     if (result.Flag)
         //     {
         //         return Ok(result);
@@ -36,64 +68,26 @@ namespace EMS.BACKEND.API.Controllers
         //         return BadRequest(result);
         //     }
         // }
+
+        [HttpDelete("delete/{feedBackId}"), Authorize]
+        public async Task<IActionResult> DeleteFeedBack(int feedBackId)
+        {
+            var userId = User.GetUserId();
+            var result = await _feedbackRepository.DeleteAsync(userId, feedBackId);
+            if (result.Flag)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+            }
+        }
 
         [HttpGet("getall")]
-        public async Task<IActionResult> GetAllFeedbacks()
+        public async Task<IActionResult> GetAllFeedBacks()
         {
-            var result = await feedbackRepository.FindAllAsync();
-            if (result.Flag)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest(result);
-            }
-        }
-
-        // [HttpGet("getbyid/{feedbackId}")]
-        // public async Task<IActionResult> GetFeedbackById(string feedbackId)
-        // {
-        //     var result = await feedbackRepository.FindByIdAsync(feedbackId);
-        //     if (result.Flag)
-        //     {
-        //         return Ok(result);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(result);
-        //     }
-        // }
-        // [HttpPut("update"),Authorize]
-        // public async Task<IActionResult> UpdateFeedback([FromQuery] String feedbackid ,[FromForm]FeedBack feedback)
-        // {
-        //     var result = await feedbackRepository.UpdateAsync(feedbackid,feedback);
-        //     if (result.Flag)
-        //     {
-        //         return Ok(result);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(result);
-        //     }
-        // }
-        [HttpGet("getbyserviceid/{serviceId}")]
-        public async Task<IActionResult> GetFeedbackByServiceId(string serviceId)
-        {
-            var result = await feedbackRepository.GetFeedBacksByServiceId(serviceId);
-            if (result.Flag)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest(result);
-            }
-        }
-        [HttpGet("getbyshopid/{shopId}")]
-        public async Task<IActionResult> GetFeedbackByShopId(string shopId)
-        {
-            var result = await feedbackRepository.GetFeedBacksByShopId(shopId);
+            var result = await _feedbackRepository.FindAllAsync();
             if (result.Flag)
             {
                 return Ok(result);
