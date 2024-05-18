@@ -1,9 +1,10 @@
+using EMS.BACKEND.API.DTOs.AdminStaticResource;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
 
 namespace EMS.BACKEND.API.Contracts
 {
-    public interface IAdminStaticResourceRepository : IBaseRepository<AdminStaticResource, AdminStaticResource>
+    public interface IAdminStaticResourceRepository : IBaseRepository<AdminStaticResourceResponseDTO,AdminStaticResourceRequestDTO >
     {
 
     }

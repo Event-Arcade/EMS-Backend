@@ -95,6 +95,8 @@ namespace EMS.BACKEND.API.DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
 
+
+
             // Data Seeding for the Category Table
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Automotive", AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226", CategoryImagePath = "https://via.placeholder.com/150" },
@@ -115,13 +117,13 @@ namespace EMS.BACKEND.API.DbContext
             // Data Seeding for the Shop Table
             modelBuilder.Entity<Shop>().HasData(
                  new Shop { Id = 1, Name = "Shop 1", OwnerId = "9b982dc2-f99d-4c9b-b3db-c6ed2e193c98", BackgroundImagePath = "https://via.placeholder.com/150" }
-                
+
             );
 
             // Data Seeding for the ShopService Table
             modelBuilder.Entity<ShopService>().HasData(
                 new ShopService { Id = 1, Name = "Service 1", Price = 100, Description = "Service 1 Description", Rating = 4.5, ShopId = 1, CategoryId = 1 }
-            
+
 
             );
 

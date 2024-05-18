@@ -1,205 +1,337 @@
 using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
+using EMS.BACKEND.API.DTOs.AdminStaticResource;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Controllers
 {
     public class AdminStaticResourceRepository : IAdminStaticResourceRepository
     {
-        // public async Task<BaseResponseDTO<String>> CreateAsync(AdminStaticResource entity)
-        // {
-        //     try
-        //     {
-        //         using (var scope = serviceProvider.CreateScope())
-        //         {
-        //             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             // Check if the entity is null
-        //             if (entity == null)
-        //             {
-        //                 throw new ArgumentNullException(nameof(entity));
-        //             }
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ICloudProviderRepository _cloudProvider;
+        private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        //             // Check if the entity is null
-        //             if (entity.Resource == null)
-        //             {
-        //                 throw new ArgumentNullException(nameof(entity.Resource));
-        //             }
-
-        //             // Upload the file to the cloud
-        //             var (flag, path) = await cloudProvider.UploadFile(entity.Resource, configuration["StorageDirectories:AdminStaticResources"]);
-        //             if (!flag)
-        //             {
-        //                 throw new Exception("Failed to upload the file to the cloud");
-        //             }
-
-        //             // Save the entity to the database
-        //             entity.Id = Guid.NewGuid().ToString();
-        //             entity.ResourceUrl = path;
-        //             await dbContext.AdminStaticResources.AddAsync(entity);
-        //             await dbContext.SaveChangesAsync();
-
-        //             return new BaseResponseDTO<String> { Message = "Resource uploaded successfully", Flag = true };
-        //         }
-
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO <String>{ Message = ex.Message, Flag = false };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
-        // {
-        //     try
-        //     {
-        //         // Check if the id is null
-        //         if (string.IsNullOrEmpty(id))
-        //         {
-        //             throw new ArgumentNullException(nameof(id));
-        //         }
-        //         using (var scope = serviceProvider.CreateScope())
-        //         {
-        //             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var entity = dbContext.AdminStaticResources.FirstOrDefault(x => x.Id == id);
-        //             if (entity == null)
-        //             {
-        //                 throw new Exception("Resource not found");
-        //             }
-
-        //             // Delete the file from the cloud
-        //             var flag = await cloudProvider.RemoveFile(entity.ResourceUrl);
-        //             if (!flag)
-        //             {
-        //                 throw new Exception("Failed to delete the file from the cloud");
-        //             }
-
-        //             // Delete the entity from the database
-        //             dbContext.AdminStaticResources.Remove(entity);
-        //             await dbContext.SaveChangesAsync();
-
-        //             return new BaseResponseDTO<String> { Message = "Resource deleted successfully", Flag = true };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<String> { Message = ex.Message, Flag = false };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<IEnumerable<AdminStaticResource>>> FindAllAsync()
-        // {
-        //     try
-        //     {
-        //         using (var scope = serviceProvider.CreateScope())
-        //         {
-        //             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var entities = await dbContext.AdminStaticResources.ToListAsync();
-        //             //convert path to url
-        //             foreach (var entity in entities)
-        //             {
-        //                 var url = cloudProvider.GeneratePreSignedUrlForDownload(entity.ResourceUrl);
-        //                 entity.ResourceUrl = url;
-        //             }
-
-        //             return new BaseResponseDTO<IEnumerable<AdminStaticResource>> { Data = entities, Message = "Successfully found", Flag = true };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<IEnumerable<AdminStaticResource>> { Message = ex.Message, Flag = false };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<AdminStaticResource>> FindByIdAsync(string id)
-        // {
-        //     try{
-        //         // Check if the id is null
-        //         if (string.IsNullOrEmpty(id))
-        //         {
-        //             throw new ArgumentNullException(nameof(id));
-        //         }
-        //         using (var scope = serviceProvider.CreateScope())
-        //         {
-        //             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var entity = dbContext.AdminStaticResources.FirstOrDefault(x => x.Id == id);
-        //             if (entity == null)
-        //             {
-        //                 throw new Exception("Resource not found");
-        //             }
-
-        //             //convert path to url
-        //             var url = cloudProvider.GeneratePreSignedUrlForDownload(entity.ResourceUrl);
-        //             entity.ResourceUrl = url;
-
-        //             return new BaseResponseDTO<AdminStaticResource> { Data = entity, Message = "Successfully found", Flag = true };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<AdminStaticResource> { Message = ex.Message, Flag = false };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO> UpdateAsync(String id,AdminStaticResource entity)
-        // {
-        //     try{
-        //         using (var scope = serviceProvider.CreateScope())
-        //         {
-        //             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             // Check if the entity is null
-        //             if (entity == null)
-        //             {
-        //                 throw new ArgumentNullException(nameof(entity));
-        //             }
-
-        //             // Check if the entity is null
-        //             if (entity.Resource == null)
-        //             {
-        //                 throw new ArgumentNullException(nameof(entity.Resource));
-        //             }
-
-        //             // Update the file to the cloud
-        //             var (flag, path) = await cloudProvider.UpdateFile(entity.Resource, configuration["StorageDirectories:AdminStaticResources"], entity.ResourceUrl);
-        //             if (!flag)
-        //             {
-        //                 throw new Exception("Failed to upload the file to the cloud");
-        //             }
-
-        //             // Save the entity to the database
-        //             entity.ResourceUrl = path;
-        //             dbContext.AdminStaticResources.Update(entity);
-        //             dbContext.SaveChanges();
-
-        //             return new BaseResponseDTO { Message = "Resource updated successfully", Flag = true };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO { Message = ex.Message, Flag = false };
-        //     }
-        // }
-        public Task<BaseResponseDTO<AdminStaticResource>> CreateAsync(string userId, AdminStaticResource entity)
+        public AdminStaticResourceRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
-            throw new NotImplementedException();
+            _serviceScopeFactory = serviceScopeFactory;
+            _cloudProvider = cloudProvider;
+            _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public Task<BaseResponseDTO> DeleteAsync(string userId, int id)
+
+        public async Task<BaseResponseDTO<AdminStaticResourceResponseDTO>> CreateAsync(string userId, AdminStaticResourceRequestDTO entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Message = "User not found",
+                        Flag = false
+                    };
+                }
+
+                // check user is admin
+                if (!await _userManager.IsInRoleAsync(user, "admin"))
+                {
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Message = "User is not an admin",
+                        Flag = false
+                    };
+                }
+
+                var adminStaticResource = entity.ToAdminStaticResource(userId);
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var newStaticResource = await context.AdminStaticResources.AddAsync(adminStaticResource);
+                    await context.SaveChangesAsync();
+
+                    var (flag, path) = await _cloudProvider.UploadFile(entity.Resource, _configuration["StorageDirectories:AdminStaticResources"]);
+
+                    if (flag)
+                    {
+                        newStaticResource.Entity.ResourceUrl = path;
+                        await context.SaveChangesAsync();
+                    }
+
+                    adminStaticResource.ResourceUrl = path;
+                    context.AdminStaticResources.Update(adminStaticResource);
+                    await context.SaveChangesAsync();
+
+                    // generate presigned url
+                    var url = _cloudProvider.GeneratePreSignedUrlForDownload(path);
+
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Data = adminStaticResource.ToAdminStaticResourceResponseDTO(url),
+                        Message = "Resource created successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<IEnumerable<AdminStaticResource>>> FindAllAsync()
+        public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new BaseResponseDTO
+                    {
+                        Message = "User not found",
+                        Flag = false
+                    };
+                }
+
+                // check user is admin
+                if (!await _userManager.IsInRoleAsync(user, "admin"))
+                {
+                    return new BaseResponseDTO
+                    {
+                        Message = "User is not an admin",
+                        Flag = false
+                    };
+                }
+
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var staticResource = await context.AdminStaticResources.FirstOrDefaultAsync(x => x.Id == id);
+                    if (staticResource == null)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "Resource not found",
+                            Flag = false
+                        };
+                    }
+
+                    context.AdminStaticResources.Remove(staticResource);
+                    await context.SaveChangesAsync();
+
+                    // delete file from cloud
+                    var flag = await _cloudProvider.RemoveFile(staticResource.ResourceUrl);
+                    if (flag)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "Resource deleted successfully",
+                            Flag = true
+                        };
+                    }
+
+                    return new BaseResponseDTO
+                    {
+                        Message = "Resource deleted successfully but failed to delete from cloud",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<AdminStaticResource>> FindByIdAsync(int id)
+        public async Task<BaseResponseDTO<IEnumerable<AdminStaticResourceResponseDTO>>> FindAllAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var staticResources = await context.AdminStaticResources.ToListAsync();
+                    if (staticResources.Count == 0)
+                    {
+                        return new BaseResponseDTO<IEnumerable<AdminStaticResourceResponseDTO>>
+                        {
+                            Message = "No resources found",
+                            Flag = false
+                        };
+                    }
+
+                    var response = new List<AdminStaticResourceResponseDTO>();
+                    foreach (var staticResource in staticResources)
+                    {
+                        // generate presigned url
+                        var url = _cloudProvider.GeneratePreSignedUrlForDownload(staticResource.ResourceUrl);
+                        response.Add(staticResource.ToAdminStaticResourceResponseDTO(url));
+                    }
+
+                    return new BaseResponseDTO<IEnumerable<AdminStaticResourceResponseDTO>>
+                    {
+                        Data = response,
+                        Message = "Resources found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<AdminStaticResourceResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<AdminStaticResource>> UpdateAsync(string userId, int id, AdminStaticResource entity)
+        public async Task<BaseResponseDTO<AdminStaticResourceResponseDTO>> FindByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var staticResource = await context.AdminStaticResources.FirstOrDefaultAsync(x => x.Id == id);
+                    if (staticResource == null)
+                    {
+                        return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                        {
+                            Message = "Resource not found",
+                            Flag = false
+                        };
+                    }
+
+                    // generate presigned url
+                    var url = _cloudProvider.GeneratePreSignedUrlForDownload(staticResource.ResourceUrl);
+
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Data = staticResource.ToAdminStaticResourceResponseDTO(url),
+                        Message = "Resource found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+
+            }
+        }
+
+        public async Task<BaseResponseDTO<AdminStaticResourceResponseDTO>> UpdateAsync(string userId, int id, AdminStaticResourceRequestDTO entity)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Message = "User not found",
+                        Flag = false
+                    };
+                }
+
+                // check user is admin
+                if (!await _userManager.IsInRoleAsync(user, "admin"))
+                {
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Message = "User is not an admin",
+                        Flag = false
+                    };
+                }
+
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var staticResource = await context.AdminStaticResources.FirstOrDefaultAsync(x => x.Id == id);
+                    if (staticResource == null)
+                    {
+                        return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                        {
+                            Message = "Resource not found",
+                            Flag = false
+                        };
+                    }
+
+                    if (entity.Resource != null)
+                    {
+                        var (flag, path) = await _cloudProvider.UpdateFile(entity.Resource, _configuration["StorageDirectories:AdminStaticResources"], staticResource.ResourceUrl);
+
+                        if (flag)
+                        {
+
+                            context.AdminStaticResources.Update(staticResource);
+                            if (!string.IsNullOrEmpty(path))
+                            {
+                                staticResource.ResourceUrl = path;
+                            }
+                            if (!string.IsNullOrEmpty(entity.Name))
+                            {
+                                staticResource.Name = entity.Name;
+                            }
+                            if (!string.IsNullOrEmpty(entity.Description))
+                            {
+                                staticResource.Description = entity.Description;
+                            }
+
+                            context.AdminStaticResources.Update(staticResource);
+                            await context.SaveChangesAsync();
+
+                            // generate presigned url
+                            var url = _cloudProvider.GeneratePreSignedUrlForDownload(path);
+
+                            return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                            {
+                                Data = staticResource.ToAdminStaticResourceResponseDTO(url),
+                                Message = "Resource updated successfully",
+                                Flag = true
+                            };
+                        }
+                    }
+
+                    return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                    {
+                        Message = "Failed to update resource",
+                        Flag = false
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<AdminStaticResourceResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
     }
 }
