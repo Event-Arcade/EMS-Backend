@@ -7,6 +7,6 @@ namespace EMS.BACKEND.API.Contracts
 {
     public interface IShopServiceRepository : IBaseRepository<ShopServiceResponseDTO, ShopServiceRequestDTO>
     {
-        Task<BaseResponseDTO<IEnumerable<ShopService>>> GetServicesByShopId(string shopId);
+        Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> GetServicesByShopId(string userId);
     }
 }

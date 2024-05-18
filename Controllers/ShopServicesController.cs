@@ -13,7 +13,7 @@ namespace EMS.BACKEND.API.Controllers
     [ApiController]
     public class ShopServicesController(IShopServiceRepository serviceRepository) : Controller
     {
-        [HttpGet("servicesbyshop")]
+        [HttpGet("getall")]
         public async Task<IActionResult> GetAllServices()
         {
             var response = await serviceRepository.FindAllAsync();
@@ -61,7 +61,7 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> CreateService([FromForm] ShopServiceRequestDTO service)
         {
             var userId = User.GetUserId();
-            var response = await serviceRepository.CreateAsync(userId,service);
+            var response = await serviceRepository.CreateAsync(userId, service);
             if (response.Flag)
             {
                 return Ok(response);
@@ -76,7 +76,7 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> UpdateService(int serviceId, [FromForm] ShopServiceRequestDTO service)
         {
             var userId = User.GetUserId();
-            var response = await serviceRepository.UpdateAsync(userId,serviceId, service);
+            var response = await serviceRepository.UpdateAsync(userId, serviceId, service);
             if (response.Flag)
             {
                 return Ok(response);

@@ -6,7 +6,7 @@ namespace EMS.BACKEND.API.Mappers
 {
     public static class ShopServiceMapper
     {
-        public static ShopServiceResponseDTO ToShopServiceResponseDTO(this ShopService shopService)
+        public static ShopServiceResponseDTO ToShopServiceResponseDTO(this ShopService shopService, ICollection<string> resourceUrls)
         {
             return new ShopServiceResponseDTO
             {
@@ -17,7 +17,7 @@ namespace EMS.BACKEND.API.Mappers
                 ShopId = shopService.ShopId,
                 CategoryId = shopService.CategoryId,
                 Rating = shopService.Rating,
-                FeedBacks = shopService.FeedBacks,
+                ShopServiceStaticResourcesURLs = resourceUrls
             };
         }
         public static ShopService ToShopService(this ShopServiceRequestDTO shopServiceRequestDTO)
