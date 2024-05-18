@@ -99,7 +99,7 @@ builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// 
+
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {

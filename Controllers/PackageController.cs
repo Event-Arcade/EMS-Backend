@@ -1,4 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
+using EMS.BACKEND.API.DTOs.Package;
+using EMS.BACKEND.API.Extensions;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,76 +9,71 @@ namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PackageController(IPackageRepository packageRepository) : Controller
+    public class PackageController : Controller
     {
-        [HttpGet("GetAllPackages/{userId}"), Authorize]
-        public async Task<IActionResult> GetAllPackages(string userId)
+        private readonly IPackageRepository _packageRepository;
+
+        public PackageController(IPackageRepository packageRepository)
         {
-            var result = await packageRepository.GetAllPackagesByUser(userId);
-            if (result.Flag)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest(result);
-            }
+            _packageRepository = packageRepository;
         }
 
-        // [HttpGet("GetPackageById"), Authorize]
-        // public async Task<IActionResult> GetPackageById(string id)
-        // {
-        //     var result = await packageRepository.FindByIdAsync(id);
-        //     if (result.Flag)
-        //     {
-        //         return Ok(result);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(result);
-        //     }
-        // }
+        [HttpGet("getall"), Authorize]
+        public async Task<IActionResult> Get()
+        {
+            var response = await _packageRepository.FindAllAsync();
+            if(response.Flag)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
+        
+        [HttpGet("get/{id}"), Authorize]
+        public async Task<IActionResult> Get(int id)
+        {
+            var response = await _packageRepository.FindByIdAsync(id);
+            if(response.Flag)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
 
-        // [HttpPost("CreatePackage"), Authorize(Roles = "Client")]
-        // public async Task<IActionResult> CreatePackage(Package package)
-        // {
-        //     var response = await packageRepository.CreateAsync(package);
-        //     if (response.Flag)
-        //     {
-        //         return Ok(response);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(response);
-        //     }
-        // }
+        [HttpPost("create"), Authorize]
+        public async Task<IActionResult> Create([FromForm] PackageRequestDTO packageRequestDTO)
+        {
+            var userId = User.GetUserId();
+            var response = await _packageRepository.CreateAsync(userId, packageRequestDTO);
+            if(response.Flag)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
 
-        //[HttpPut("UpdatePackage"), Authorize(Roles = "Client")]
-        // public async Task<IActionResult> UpdatePackage([FromQuery] String packageId, [FromForm] Package package)
-        // {
-        //     var result = await packageRepository.UpdateAsync(packageId, package);
-        //     if (result.Flag)
-        //     {
-        //         return Ok(result);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(result);
-        //     }
-        // }
+        [HttpPut("update/{id}"), Authorize]
+        public async Task<IActionResult> Update(int id, [FromForm] PackageRequestDTO packageRequestDTO)
+        {
+            var userId = User.GetUserId();
+            var response = await _packageRepository.UpdateAsync(userId, id, packageRequestDTO);
+            if(response.Flag)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
 
-        // [HttpDelete("DeletePackage/{id}"), Authorize(Roles = "Client")]
-        // public async Task<IActionResult> DeletePackage(string id)
-        // {
-        //     var response = await packageRepository.DeleteAsync(id);
-        //     if (response.Flag)
-        //     {
-        //         return Ok(response);
-        //     }
-        //     else
-        //     {
-        //         return BadRequest(response);
-        //     }
-        // }
+        [HttpDelete("delete/{id}"), Authorize]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = User.GetUserId();
+            var response = await _packageRepository.DeleteAsync(userId, id);
+            if(response.Flag)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
     }
 }

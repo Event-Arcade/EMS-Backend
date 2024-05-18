@@ -1,346 +1,372 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
+using EMS.BACKEND.API.DTOs.Package;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace EMS.BACKEND.API.Repositories
 {
     public class PackageRepository : IPackageRepository
     {
-        // public async Task<BaseResponseDTO<String>> CreateAsync(Package entity)
-        // {
-        //     try
-        //     {
-        //         //check if entity is null
-        //         if (entity == null)
-        //         {
-        //             throw new ArgumentNullException(nameof(entity));
-        //         }
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ICloudProviderRepository _cloudProvider;
+        private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        //         using (var scope = scopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var package = new Package
-        //             {
-        //                 Id = Guid.NewGuid().ToString(),
-        //                 CreatedAt = entity.CreatedAt,
-        //                 UserId = entity.UserId,
-        //             };
-
-        //             //create subpackages
-        //             foreach (var subPackage in entity.SubPackages)
-        //             {
-        //                 var subPackageResponse = await subPackageRepository.CreateAsync(subPackage);
-        //                 if (!subPackageResponse.Flag)
-        //                 {
-        //                     return new BaseResponseDTO<String>
-        //                     {
-        //                         Flag = false,
-        //                         Message = "An error occured while creating subpackage"
-        //                     };
-        //                 }
-        //             }
-
-        //             //add package to db
-        //             await context.Packages.AddAsync(package);
-        //             await context.SaveChangesAsync();
-
-        //             return new BaseResponseDTO<String>
-        //             {
-        //                 Flag = true,
-        //                 Message = "Package created successfully"
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<String>
-        //         {
-        //             Flag = false,
-        //             Message = ex.Message
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO<String>> DeleteAsync(string id)
-        // {
-        //     try
-        //     {
-        //         using (var scope = scopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var package = await context.Packages.FindAsync(id);
-        //             if (package == null)
-        //             {
-        //                 return new BaseResponseDTO<String>
-        //                 {
-        //                     Flag = false,
-        //                     Message = "Package not found"
-        //                 };
-        //             }
-        //             //delete subpackages
-        //             var response = await subPackageRepository.GetSubpackagesByUser(package.UserId);
-        //             foreach (var subPackage in response.Data)
-        //             {
-        //                 var subPackageResponse = await subPackageRepository.DeleteAsync(subPackage.Id);
-        //                 if (!subPackageResponse.Flag)
-        //                 {
-        //                     return new BaseResponseDTO<String>
-        //                     {
-        //                         Flag = false,
-        //                         Message = "An error occured while deleting subpackage"
-        //                     };
-        //                 }
-        //             }
-
-        //             //delete package
-        //             context.Packages.Remove(package);
-        //             await context.SaveChangesAsync();
-
-        //             return new BaseResponseDTO<String>
-        //             {
-        //                 Flag = true,
-        //                 Message = "Package deleted successfully"
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<String>
-        //         {
-        //             Flag = false,
-        //             Message = ex.Message
-        //         };
-        //     }
-        // }
-
-        // //TODO : implement if want from the front end
-        // public Task<BaseResponseDTO<IEnumerable<Package>>> FindAllAsync()
-        // {
-        //     throw new NotImplementedException();
-        // }
-
-        // public async Task<BaseResponseDTO<Package>> FindByIdAsync(string id)
-        // {
-        //     try
-        //     {
-        //         //check if the entity is null
-        //         if (id == null)
-        //         {
-        //             throw new ArgumentNullException(nameof(id));
-        //         }
-
-        //         using (var scope = scopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-        //             var package = await context.Packages.FindAsync(id);
-
-        //             if (package == null)
-        //             {
-        //                 return new BaseResponseDTO<Package>
-        //                 {
-        //                     Flag = false,
-        //                     Message = "Package not found!"
-        //                 };
-        //             }
-
-        //             //get subpackages
-        //             var response = await subPackageRepository.GetSubpackagesByUser(package.UserId);
-        //             if (!response.Flag)
-        //             {
-        //                 return new BaseResponseDTO<Package>
-        //                 {
-        //                     Flag = false,
-        //                     Message = "An error occured while fetching subpackages"
-        //                 };
-        //             }
-
-        //             //add subpackages to package
-        //             foreach (var subPackage in response.Data)
-        //             {
-        //                 package.SubPackages.Add(subPackage);
-        //             }
-
-
-        //             return new BaseResponseDTO<Package>
-        //             {
-        //                 Flag = true,
-        //                 Data = package
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<Package>
-        //         {
-        //             Flag = false,
-        //             Message = ex.Message
-        //         };
-
-        //     }
-        // }
-
-        // public async Task<BaseResponseDTO<IEnumerable<Package>>> GetAllPackagesByUser(string userId)
-        // {
-        //     try
-        //     {
-        //         //check if the userId is null
-        //         if (userId == null)
-        //         {
-        //             throw new ArgumentNullException(nameof(userId));
-        //         }
-
-        //         using (var scope = scopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-        //             var packages = context.Packages.Where(x => x.UserId == userId).ToList();
-
-        //             //get the subpackages
-        //             foreach (var package in packages)
-        //             {
-        //                 var response = await subPackageRepository.GetSubpackagesByUser(package.UserId);
-        //                 if (!response.Flag)
-        //                 {
-        //                     return new BaseResponseDTO<IEnumerable<Package>>
-        //                     {
-        //                         Flag = false,
-        //                         Message = "An error occured while fetching subpackages"
-        //                     };
-        //                 }
-
-        //                 //add subpackages to package
-        //                 foreach (var subPackage in response.Data)
-        //                 {
-        //                     package.SubPackages.Add(subPackage);
-        //                 }
-        //             }
-        //             //check pacakges are null or empty
-        //             if (packages == null || packages.Count == 0)
-        //             {
-        //                 return new BaseResponseDTO<IEnumerable<Package>>
-        //                 {
-        //                     Flag = false,
-        //                     Message = "Packages not found!"
-        //                 };
-        //             }
-
-        //             return new BaseResponseDTO<IEnumerable<Package>>
-        //             {
-        //                 Flag = true,
-        //                 Data = packages
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO<IEnumerable<Package>>
-        //         {
-        //             Flag = false,
-        //             Message = ex.Message
-        //         };
-        //     }
-        // }
-        // public async Task<BaseResponseDTO> UpdateAsync(String id, Package entity)
-        // {
-        //     try
-        //     {
-        //         //check if the entity is null
-        //         if (entity == null)
-        //         {
-        //             throw new ArgumentNullException(nameof(entity));
-        //         }
-
-        //         using (var scope = scopeFactory.CreateScope())
-        //         {
-        //             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //             var package = await context.Packages.FindAsync(entity.Id);
-
-        //             if (package == null)
-        //             {
-        //                 return new BaseResponseDTO
-        //                 {
-        //                     Flag = false,
-        //                     Message = "Package not found!"
-        //                 };
-        //             }
-
-        //             //update package
-        //             package.CreatedAt = entity.CreatedAt;
-        //             package.UserId = entity.UserId;
-
-        //             //update subpackages
-        //             var response = await subPackageRepository.GetSubpackagesByUser(package.UserId);
-        //             if (!response.Flag)
-        //             {
-        //                 return new BaseResponseDTO
-        //                 {
-        //                     Flag = false,
-        //                     Message = "An error occured while fetching subpackages"
-        //                 };
-        //             }
-
-        //             foreach (var subPackage in response.Data)
-        //             {
-        //                 var subPackageResponse = await subPackageRepository.UpdateAsync(subPackage.Id, subPackage);
-        //                 if (!subPackageResponse.Flag)
-        //                 {
-        //                     return new BaseResponseDTO
-        //                     {
-        //                         Flag = false,
-        //                         Message = "An error occured while updating subpackage"
-        //                     };
-        //                 }
-        //             }
-
-        //             //update package
-        //             context.Packages.Update(package);
-        //             await context.SaveChangesAsync();
-
-        //             return new BaseResponseDTO
-        //             {
-        //                 Flag = true,
-        //                 Message = "Package updated successfully"
-        //             };
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return new BaseResponseDTO
-        //         {
-        //             Flag = false,
-        //             Message = ex.Message
-        //         };
-        //     }
-        // }
-        public Task<BaseResponseDTO<Package>> CreateAsync(string userId, Package entity)
+        public PackageRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
-            throw new NotImplementedException();
+            _serviceScopeFactory = serviceScopeFactory;
+            _cloudProvider = cloudProvider;
+            _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public Task<BaseResponseDTO> DeleteAsync(string userId, int id)
+        public async Task<BaseResponseDTO<PackageResponseDTO>> CreateAsync(string userId, PackageRequestDTO entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
+
+                    // check user is client
+                    if (!await _userManager.IsInRoleAsync(user, "Client"))
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "You cannot create package. You are not a client.",
+                            Flag = false
+                        };
+                    }
+
+                    var package = new Package
+                    {
+                        UserId = userId,
+                        Status = PackageStatus.Pending,
+                        CreatedAt = DateTime.Now
+                    };
+                    dbContext.Packages.Add(package);
+                    await dbContext.SaveChangesAsync();
+
+                    // create subpackages
+                    foreach (var subPackage in entity.SubPackages)
+                    {
+                        var newSubPackage = new SubPackage
+                        {
+                            PackageId = package.Id,
+                            ServiceId = subPackage.ServiceId,
+                            Status = PackageStatus.Pending
+                        };
+                        dbContext.SubPackages.Add(newSubPackage);
+                    }
+
+                    await dbContext.SaveChangesAsync();
+
+                    // create package response
+                    var packageResponse = new PackageResponseDTO
+                    {
+                        Id = package.Id,
+                        Status = package.Status,
+                        CreatedAt = package.CreatedAt,
+                        UserId = package.UserId
+                    };
+
+                    // create subpackage response
+                    packageResponse.SubPackages = new List<SubPackageResponseDTO>();
+                    foreach (var subPackage in package.SubPackages)
+                    {
+                        packageResponse.SubPackages.Add(new SubPackageResponseDTO
+                        {
+                            Id = subPackage.Id,
+                            PackageId = subPackage.PackageId,
+                            ServiceId = subPackage.ServiceId,
+                            Status = subPackage.Status
+                        });
+                    }
+
+                    return new BaseResponseDTO<PackageResponseDTO>
+                    {
+                        Data = packageResponse,
+                        Message = "Package created successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<PackageResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<IEnumerable<Package>>> FindAllAsync()
+        public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
+
+                    // check user is client
+                    if (!await _userManager.IsInRoleAsync(user, "Client"))
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "You cannot delete package. You are not a client.",
+                            Flag = false
+                        };
+                    }
+
+                    var package = await dbContext.Packages.Where(p => p.UserId == userId && p.Id == id).FirstOrDefaultAsync();
+                    if (package == null)
+                    {
+                        return new BaseResponseDTO
+                        {
+                            Message = "Package not found",
+                            Flag = false
+                        };
+                    }
+
+                    // delete subpackages
+                    var subPackages = await dbContext.SubPackages.Where(sp => sp.PackageId == package.Id).ToListAsync();
+                    foreach (var subPackage in subPackages)
+                    {
+                        dbContext.SubPackages.Remove(subPackage);
+                    }
+
+                    dbContext.Packages.Remove(package);
+                    await dbContext.SaveChangesAsync();
+
+                    return new BaseResponseDTO
+                    {
+                        Message = "Package deleted successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<Package>> FindByIdAsync(int id)
+        public async Task<BaseResponseDTO<IEnumerable<PackageResponseDTO>>> FindAllAsync()
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var packages = await dbContext.Packages.ToListAsync();
+                    var packageResponseList = new List<PackageResponseDTO>();
+                    foreach (var package in packages)
+                    {
+                        var packageResponse = new PackageResponseDTO
+                        {
+                            Id = package.Id,
+                            Status = package.Status,
+                            CreatedAt = package.CreatedAt,
+                            UserId = package.UserId
+                        };
+
+                        // create subpackage response
+                        packageResponse.SubPackages = new List<SubPackageResponseDTO>();
+                        foreach (var subPackage in package.SubPackages)
+                        {
+                            packageResponse.SubPackages.Add(new SubPackageResponseDTO
+                            {
+                                Id = subPackage.Id,
+                                PackageId = subPackage.PackageId,
+                                ServiceId = subPackage.ServiceId,
+                                Status = subPackage.Status
+                            });
+                        }
+
+                        packageResponseList.Add(packageResponse);
+                    }
+
+                    return new BaseResponseDTO<IEnumerable<PackageResponseDTO>>
+                    {
+                        Data = packageResponseList,
+                        Message = "Packages found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<PackageResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
 
-        public Task<BaseResponseDTO<IEnumerable<Package>>> GetAllPackagesByUser(string userId)
+        public async Task<BaseResponseDTO<PackageResponseDTO>> FindByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var package = await dbContext.Packages.Where(p => p.Id == id).Include(p => p.SubPackages).FirstOrDefaultAsync();
+                    if (package == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "Package not found",
+                            Flag = false
+                        };
+                    }
+
+                    var packageResponse = new PackageResponseDTO
+                    {
+                        Id = package.Id,
+                        Status = package.Status,
+                        CreatedAt = package.CreatedAt,
+                        UserId = package.UserId
+                    };
+
+                    // create subpackage response
+                    packageResponse.SubPackages = new List<SubPackageResponseDTO>();
+                    foreach (var subPackage in package.SubPackages)
+                    {
+                        packageResponse.SubPackages.Add(new SubPackageResponseDTO
+                        {
+                            Id = subPackage.Id,
+                            PackageId = subPackage.PackageId,
+                            ServiceId = subPackage.ServiceId,
+                            Status = subPackage.Status
+                        });
+                    }
+
+                    return new BaseResponseDTO<PackageResponseDTO>
+                    {
+                        Data = packageResponse,
+                        Message = "Package found",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<PackageResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+
+            }
         }
 
-        public Task<BaseResponseDTO<Package>> UpdateAsync(string userId, int id, Package entity)
+        public async Task<BaseResponseDTO<PackageResponseDTO>> UpdateAsync(string userId, int id, PackageRequestDTO entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
+
+                    // check user is client
+                    if (!await _userManager.IsInRoleAsync(user, "Client"))
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "You cannot update package. You are not a client.",
+                            Flag = false
+                        };
+                    }
+
+                    var package = await dbContext.Packages.Where(p => p.UserId == userId && p.Id == id).Include(p => p.SubPackages).FirstOrDefaultAsync();
+                    if (package == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "Package not found",
+                            Flag = false
+                        };
+                    }
+
+                    // update package
+                    dbContext.Packages.Update(package);
+                    await dbContext.SaveChangesAsync();
+
+                    // create package response
+                    var packageResponse = new PackageResponseDTO
+                    {
+                        Id = package.Id,
+                        Status = package.Status,
+                        CreatedAt = package.CreatedAt,
+                        UserId = package.UserId
+                    };
+
+                    // create subpackage response
+                    packageResponse.SubPackages = new List<SubPackageResponseDTO>();
+                    foreach (var subPackage in package.SubPackages)
+                    {
+                        packageResponse.SubPackages.Add(new SubPackageResponseDTO
+                        {
+                            Id = subPackage.Id,
+                            PackageId = subPackage.PackageId,
+                            ServiceId = subPackage.ServiceId,
+                            Status = subPackage.Status
+                        });
+                    }
+
+                    return new BaseResponseDTO<PackageResponseDTO>
+                    {
+                        Data = packageResponse,
+                        Message = "Package updated successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<PackageResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
     }
 }
