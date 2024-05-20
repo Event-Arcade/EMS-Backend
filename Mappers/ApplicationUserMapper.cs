@@ -1,8 +1,6 @@
-using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.Account;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Models;
-using EMS.BACKEND.API.Repositories;
 
 namespace EMS.BACKEND.API.Mappers
 {
@@ -19,8 +17,8 @@ namespace EMS.BACKEND.API.Mappers
                 City = user.City,
                 PostalCode = user.PostalCode,
                 Province = user.Province,
-                Longitude = user.Longitude,
-                Latitude = user.Latitude,
+                Longitude = user.Longitude ?? 0,
+                Latitude = user.Latitude ?? 0,
                 Email = user.Email,
                 Role = role,
                 ProfilePictureURL = user.ProfilePicturePath
@@ -37,8 +35,8 @@ namespace EMS.BACKEND.API.Mappers
                 City = userDTO.City,
                 PostalCode = userDTO.PostalCode,
                 Province = userDTO.Province,
-                Longitude = userDTO.Longitude,
-                Latitude = userDTO.Latitude,
+                Longitude = userDTO.Longitude ?? 0,
+                Latitude = userDTO.Latitude ?? 0,
                 Email = userDTO.Email,
                 UserName = userDTO.Email
             };

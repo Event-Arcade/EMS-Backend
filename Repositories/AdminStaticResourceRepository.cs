@@ -24,7 +24,6 @@ namespace EMS.BACKEND.API.Controllers
             _userManager = userManager;
         }
 
-
         public async Task<BaseResponseDTO<AdminStaticResourceResponseDTO>> CreateAsync(string userId, AdminStaticResourceRequestDTO entity)
         {
             try

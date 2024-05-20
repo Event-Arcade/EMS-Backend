@@ -12,8 +12,8 @@ namespace EMS.BACKEND.API.Models
         public string? PostalCode { get; set; }
         public string? Province { get; set; }
         public Double? Rating { get; set; }
-        public Double Longitude { get; set; }
-        public Double Latitude { get; set; }
+        public Double? Longitude { get; set; }
+        public Double? Latitude { get; set; }
         public string? ProfilePicturePath { get; set; }
         public virtual ICollection<Shop>? Shops { get; set; }
         public virtual ICollection<AdminStaticResource>? AdminStaticResources { get; set; }
