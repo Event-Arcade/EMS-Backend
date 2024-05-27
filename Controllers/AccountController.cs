@@ -76,7 +76,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpDelete(), Authorize]
+        [HttpDelete("delete"), Authorize]
         public async Task<IActionResult> Delete()
         {
             var userId = User.GetUserId();
@@ -133,7 +133,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(result);
             }
         }
-        
-           
+
+
     }
 }

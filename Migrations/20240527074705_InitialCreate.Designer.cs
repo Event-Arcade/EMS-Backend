@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EMS.BACKEND.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240518080957_feedbackstaticresources")]
-    partial class feedbackstaticresources
+    [Migration("20240527074705_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.4")
+                .HasAnnotation("ProductVersion", "8.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -38,7 +38,6 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -86,7 +85,7 @@ namespace EMS.BACKEND.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Latitude")
+                    b.Property<double?>("Latitude")
                         .HasColumnType("float");
 
                     b.Property<bool>("LockoutEnabled")
@@ -95,7 +94,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<double>("Longitude")
+                    b.Property<double?>("Longitude")
                         .HasColumnType("float");
 
                     b.Property<string>("NormalizedEmail")
@@ -181,99 +180,6 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasIndex("AdminId");
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Automotive"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Beauty"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Construction"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Education"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Entertainment"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Food"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Health"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "IT"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Legal"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Manufacturing"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Retail"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Services"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            AdminId = "2908e25a-b961-4dea-85b2-9ec84c1e6226",
-                            CategoryImagePath = "https://via.placeholder.com/150",
-                            Name = "Transportation"
-                        });
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.ChatMessage", b =>
@@ -375,6 +281,9 @@ namespace EMS.BACKEND.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -416,15 +325,6 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Shops");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BackgroundImagePath = "https://via.placeholder.com/150",
-                            Name = "Shop 1",
-                            OwnerId = "9b982dc2-f99d-4c9b-b3db-c6ed2e193c98"
-                        });
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.ShopService", b =>
@@ -462,18 +362,6 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasIndex("ShopId");
 
                     b.ToTable("ShopServices");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CategoryId = 1,
-                            Description = "Service 1 Description",
-                            Name = "Service 1",
-                            Price = 100.0,
-                            Rating = 4.5,
-                            ShopId = 1
-                        });
                 });
 
             modelBuilder.Entity("EMS.BACKEND.API.Models.ShopServiceStaticResources", b =>
@@ -665,7 +553,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Admin")
                         .WithMany("AdminStaticResources")
                         .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Admin");
@@ -676,7 +564,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Admin")
                         .WithMany("Categories")
                         .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Admin");
@@ -687,13 +575,13 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Receiver")
                         .WithMany("RecievedMessages")
                         .HasForeignKey("ReceiverId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Sender")
                         .WithMany("SentMessages")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Receiver");
@@ -712,7 +600,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
                         .WithMany("FeedBacks")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Service");
@@ -725,7 +613,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.FeedBack", "FeedBack")
                         .WithMany("FeedBackStaticResources")
                         .HasForeignKey("FeedBackId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("FeedBack");
@@ -736,7 +624,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "User")
                         .WithMany("Packages")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -747,7 +635,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ApplicationUser", "Owner")
                         .WithMany("Shops")
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Owner");
@@ -758,13 +646,13 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.Category", "Category")
                         .WithMany("ShopServices")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("EMS.BACKEND.API.Models.Shop", "Shop")
                         .WithMany("Services")
                         .HasForeignKey("ShopId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Category");
@@ -777,7 +665,7 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
                         .WithMany("ShopServiceStaticResources")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Service");
@@ -788,13 +676,13 @@ namespace EMS.BACKEND.API.Migrations
                     b.HasOne("EMS.BACKEND.API.Models.Package", "Package")
                         .WithMany("SubPackages")
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("EMS.BACKEND.API.Models.ShopService", "Service")
                         .WithMany("SubPackages")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Package");

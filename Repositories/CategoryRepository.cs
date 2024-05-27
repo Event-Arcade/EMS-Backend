@@ -26,12 +26,12 @@ namespace EMS.BACKEND.API.Repositories
 
         public async Task<BaseResponseDTO<CategoryResponseDTO>> CreateAsync(string userId, CategoryRequestDTO entity)
         {
-            using (var scope = _serviceScopeFactory.CreateScope())
+            try
             {
-
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
+
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     //Get the user and check if the user is admin
                     var user = await _userManager.FindByIdAsync(userId);
                     if (user == null)
@@ -75,24 +75,24 @@ namespace EMS.BACKEND.API.Repositories
                         Data = newCategory.ToCategoryResponseDTO(url)
                     };
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<CategoryResponseDTO>
                 {
-                    return new BaseResponseDTO<CategoryResponseDTO>
-                    {
-                        Message = ex.Message,
-                        Flag = false
-                    };
-                }
+                    Message = ex.Message,
+                    Flag = false
+                };
             }
 
         }
         public async Task<BaseResponseDTO> DeleteAsync(string userId, int id)
         {
-            using (var scope = _serviceScopeFactory.CreateScope())
+            try
             {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     //Get the user and check if the user is admin
                     var user = await _userManager.FindByIdAsync(userId);
                     if (user == null)
@@ -128,14 +128,14 @@ namespace EMS.BACKEND.API.Repositories
                         Flag = true
                     };
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO
                 {
-                    return new BaseResponseDTO
-                    {
-                        Message = ex.Message,
-                        Flag = false
-                    };
-                }
+                    Message = ex.Message,
+                    Flag = false
+                };
             }
         }
         public async Task<BaseResponseDTO<IEnumerable<CategoryResponseDTO>>> FindAllAsync()
@@ -210,12 +210,12 @@ namespace EMS.BACKEND.API.Repositories
         }
         public async Task<BaseResponseDTO<CategoryResponseDTO>> UpdateAsync(string userId, int id, CategoryRequestDTO entity)
         {
-            // Update category
-            using (var scope = _serviceScopeFactory.CreateScope())
+            try
             {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                try
+                // Update category
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     //Get the user and check if the user is admin
                     var user = await _userManager.FindByIdAsync(userId);
                     if (user == null)
@@ -269,14 +269,14 @@ namespace EMS.BACKEND.API.Repositories
                         Data = category.ToCategoryResponseDTO(url)
                     };
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<CategoryResponseDTO>
                 {
-                    return new BaseResponseDTO<CategoryResponseDTO>
-                    {
-                        Message = ex.Message,
-                        Flag = false
-                    };
-                }
+                    Message = ex.Message,
+                    Flag = false
+                };
             }
         }
 

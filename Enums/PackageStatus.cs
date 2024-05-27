@@ -2,9 +2,9 @@
 {
     public enum PackageStatus
     {
-        Pending,
-        Approved,
-        Rejected,
-        Delivered
+        Pending = 1,
+        Approved = 2,
+        Rejected = 3,
+        Delivered = 4
     }
 }

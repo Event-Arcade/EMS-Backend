@@ -171,15 +171,13 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    //seeding 7 vendor user
-    for(int i=1;i<=7;i++){
-        string email = "vendor"+i.ToString()+"@gmail.com";
-        var vendorUser = new ApplicationUser
+
+    var vendorUser = new ApplicationUser
     {
         FirstName = "vendor",
         LastName = "vendor",
-        UserName =email,
-        Email = email,
+        UserName = "vendor@gmail.com",
+        Email = "vendor@gmail.com",
         Street = "vendor street",
         City = "vendor city",
         PostalCode = "vendor postal code",
@@ -192,10 +190,10 @@ using (var scope = app.Services.CreateScope())
         var response = await userManager.CreateAsync(vendorUser, "Vendor@123");
         if (response.Succeeded)
         {
-            await userManager.AddToRoleAsync(vendorUser, "vendor");
+            await userManager.AddToRoleAsync(vendorUser, "client");
         }
     }
-    }
+
 
     //seeding client user
     var clientUser = new ApplicationUser

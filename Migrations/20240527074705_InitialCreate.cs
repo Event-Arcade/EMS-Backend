@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EMS.BACKEND.API.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,8 +37,8 @@ namespace EMS.BACKEND.API.Migrations
                     PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Province = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Rating = table.Column<double>(type: "float", nullable: true),
-                    Longitude = table.Column<double>(type: "float", nullable: false),
-                    Latitude = table.Column<double>(type: "float", nullable: false),
+                    Longitude = table.Column<double>(type: "float", nullable: true),
+                    Latitude = table.Column<double>(type: "float", nullable: true),
                     ProfilePicturePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -88,7 +88,7 @@ namespace EMS.BACKEND.API.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AdminId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ResourceUrl = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -99,8 +99,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_AdminStaticResources_AspNetUsers_AdminId",
                         column: x => x.AdminId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -206,8 +205,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_Categories_AspNetUsers_AdminId",
                         column: x => x.AdminId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -228,14 +226,12 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_ChatMessages_AspNetUsers_ReceiverId",
                         column: x => x.ReceiverId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ChatMessages_AspNetUsers_SenderId",
                         column: x => x.SenderId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -244,6 +240,7 @@ namespace EMS.BACKEND.API.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -254,8 +251,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_Packages_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -277,8 +273,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_Shops_AspNetUsers_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -301,14 +296,12 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_ShopServices_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ShopServices_Shops_ShopId",
                         column: x => x.ShopId,
                         principalTable: "Shops",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -336,8 +329,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_FeedBacks_ShopServices_ServiceId",
                         column: x => x.ServiceId,
                         principalTable: "ShopServices",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -356,8 +348,7 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_ShopServiceStaticResources_ShopServices_ServiceId",
                         column: x => x.ServiceId,
                         principalTable: "ShopServices",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -378,18 +369,16 @@ namespace EMS.BACKEND.API.Migrations
                         name: "FK_SubPackages_Packages_PackageId",
                         column: x => x.PackageId,
                         principalTable: "Packages",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_SubPackages_ShopServices_ServiceId",
                         column: x => x.ServiceId,
                         principalTable: "ShopServices",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "FeedBackStaticResource",
+                name: "FeedBackStaticResources",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -399,13 +388,12 @@ namespace EMS.BACKEND.API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FeedBackStaticResource", x => x.Id);
+                    table.PrimaryKey("PK_FeedBackStaticResources", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FeedBackStaticResource_FeedBacks_FeedBackId",
+                        name: "FK_FeedBackStaticResources_FeedBacks_FeedBackId",
                         column: x => x.FeedBackId,
                         principalTable: "FeedBacks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -478,8 +466,8 @@ namespace EMS.BACKEND.API.Migrations
                 column: "ServiceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FeedBackStaticResource_FeedBackId",
-                table: "FeedBackStaticResource",
+                name: "IX_FeedBackStaticResources_FeedBackId",
+                table: "FeedBackStaticResources",
                 column: "FeedBackId");
 
             migrationBuilder.CreateIndex(
@@ -543,7 +531,7 @@ namespace EMS.BACKEND.API.Migrations
                 name: "ChatMessages");
 
             migrationBuilder.DropTable(
-                name: "FeedBackStaticResource");
+                name: "FeedBackStaticResources");
 
             migrationBuilder.DropTable(
                 name: "ShopServiceStaticResources");
