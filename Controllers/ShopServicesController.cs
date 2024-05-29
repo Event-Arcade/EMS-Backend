@@ -16,14 +16,14 @@ namespace EMS.BACKEND.API.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllServices()
         {
-            var response = await serviceRepository.FindAllAsync();
-            if (response.Flag)
+            try
             {
+                var response = await serviceRepository.FindAllAsync();
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
@@ -31,59 +31,59 @@ namespace EMS.BACKEND.API.Controllers
         public async Task<IActionResult> GetService(int id)
         {
 
-            var response = await serviceRepository.FindByIdAsync(id);
-            if (response.Flag)
+            try
             {
+                var response = await serviceRepository.FindByIdAsync(id);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpDelete("delete/{id}"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> DeleteService(int id)
         {
-            var userId = User.GetUserId();
-            var response = await serviceRepository.DeleteAsync(userId, id);
-            if (response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await serviceRepository.DeleteAsync(userId, id);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPost("create"), Authorize(Roles = "vendor"), RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
         public async Task<IActionResult> CreateService([FromForm] ShopServiceRequestDTO service)
         {
-            var userId = User.GetUserId();
-            var response = await serviceRepository.CreateAsync(userId, service);
-            if (response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await serviceRepository.CreateAsync(userId, service);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPut("update/{serviceId}"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> UpdateService(int serviceId, [FromForm] ShopServiceRequestDTO service)
         {
-            var userId = User.GetUserId();
-            var response = await serviceRepository.UpdateAsync(userId, serviceId, service);
-            if (response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await serviceRepository.UpdateAsync(userId, serviceId, service);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
     }

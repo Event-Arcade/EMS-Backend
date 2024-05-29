@@ -48,7 +48,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     var staticResources = new List<ShopServiceStaticResources>();
                     //add static resources
-                    if (entity.ShopServiceStaticResources.Count > 0)
+                    if (entity.ShopServiceStaticResources != null && entity.ShopServiceStaticResources.Count > 0)
                     {
                         foreach (var item in entity.ShopServiceStaticResources)
                         {
@@ -173,7 +173,19 @@ namespace EMS.BACKEND.API.Repositories
                     var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == id).ToListAsync();
                     foreach (var item in feedbacks)
                     {
-                        await _feedBackRepository.DeleteAsync(user.Id, item.Id);
+                        //delete all static resources associated with feedback
+                        var feedbackStaticResources = await context.FeedBackStaticResources.Where(x => x.FeedBackId == item.Id).ToListAsync();
+                        foreach (var resource in feedbackStaticResources)
+                        {
+                            //delete file from cloud
+                            await _cloudProvider.RemoveFile(resource.ResourceUrl);
+
+                            //remove from database
+                            context.FeedBackStaticResources.Remove(resource);
+                        }
+
+                        //remove feedback from database
+                        context.FeedBacks.Remove(item);
                     }
 
                     context.ShopServices.Remove(shopService);
@@ -203,6 +215,7 @@ namespace EMS.BACKEND.API.Repositories
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                     var services = await context.ShopServices.ToListAsync();
+
                     var response = new List<ShopServiceResponseDTO>();
                     foreach (var service in services)
                     {
@@ -272,53 +285,6 @@ namespace EMS.BACKEND.API.Repositories
             }
         }
 
-        //TODO: if this method is not used, remove it
-        public async Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> GetServicesByShopId(string userId)
-        {
-            //get shopservices by shop id
-            try
-            {
-                using (var scope = _serviceScopeFactory.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    // get shop id by user id
-                    var shop = await context.Shops.FirstOrDefaultAsync(x => x.OwnerId == userId);
-                    if (shop == null)
-                    {
-                        throw new Exception("Shop not found");
-                    }
-
-                    var services = await context.ShopServices.Where(s => s.Id == shop.Id).ToListAsync();
-                    var response = new List<ShopServiceResponseDTO>();
-                    foreach (var service in services)
-                    {
-                        var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == service.Id).ToListAsync();
-                        var staticResourcesURLs = new List<string>();
-                        foreach (var item in staticResources)
-                        {
-                            staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
-                        }
-                        response.Add(service.ToShopServiceResponseDTO(staticResourcesURLs));
-                    }
-
-                    return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
-                    {
-                        Data = response,
-                        Message = "Services fetched successfully",
-                        Flag = true
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
-                {
-                    Message = ex.Message,
-                    Flag = false
-                };
-            }
-        }
-
         public async Task<BaseResponseDTO<ShopServiceResponseDTO>> UpdateAsync(string userId, int id, ShopServiceRequestDTO entity)
         {
             try
@@ -346,28 +312,26 @@ namespace EMS.BACKEND.API.Repositories
                         throw new Exception("You are not authorized to update service for this shop");
                     }
 
-                    //update service
-                    shopService.Name = entity.Name;
-                    shopService.Description = entity.Description;
-                    shopService.Price = entity.Price;
-                    shopService.CategoryId = entity.CategoryId;
-                    shopService.ShopId = entity.ShopId;
-
-                    //delete all static resources
-                    var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == id).ToListAsync();
-                    foreach (var item in staticResources)
+                    //update service details if not null
+                    if (!string.IsNullOrEmpty(entity.Name))
                     {
-                        //delete file from cloud
-                        await _cloudProvider.RemoveFile(item.ResourceUrl);
-
-                        //remove from database
-                        context.ShopServiceStaticResources.Remove(item);
+                        shopService.Name = entity.Name;
                     }
-
-                    //add new static resources
-                    var newStaticResources = new List<ShopServiceStaticResources>();
-                    if (entity.ShopServiceStaticResources.Count > 0)
+                    if (!string.IsNullOrEmpty(entity.Description))
                     {
+                        shopService.Description = entity.Description;
+                    }
+                    if (entity.NoOfGuests > 0)
+                    {
+                        shopService.NoOfGuests = entity.NoOfGuests;
+                    }
+                    shopService.Indoor = entity.Indoor;
+                    shopService.Outdoor = entity.Outdoor;
+
+                    //update static resources if not null
+                    if (entity.ShopServiceStaticResources != null && entity.ShopServiceStaticResources.Count > 0)
+                    {
+                        var newStaticResources = new List<ShopServiceStaticResources>();
                         foreach (var item in entity.ShopServiceStaticResources)
                         {
                             // upload to the cloud
@@ -409,9 +373,21 @@ namespace EMS.BACKEND.API.Repositories
                                 throw new Exception("Invalid file type");
                             }
                         }
-                    }
 
-                    shopService.ShopServiceStaticResources = newStaticResources;
+                        //delete all static resources
+                        var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == shopService.Id).ToListAsync();
+                        foreach (var item in staticResources)
+                        {
+                            //delete file from cloud
+                            await _cloudProvider.RemoveFile(item.ResourceUrl);
+
+                            //remove from database
+                            context.ShopServiceStaticResources.Remove(item);
+                        }
+
+                        //Update service static resources
+                        shopService.ShopServiceStaticResources = newStaticResources;
+                    }
 
                     //Update service
                     context.Update(shopService);
@@ -419,17 +395,30 @@ namespace EMS.BACKEND.API.Repositories
 
                     // convert resources into URLs
                     var staticResourcesURLs = new List<string>();
-                    foreach (var item in newStaticResources)
+                    var updatedStaticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == shopService.Id).ToListAsync();
+                    if (updatedStaticResources != null)
                     {
-                        staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
-                    }
+                        foreach (var item in updatedStaticResources)
+                        {
+                            staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
+                        }
 
-                    return new BaseResponseDTO<ShopServiceResponseDTO>
+                        return new BaseResponseDTO<ShopServiceResponseDTO>
+                        {
+                            Message = "Service updated successfully",
+                            Flag = true,
+                            Data = shopService.ToShopServiceResponseDTO(staticResourcesURLs)
+                        };
+                    }
+                    else
                     {
-                        Message = "Service updated successfully",
-                        Flag = true,
-                        Data = shopService.ToShopServiceResponseDTO(staticResourcesURLs)
-                    };
+                        return new BaseResponseDTO<ShopServiceResponseDTO>
+                        {
+                            Message = "Service updated successfully",
+                            Flag = true,
+                            Data = shopService.ToShopServiceResponseDTO(null)
+                        };
+                    }
                 }
             }
             catch (Exception ex)
@@ -441,6 +430,44 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
 
+        }
+        public async Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindByShopIdAsync(int shopId)
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var services = await context.ShopServices.Where(x => x.ShopId == shopId).ToListAsync();
+
+                    var response = new List<ShopServiceResponseDTO>();
+                    foreach (var service in services)
+                    {
+                        var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == service.Id).ToListAsync();
+                        var staticResourcesURLs = new List<string>();
+                        foreach (var item in staticResources)
+                        {
+                            staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
+                        }
+                        response.Add(service.ToShopServiceResponseDTO(staticResourcesURLs));
+                    }
+
+                    return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
+                    {
+                        Data = response,
+                        Message = "Services fetched successfully",
+                        Flag = true
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
         }
     }
 }

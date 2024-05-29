@@ -6,8 +6,7 @@ namespace EMS.BACKEND.API.DTOs.Package
     {
         public int Id { get; set; }
         public PackageStatus Status { get; set; }
-        public DateTime CreatedAt { get; set; }
         public string UserId { get; set; }
-        public virtual ICollection<SubPackageResponseDTO> SubPackages { get; set; }
+        public virtual ICollection<SubPackageResponseDTO>? SubPackages { get; set; }
     }
 }

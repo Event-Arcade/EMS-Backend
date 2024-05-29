@@ -8,6 +8,9 @@ namespace EMS.BACKEND.API.DTOs.ResponseDTOs
         public string Name { get; set; }
         public double Price { get; set; }
         public string? Description { get; set; }
+        public int NoOfGuests { get; set; }
+        public bool Indoor { get; set; }
+        public bool Outdoor { get; set; }
         public int ShopId { get; set; }
         public int CategoryId { get; set; }
         public double Rating { get; set; }

@@ -29,7 +29,7 @@ namespace EMS.BACKEND.API.Repositories
             _tokenService = tokenService;
         }
 
-        public async Task<BaseResponseDTO<string,ShopResponseDTO>> CreateAsync(string userId, ShopCreateDTO entity)
+        public async Task<BaseResponseDTO<string, ShopResponseDTO>> CreateAsync(string userId, ShopCreateDTO entity)
         {
             try
             {
@@ -130,6 +130,13 @@ namespace EMS.BACKEND.API.Repositories
                     if (shop.OwnerId != user.Id)
                     {
                         return new BaseResponseDTO { Message = "You are not the owner of the shop", Flag = false };
+                    }
+
+                    // Check any shopservices are available
+                    var shopServices = await dbContext.ShopServices.Where(s => s.ShopId == shop.Id).ToListAsync();
+                    if (shopServices.Count > 0)
+                    {
+                        return new BaseResponseDTO { Message = "Shop has services, please delete the services first", Flag = false };
                     }
 
                     // Remove the background image from the cloud

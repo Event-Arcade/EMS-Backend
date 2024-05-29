@@ -98,6 +98,7 @@ builder.Services.AddScoped<ICloudProviderRepository, CloudProviderRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -162,6 +163,7 @@ using (var scope = app.Services.CreateScope())
         Longitude = 0,
         Latitude = 0
     };
+    
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
         var response = await userManager.CreateAsync(adminUser, "Admin@123");
@@ -185,6 +187,7 @@ using (var scope = app.Services.CreateScope())
         Longitude = 0,
         Latitude = 0
     };
+
     if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
     {
         var response = await userManager.CreateAsync(vendorUser, "Vendor@123");
@@ -209,6 +212,7 @@ using (var scope = app.Services.CreateScope())
         Longitude = 0,
         Latitude = 0
     };
+
     if (await userManager.FindByEmailAsync(clientUser.Email) == null)
     {
         var response = await userManager.CreateAsync(clientUser, "Client@123");
@@ -217,8 +221,44 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(clientUser, "client");
         }
     }
-}
 
+    // update the shopservice ratings according to the its feedbacks rating average
+    var shopServices = await dbContext.ShopServices.ToListAsync();
+    if (shopServices != null)
+    {
+        foreach (var shopService in shopServices)
+        {
+            var feedbacks = await dbContext.FeedBacks.Where(f => f.ServiceId == shopService.Id).ToListAsync();
+            if (feedbacks.Count > 0)
+            {
+                var rating = feedbacks.Average(f => f.Rating);
+                shopService.Rating = rating;
+                dbContext.ShopServices.Update(shopService);
+                await dbContext.SaveChangesAsync();
+            }
+        }
+    }
+
+    // update the shop ratings according to the its shopService rating average
+    var shops = await dbContext.Shops.ToListAsync();
+    if (shops != null)
+    {
+        foreach (var shop in shops)
+        {
+            var tempShopServices = await dbContext.ShopServices.Where(s => s.ShopId == shop.Id).ToListAsync();
+            if (tempShopServices != null)
+            {
+                if (tempShopServices.Count > 0)
+                {
+                    var rating = tempShopServices.Average(s => s.Rating);
+                    shop.Rating = rating;
+                    dbContext.Shops.Update(shop);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+        }
+    }
+}
 
 
 app.Run();

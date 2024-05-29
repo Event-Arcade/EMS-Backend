@@ -20,15 +20,15 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userId = User.GetUserId();
-            var result = await categoryRepository.CreateAsync(userId, categoryRequestDTO);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await categoryRepository.CreateAsync(userId, categoryRequestDTO);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message);
             }
         }
 
@@ -41,43 +41,44 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userId = User.GetUserId();
-            var result = await categoryRepository.DeleteAsync(userId, categoryId);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await categoryRepository.DeleteAsync(userId, categoryId);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message );
             }
         }
 
         [HttpGet("getall")]
         public async Task<IActionResult> GetAllCategories()
         {
-            var result = await categoryRepository.FindAllAsync();
-            if (result.Flag)
+            try
             {
+                var result = await categoryRepository.FindAllAsync();
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message );
             }
+
         }
 
         [HttpGet("get/{categoryId}")]
         public async Task<IActionResult> GetCategoryById(int categoryId)
         {
-            var result = await categoryRepository.FindByIdAsync(categoryId);
-            if (result.Flag)
+            try
             {
+                var result = await categoryRepository.FindByIdAsync(categoryId);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message );
             }
         }
 
@@ -90,15 +91,15 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var userId = User.GetUserId();
-            var result = await categoryRepository.UpdateAsync(userId, categotyId, category);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await categoryRepository.UpdateAsync(userId, categotyId, category);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message );
             }
         }
     }

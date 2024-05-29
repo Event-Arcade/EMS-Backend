@@ -17,7 +17,7 @@ namespace EMS.BACKEND.API.Repositories
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration,  UserManager<ApplicationUser> userManager)
+        public FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
@@ -27,7 +27,8 @@ namespace EMS.BACKEND.API.Repositories
 
         public async Task<BaseResponseDTO<FeedBackResponseDTO>> CreateAsync(string userId, FeedBackRequestDTO entity)
         {
-            try{
+            try
+            {
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -72,11 +73,33 @@ namespace EMS.BACKEND.API.Repositories
                     var newFeedback = await context.FeedBacks.AddAsync(feedBackEntity);
                     await context.SaveChangesAsync();
 
-                    if(newFeedback.State == EntityState.Added)
-                    {   
+                    // update the service rating according to the feedbacks rating
+                    var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == entity.ServiceId).ToListAsync();
+                    double totalRating = 0;
+                    foreach (var feedback in feedbacks)
+                    {
+                        totalRating += feedback.Rating;
+                    }
+                    service.Rating = totalRating / feedbacks.Count;
+                    context.ShopServices.Update(service);
+                    await context.SaveChangesAsync();
+
+                    // update the shop rating according to the services rating
+                    var shop = await context.Shops.FirstOrDefaultAsync(x => x.Id == service.ShopId);
+                    var services = await context.ShopServices.Where(x => x.ShopId == shop.Id).ToListAsync();
+                    double totalShopRating = 0;
+                    foreach (var s in services)
+                    {
+                        totalShopRating += s.Rating;
+                    }
+                    shop.Rating = totalShopRating / services.Count;
+                    context.Shops.Update(shop);
+
+                    if (newFeedback.State == EntityState.Added)
+                    {
                         throw new Exception("Feedback not created, please try again later");
                     }
-                    
+
                     // upload the iformfiles and create the feedBackStaticResources
                     ICollection<FeedBackStaticResource> feedBackStaticResources = new List<FeedBackStaticResource>();
                     if (entity.FeedBackStaticResources != null)
@@ -95,12 +118,14 @@ namespace EMS.BACKEND.API.Repositories
                                         ResourceUrl = path
                                     };
                                     feedBackStaticResources.Add(feedBackStaticResource);
-                                }else{
+                                }
+                                else
+                                {
                                     throw new Exception("Error uploading file");
                                 }
                             }
                         }
-                    } 
+                    }
 
                     // add the feedBackStaticResources to the feedback
                     if (feedBackStaticResources.Count > 0)
@@ -123,7 +148,7 @@ namespace EMS.BACKEND.API.Repositories
                         Message = "Feedback created successfully",
                         Flag = true
                     };
-  
+
                 }
             }
             catch (Exception ex)
@@ -166,7 +191,7 @@ namespace EMS.BACKEND.API.Repositories
                         };
                     }
 
-                    // check if the user is the owner of the feedback
+                    // check if the user is the owner of the feedback 
                     if (feedBack.ApplicationUserId != userId)
                     {
                         return new BaseResponseDTO
@@ -208,7 +233,7 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-       
+
         public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> FindAllAsync()
         {
             try

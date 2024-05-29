@@ -2,6 +2,7 @@
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.Package;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.DTOs.SubPackage;
 using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,15 +13,11 @@ namespace EMS.BACKEND.API.Repositories
     public class PackageRepository : IPackageRepository
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly ICloudProviderRepository _cloudProvider;
-        private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public PackageRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        public PackageRepository(IServiceScopeFactory serviceScopeFactory, UserManager<ApplicationUser> userManager)
         {
             _serviceScopeFactory = serviceScopeFactory;
-            _cloudProvider = cloudProvider;
-            _configuration = configuration;
             _userManager = userManager;
         }
 
@@ -42,7 +39,7 @@ namespace EMS.BACKEND.API.Repositories
                     }
 
                     // check user is client
-                    if (!await _userManager.IsInRoleAsync(user, "Client"))
+                    if (!await _userManager.IsInRoleAsync(user, "client"))
                     {
                         return new BaseResponseDTO<PackageResponseDTO>
                         {
@@ -55,7 +52,6 @@ namespace EMS.BACKEND.API.Repositories
                     {
                         UserId = userId,
                         Status = PackageStatus.Pending,
-                        CreatedAt = DateTime.Now
                     };
                     dbContext.Packages.Add(package);
                     await dbContext.SaveChangesAsync();
@@ -67,6 +63,8 @@ namespace EMS.BACKEND.API.Repositories
                         {
                             PackageId = package.Id,
                             ServiceId = subPackage.ServiceId,
+                            OrderTime = subPackage.OrderTime,
+                            Description = subPackage.Description,
                             Status = PackageStatus.Pending
                         };
                         dbContext.SubPackages.Add(newSubPackage);
@@ -79,19 +77,21 @@ namespace EMS.BACKEND.API.Repositories
                     {
                         Id = package.Id,
                         Status = package.Status,
-                        CreatedAt = package.CreatedAt,
                         UserId = package.UserId
                     };
 
                     // create subpackage response
                     packageResponse.SubPackages = new List<SubPackageResponseDTO>();
-                    foreach (var subPackage in package.SubPackages)
+                    var subPackages = await dbContext.SubPackages.Where(sp => sp.PackageId == package.Id).ToListAsync();
+                    foreach (var subPackage in subPackages)
                     {
                         packageResponse.SubPackages.Add(new SubPackageResponseDTO
                         {
                             Id = subPackage.Id,
                             PackageId = subPackage.PackageId,
                             ServiceId = subPackage.ServiceId,
+                            OrderTime = subPackage.OrderTime,
+                            Description = subPackage.Description,
                             Status = subPackage.Status
                         });
                     }
@@ -177,7 +177,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<IEnumerable<PackageResponseDTO>>> FindAllAsync()
         {
             try
@@ -193,18 +192,20 @@ namespace EMS.BACKEND.API.Repositories
                         {
                             Id = package.Id,
                             Status = package.Status,
-                            CreatedAt = package.CreatedAt,
                             UserId = package.UserId
                         };
 
                         // create subpackage response
                         packageResponse.SubPackages = new List<SubPackageResponseDTO>();
-                        foreach (var subPackage in package.SubPackages)
+                        var subPackages = await dbContext.SubPackages.Where(sp => sp.PackageId == package.Id).ToListAsync();
+                        foreach (var subPackage in subPackages)
                         {
                             packageResponse.SubPackages.Add(new SubPackageResponseDTO
                             {
                                 Id = subPackage.Id,
                                 PackageId = subPackage.PackageId,
+                                OrderTime = subPackage.OrderTime,
+                                Description = subPackage.Description,
                                 ServiceId = subPackage.ServiceId,
                                 Status = subPackage.Status
                             });
@@ -230,7 +231,6 @@ namespace EMS.BACKEND.API.Repositories
                 };
             }
         }
-
         public async Task<BaseResponseDTO<PackageResponseDTO>> FindByIdAsync(int id)
         {
             try
@@ -252,19 +252,21 @@ namespace EMS.BACKEND.API.Repositories
                     {
                         Id = package.Id,
                         Status = package.Status,
-                        CreatedAt = package.CreatedAt,
                         UserId = package.UserId
                     };
 
                     // create subpackage response
                     packageResponse.SubPackages = new List<SubPackageResponseDTO>();
-                    foreach (var subPackage in package.SubPackages)
+                    var subPackages = await dbContext.SubPackages.Where(sp => sp.PackageId == package.Id).ToListAsync();
+                    foreach (var subPackage in subPackages)
                     {
                         packageResponse.SubPackages.Add(new SubPackageResponseDTO
                         {
                             Id = subPackage.Id,
                             PackageId = subPackage.PackageId,
                             ServiceId = subPackage.ServiceId,
+                            OrderTime = subPackage.OrderTime,
+                            Description = subPackage.Description,
                             Status = subPackage.Status
                         });
                     }
@@ -285,6 +287,100 @@ namespace EMS.BACKEND.API.Repositories
                     Flag = false
                 };
 
+            }
+        }
+
+        public async Task<BaseResponseDTO<ICollection<SubPackageResponseDTO>>> GetSubPackages(string userId)
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
+
+                    // check user is vendor
+                    if (!await _userManager.IsInRoleAsync(user, "vendor"))
+                    {
+                        return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                        {
+                            Message = "You cannot get subpackages. You are not a vendor.",
+                            Flag = false
+                        };
+                    }
+
+                    var myShop = await dbContext.Shops.Where(s => s.OwnerId == userId).FirstOrDefaultAsync();
+                    if (myShop == null)
+                    {
+                        return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                        {
+                            Message = "Shop not found",
+                            Flag = false
+                        };
+                    }
+
+                    var myServices = await dbContext.ShopServices.Where(s => s.ShopId == myShop.Id).ToListAsync();
+
+                    var mySubPackages = new List<SubPackage>();
+                    var allSubPackages = await dbContext.SubPackages.ToListAsync();
+                    foreach (var subPackage in allSubPackages)
+                    {
+                        foreach (var service in myServices)
+                        {
+                            if (subPackage.ServiceId == service.Id)
+                            {
+                                mySubPackages.Add(subPackage);
+                            }
+                        }
+                    }
+
+                    if (mySubPackages.Count == 0)
+                    {
+                        return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                        {
+                            Message = "Subpackages not found",
+                            Flag = false
+                        };
+                    }
+
+                    var subPackageResponseList = new List<SubPackageResponseDTO>();
+                    foreach (var subPackage in mySubPackages)
+                    {
+                        subPackageResponseList.Add(new SubPackageResponseDTO
+                        {
+                            Id = subPackage.Id,
+                            PackageId = subPackage.PackageId,
+                            ServiceId = subPackage.ServiceId,
+                            OrderTime = subPackage.OrderTime,
+                            Description = subPackage.Description,
+                            Status = subPackage.Status
+                        });
+                    }
+
+                    return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                    {
+                        Data = subPackageResponseList,
+                        Message = "Subpackages found",
+                        Flag = true
+                    };
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<ICollection<SubPackageResponseDTO>>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
             }
         }
 
@@ -315,7 +411,7 @@ namespace EMS.BACKEND.API.Repositories
                         };
                     }
 
-                    var package = await dbContext.Packages.Where(p => p.UserId == userId && p.Id == id).Include(p => p.SubPackages).FirstOrDefaultAsync();
+                    var package = await dbContext.Packages.Where(p => p.UserId == userId && p.Id == id).FirstOrDefaultAsync();
                     if (package == null)
                     {
                         return new BaseResponseDTO<PackageResponseDTO>
@@ -334,7 +430,6 @@ namespace EMS.BACKEND.API.Repositories
                     {
                         Id = package.Id,
                         Status = package.Status,
-                        CreatedAt = package.CreatedAt,
                         UserId = package.UserId
                     };
 
@@ -347,6 +442,8 @@ namespace EMS.BACKEND.API.Repositories
                             Id = subPackage.Id,
                             PackageId = subPackage.PackageId,
                             ServiceId = subPackage.ServiceId,
+                            OrderTime = subPackage.OrderTime,
+                            Description = subPackage.Description,
                             Status = subPackage.Status
                         });
                     }
@@ -357,6 +454,99 @@ namespace EMS.BACKEND.API.Repositories
                         Message = "Package updated successfully",
                         Flag = true
                     };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<PackageResponseDTO>
+                {
+                    Message = ex.Message,
+                    Flag = false
+                };
+            }
+        }
+
+        public async Task<BaseResponseDTO<PackageResponseDTO>> UpdateSubPackage(string userId, int id, SubPackageRequestDTO subPackageRequest)
+        {
+            try
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "User not found",
+                            Flag = false
+                        };
+                    }
+
+                    // check user is client
+                    if (!await _userManager.IsInRoleAsync(user, "vendor"))
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "You cannot update subpackage. You are not a vendor.",
+                            Flag = false
+                        };
+                    }
+
+                    // find the subpackage
+                    var subPackage = await dbContext.SubPackages.Where(sp => sp.Id == subPackageRequest.Id).FirstOrDefaultAsync();
+                    if (subPackage == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "Subpackage not found",
+                            Flag = false
+                        };
+                    }
+
+                    // update subpackage
+                    subPackage.Status = subPackageRequest.Status;
+                    dbContext.SubPackages.Update(subPackage);
+                    await dbContext.SaveChangesAsync();
+
+                    var package = await dbContext.Packages.Where(p => p.Id == subPackage.PackageId).Include(p => p.SubPackages).FirstOrDefaultAsync();
+                    if (package == null)
+                    {
+                        return new BaseResponseDTO<PackageResponseDTO>
+                        {
+                            Message = "Package not found",
+                            Flag = false
+                        };
+                    }
+
+                    var response = new PackageResponseDTO()
+                    {
+                        Id = package.Id,
+                        Status = package.Status,
+                        UserId = package.UserId
+                    };
+
+                    response.SubPackages = new List<SubPackageResponseDTO>();
+                    foreach (var subPkage in package.SubPackages)
+                    {
+                        response.SubPackages.Add(new SubPackageResponseDTO
+                        {
+                            Id = subPkage.Id,
+                            PackageId = subPkage.PackageId,
+                            ServiceId = subPkage.ServiceId,
+                            OrderTime = subPkage.OrderTime,
+                            Description = subPkage.Description,
+                            Status = subPkage.Status
+                        });
+                    }
+
+                    return new BaseResponseDTO<PackageResponseDTO>
+                    {
+                        Data = response,
+                        Message = "Subpackage updated successfully",
+                        Flag = true
+                    };
+
                 }
             }
             catch (Exception ex)

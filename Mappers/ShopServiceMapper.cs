@@ -14,6 +14,9 @@ namespace EMS.BACKEND.API.Mappers
                 Name = shopService.Name,
                 Price = shopService.Price,
                 Description = shopService.Description,
+                NoOfGuests = shopService.NoOfGuests,
+                Indoor = shopService.Indoor,
+                Outdoor = shopService.Outdoor,
                 ShopId = shopService.ShopId,
                 CategoryId = shopService.CategoryId,
                 Rating = shopService.Rating,
@@ -26,6 +29,9 @@ namespace EMS.BACKEND.API.Mappers
             {
                 Name = shopServiceRequestDTO.Name,
                 Price = shopServiceRequestDTO.Price,
+                NoOfGuests = shopServiceRequestDTO.NoOfGuests,
+                Indoor = shopServiceRequestDTO.Indoor,
+                Outdoor = shopServiceRequestDTO.Outdoor,
                 Description = shopServiceRequestDTO.Description,
                 ShopId = shopServiceRequestDTO.ShopId,
                 CategoryId = shopServiceRequestDTO.CategoryId

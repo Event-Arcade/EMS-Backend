@@ -3,6 +3,8 @@ namespace EMS.BACKEND.API.DTOs.Package
 {
     public class PackageRequestDTO
     {
-        public ICollection<SubPackageRequestDTO>? SubPackages { get; set; }
+        public int? Id { get; set; }
+        public string? UserId { get; set; }
+        public ICollection<SubPackageRequestDTO> SubPackages { get; set; }
     }
 }

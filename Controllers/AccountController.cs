@@ -20,43 +20,43 @@ namespace EMS.BACKEND.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterUserDTO registerUserDTO)
         {
-            var response = await _userAccount.CreateAccountAsync(registerUserDTO);
-            if (response.Flag)
+            try
             {
+                var response = await _userAccount.CreateAccountAsync(registerUserDTO);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginDTO loginDTO)
         {
-            var response = await _userAccount.LoginAccountAsync(loginDTO);
-            if (response.Flag)
+            try
             {
+                var response = await _userAccount.LoginAccountAsync(loginDTO);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPut("updateaccount"), Authorize]
         public async Task<IActionResult> Update([FromForm] UpdateUserDTO userDTO)
         {
-            var userId = User.GetUserId();
-            var response = await _userAccount.UpdateAccountAsync(userId, userDTO);
-            if (response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await _userAccount.UpdateAccountAsync(userId, userDTO);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
@@ -64,73 +64,73 @@ namespace EMS.BACKEND.API.Controllers
         [HttpGet("getme"), Authorize]
         public async Task<IActionResult> GetMe()
         {
-            var userId = User.GetUserId();
-            var result = await _userAccount.GetAccountByIdAsync(userId);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await _userAccount.GetAccountByIdAsync(userId);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpDelete("delete"), Authorize]
         public async Task<IActionResult> Delete()
         {
-            var userId = User.GetUserId();
-            var result = await _userAccount.DeleteAccountAsync(userId);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await _userAccount.DeleteAccountAsync(userId);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpPut("updatepassword"), Authorize]
         public async Task<IActionResult> UpdatePassword([FromForm] UpdatePasswordDTO updatePassword)
         {
-            var userId = User.GetUserId();
-            var result = await _userAccount.UpdateAccountPasswordAsync(userId, updatePassword);
-            if (result.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var result = await _userAccount.UpdateAccountPasswordAsync(userId, updatePassword);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message);
             }
         }
         //signin with google
         [HttpPost("googlelogin")]
         public async Task<IActionResult> GoogleLogin([FromForm] GoogleLoginDTO googleLoginDTO)
         {
-            var response = await _userAccount.GoogleLoginAsync(googleLoginDTO);
-            if (response.Flag)
+            try
             {
+                var response = await _userAccount.GoogleLoginAsync(googleLoginDTO);
                 return Ok(response);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                return BadRequest(ex.Message);
             }
         }
 
         [HttpGet("getaccountbyid/{id}")]
         public async Task<IActionResult> GetAccountById(string id)
         {
-            var result = await _userAccount.GetAccountByIdAsync(id);
-            if (result.Flag)
+            try
             {
+                var result = await _userAccount.GetAccountByIdAsync(id);
                 return Ok(result);
             }
-            else
+            catch (Exception ex)
             {
-                return BadRequest(result);
+                return BadRequest(ex.Message);
             }
         }
 

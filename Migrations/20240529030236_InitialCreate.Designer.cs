@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EMS.BACKEND.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240527074705_InitialCreate")]
+    [Migration("20240529030236_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -227,7 +227,6 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Comment")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("PostedOn")
@@ -339,12 +338,20 @@ namespace EMS.BACKEND.API.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Indoor")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NoOfGuests")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Outdoor")
+                        .HasColumnType("bit");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");

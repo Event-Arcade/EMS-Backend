@@ -7,6 +7,7 @@ namespace EMS.BACKEND.API.Models
         public int Id { get; set; }
         public string? Description { get; set; }
         public int PackageId { get; set; }
+        public DateTime OrderTime { get; set; }
         public virtual Package Package { get; set; }
         public PackageStatus Status { get; set; }
         public int ServiceId { get; set; }

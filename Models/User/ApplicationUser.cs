@@ -15,6 +15,7 @@ namespace EMS.BACKEND.API.Models
         public Double? Longitude { get; set; }
         public Double? Latitude { get; set; }
         public string? ProfilePicturePath { get; set; }
+        public bool IsActive { get; set; }
         public virtual ICollection<Shop>? Shops { get; set; }
         public virtual ICollection<AdminStaticResource>? AdminStaticResources { get; set; }
         public virtual ICollection<FeedBack>? FeedBacks { get; set; }

@@ -8,7 +8,10 @@ namespace EMS.BACKEND.API.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public double Price { get; set; }
-        public string Description { get; set; } = string.Empty;
+        public int NoOfGuests { get; set; }
+        public bool Indoor { get; set; }
+        public bool Outdoor { get; set; }
+        public string? Description { get; set; }
         public double Rating { get; set; }
         public int ShopId { get; set; }
         public virtual Shop Shop { get; set; }

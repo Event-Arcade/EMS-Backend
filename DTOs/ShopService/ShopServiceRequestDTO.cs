@@ -8,6 +8,12 @@ namespace EMS.BACKEND.API.DTOs.ShopService
         public string Name { get; set; }
         [Required, Range(0, double.MaxValue)]
         public double Price { get; set; }
+        [Required, Range(0, int.MaxValue)]
+        public int NoOfGuests { get; set; }
+        [Required]
+        public bool Indoor { get; set; }
+        [Required]
+        public bool Outdoor { get; set; }
         [StringLength(100)]
         public string? Description { get; set; }
         [Required]

@@ -1,5 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.Package;
+using EMS.BACKEND.API.DTOs.SubPackage;
 using EMS.BACKEND.API.Extensions;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -21,59 +22,103 @@ namespace EMS.BACKEND.API.Controllers
         [HttpGet("getall"), Authorize]
         public async Task<IActionResult> Get()
         {
-            var response = await _packageRepository.FindAllAsync();
-            if(response.Flag)
+            try
             {
+                var response = await _packageRepository.FindAllAsync();
                 return Ok(response);
             }
-            return BadRequest(response);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-        
+
         [HttpGet("get/{id}"), Authorize]
         public async Task<IActionResult> Get(int id)
         {
-            var response = await _packageRepository.FindByIdAsync(id);
-            if(response.Flag)
+            try
             {
+                var response = await _packageRepository.FindByIdAsync(id);
                 return Ok(response);
             }
-            return BadRequest(response);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("create"), Authorize]
-        public async Task<IActionResult> Create([FromForm] PackageRequestDTO packageRequestDTO)
+        public async Task<IActionResult> Create([FromBody] PackageRequestDTO packageRequestDTO)
         {
-            var userId = User.GetUserId();
-            var response = await _packageRepository.CreateAsync(userId, packageRequestDTO);
-            if(response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.CreateAsync(userId, packageRequestDTO);
                 return Ok(response);
             }
-            return BadRequest(response);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("update/{id}"), Authorize]
         public async Task<IActionResult> Update(int id, [FromForm] PackageRequestDTO packageRequestDTO)
         {
-            var userId = User.GetUserId();
-            var response = await _packageRepository.UpdateAsync(userId, id, packageRequestDTO);
-            if(response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.UpdateAsync(userId, id, packageRequestDTO);
                 return Ok(response);
             }
-            return BadRequest(response);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("delete/{id}"), Authorize]
         public async Task<IActionResult> Delete(int id)
         {
-            var userId = User.GetUserId();
-            var response = await _packageRepository.DeleteAsync(userId, id);
-            if(response.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.DeleteAsync(userId, id);
                 return Ok(response);
             }
-            return BadRequest(response);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("update-sub-package/{id}"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> UpdateSubPackage(int id, [FromForm] SubPackageRequestDTO subPackageRequestDTO)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.UpdateSubPackage(userId, id, subPackageRequestDTO);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("get-sub-packages"), Authorize(Roles = "vendor")]
+        public async Task<IActionResult> GetSubPackages()
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.GetSubPackages(userId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -21,62 +21,74 @@ namespace EMS.BACKEND.API.Controllers
         [HttpGet("getall")]
         public async Task<IActionResult> GetStaticResources()
         {
-            var staticResources = await _staticResourceRepository.FindAllAsync();
-            if (staticResources.Flag)
+            try
             {
+                var staticResources = await _staticResourceRepository.FindAllAsync();
                 return Ok(staticResources);
             }
-            return BadRequest(staticResources);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("get/{id}")]
         public async Task<IActionResult> GetStaticResource(int id)
         {
-            var staticResource = await _staticResourceRepository.FindByIdAsync(id);
-            if (staticResource.Flag)
+            try
             {
+                var staticResource = await _staticResourceRepository.FindByIdAsync(id);
                 return Ok(staticResource);
             }
-            return BadRequest(staticResource);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("create"), Authorize(Roles = "admin")]
         public async Task<IActionResult> CreateStaticResource([FromForm] AdminStaticResourceRequestDTO staticResource)
         {
-            var userId = User.GetUserId();
-            var created = await _staticResourceRepository.CreateAsync(userId, staticResource);
-            if (created.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var created = await _staticResourceRepository.CreateAsync(userId, staticResource);
                 return Ok(created);
             }
-
-            return BadRequest(created);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("update/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> UpdateStaticResource(int id, [FromForm] AdminStaticResourceRequestDTO staticResource)
         {
-            var userId = User.GetUserId();
-            var updated = await _staticResourceRepository.UpdateAsync(userId, id, staticResource);
-            if (updated.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var updated = await _staticResourceRepository.UpdateAsync(userId, id, staticResource);
                 return Ok(updated);
             }
-
-            return BadRequest(updated);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("delete/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteStaticResource(int id)
         {
-            var userId = User.GetUserId();
-            var deleted = await _staticResourceRepository.DeleteAsync(userId, id);
-            if (deleted.Flag)
+            try
             {
+                var userId = User.GetUserId();
+                var deleted = await _staticResourceRepository.DeleteAsync(userId, id);
                 return Ok(deleted);
             }
-
-            return BadRequest(deleted);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
