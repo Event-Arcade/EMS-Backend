@@ -5,7 +5,6 @@ using EMS.BACKEND.API.DTOs.Account;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models.User;
@@ -64,7 +63,9 @@ namespace EMS.BACKEND.API.Repositories
                             Message = filepath
                         };
                     }
-                }else{
+                }
+                else
+                {
                     // Assign default image path
                     registerApplicationUser.ProfilePicturePath = _config["StorageDirectories:ProfileImages"] + "/default.png";
                 }
@@ -184,7 +185,7 @@ namespace EMS.BACKEND.API.Repositories
                     };
 
                 //Store updated image if new image is uploaded
-                if (userDTO.ProfilePicture != null )
+                if (userDTO.ProfilePicture != null)
                 {
                     var (condition, filepath) = await _cloudProvider.UploadFile(userDTO.ProfilePicture, _config["StorageDirectories:ProfileImages"]);
                     if (condition)
@@ -206,7 +207,7 @@ namespace EMS.BACKEND.API.Repositories
                         };
                     }
                 }
-                
+
                 // Update user details
                 if (userDTO.FirstName != null)
                     user.FirstName = userDTO.FirstName;
@@ -521,6 +522,76 @@ namespace EMS.BACKEND.API.Repositories
                     Flag = false,
                     Message = ex.Message
                 };
+            }
+        }
+        public async Task<BaseResponseDTO<ICollection<UserAccountResponseDTO>>> GetAllUsersAsync(string userId)
+        {
+            try
+            {
+                // check if the user is an admin
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new BaseResponseDTO<ICollection<UserAccountResponseDTO>>
+                    {
+                        Flag = false,
+                        Message = "User not found"
+                    };
+                }
+
+                if (!await _userManager.IsInRoleAsync(user, "admin"))
+                {
+                    return new BaseResponseDTO<ICollection<UserAccountResponseDTO>>
+                    {
+                        Flag = false,
+                        Message = "You are not authorized to view this page"
+                    };
+                }
+
+                // get all users except the current user
+                var users = await _userManager.Users.Where(x => x.Id != userId).ToListAsync();
+                if (users.Count == 0)
+                {
+                    return new BaseResponseDTO<ICollection<UserAccountResponseDTO>>
+                    {
+                        Flag = false,
+                        Message = "No users found"
+                    };
+                }
+
+                // set the user profile picture URL
+                foreach (var u in users)
+                {
+                    if (u.ProfilePicturePath != null)
+                    {
+                        var url = _cloudProvider.GeneratePreSignedUrlForDownload(u.ProfilePicturePath);
+                        u.ProfilePicturePath = url;
+                    }
+                }
+
+                List<UserAccountResponseDTO> userAccountResponseDTOs = new List<UserAccountResponseDTO>();
+
+                foreach (var us in users)
+                {
+                    var userRole = await _userManager.GetRolesAsync(us);
+                    userAccountResponseDTOs.Add(us.MapUserToUserAccountResponseDTO(userRole.First().ToString()));
+                }
+
+                return new BaseResponseDTO<ICollection<UserAccountResponseDTO>>
+                {
+                    Flag = true,
+                    Message = "Users found",
+                    Data = userAccountResponseDTOs
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponseDTO<ICollection<UserAccountResponseDTO>>
+                {
+                    Flag = false,
+                    Message = ex.Message
+                };
+
             }
         }
     }

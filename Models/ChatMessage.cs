@@ -8,7 +8,7 @@ namespace EMS.BACKEND.API.Models
     public class ChatMessage
     {
         [Key]
-        public string Id { get; set; }
+        public int Id { get; set; }
         public string Message { get; set; }
         public DateTime Date { get; set; }
         public string SenderId { get; set; }

@@ -99,19 +99,20 @@ builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
+builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 
-
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
+    options.AddPolicy("CorsPolicy",
         policy =>
-                      {
-                          policy.WithOrigins("http://localhost:5173")
-        .AllowAnyMethod()
-        .AllowAnyHeader()
+        {
+            policy.WithOrigins("http://localhost:5173")
+            .SetIsOriginAllowed((x) => true)
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowCredentials()
         .WithHeaders(HeaderNames.ContentType);
-                      });
+        });
 });
 
 var app = builder.Build();
@@ -121,18 +122,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    app.UseCors(MyAllowSpecificOrigins);
 }
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
-
+app.UseCors("CorsPolicy");
 app.MapControllers();
 app.MapHub<PersonalChatHub>("/personalChatHub");
+
 
 //seeding user-roles
 using (var scope = app.Services.CreateScope())
@@ -163,7 +162,7 @@ using (var scope = app.Services.CreateScope())
         Longitude = 0,
         Latitude = 0
     };
-    
+
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
         var response = await userManager.CreateAsync(adminUser, "Admin@123");

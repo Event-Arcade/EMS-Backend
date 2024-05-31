@@ -1,26 +1,43 @@
 using Microsoft.AspNetCore.SignalR;
+using EMS.BACKEND.API.Contracts;
+using EMS.BACKEND.API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EMS.BACKEND.API.Hubs
 {
     public class PersonalChatHub : Hub
     {
-        public async Task SendMessage(string user, string message)
+        private readonly IChatMessageRepository _chatMessageRepository;
+
+        public PersonalChatHub(IChatMessageRepository chatMessageRepository)
         {
-            await Clients.All.SendAsync("ReceiveMessage", user, message);
+            _chatMessageRepository = chatMessageRepository;
         }
 
         public override async Task OnConnectedAsync()
         {
-            // Set user status to active and notify others
-            await Clients.All.SendAsync("UserConnected", Context.ConnectionId);
+
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            // Set user status to inactive and notify others
-            await Clients.All.SendAsync("UserDisconnected", Context.ConnectionId);
+            var userId = await _chatMessageRepository.NotifyUserOffline(Context.ConnectionId);
+            await Clients.AllExcept(Context.ConnectionId).SendAsync("UserOffline", userId);
             await base.OnDisconnectedAsync(exception);
         }
+
+        public async Task SetActive(string userId)
+        {
+            await _chatMessageRepository.SetUserActive(userId, Context.ConnectionId);
+            await Clients.AllExcept(Context.ConnectionId).SendAsync("UserConnected", userId);
+        }
+
+        public async Task NotifyUserOffline()
+        {
+            var userId = await _chatMessageRepository.NotifyUserOffline(Context.ConnectionId);
+            await Clients.AllExcept(Context.ConnectionId).SendAsync("UserOffline", userId);
+        }
+
     }
 }

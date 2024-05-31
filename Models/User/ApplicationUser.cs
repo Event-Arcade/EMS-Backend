@@ -5,6 +5,7 @@ namespace EMS.BACKEND.API.Models
 {
     public class ApplicationUser : IdentityUser
     {
+        public string? OnlineId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string? Street { get; set; }

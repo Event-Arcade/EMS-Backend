@@ -11,6 +11,7 @@ namespace EMS.BACKEND.API.Mappers
             return new UserAccountResponseDTO
             {
                 Id = user.Id,
+                OnlineId = user.OnlineId,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Street = user.Street,

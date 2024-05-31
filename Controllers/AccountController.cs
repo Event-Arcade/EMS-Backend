@@ -120,7 +120,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("getaccountbyid/{id}")]
+        [HttpGet("getaccountbyid/{id}"), Authorize]
         public async Task<IActionResult> GetAccountById(string id)
         {
             try
@@ -133,7 +133,20 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        [HttpGet("getallusers"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var result = await _userAccount.GetAllUsersAsync(userId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 }

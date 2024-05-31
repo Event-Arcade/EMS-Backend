@@ -5,6 +5,7 @@ namespace EMS.BACKEND.API.DTOs.ResponseDTOs
     public class UserAccountResponseDTO
     {
         public string Id { get; set; }
+        public string OnlineId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string? Street { get; set; }
