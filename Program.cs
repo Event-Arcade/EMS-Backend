@@ -14,8 +14,8 @@ using EMS.BACKEND.API.Contracts;
 using Amazon.S3;
 using Contracts;
 using EMS.BACKEND.API.Controllers;
-using EMS.BACKEND.API.Hubs;
 using EMS.BACKEND.API.Service;
+using EMS.BACKEND.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +100,7 @@ builder.Services.AddScoped<IAdminStaticResourceRepository, AdminStaticResourceRe
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -130,7 +131,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("CorsPolicy");
 app.MapControllers();
-app.MapHub<PersonalChatHub>("/personalChatHub");
+app.MapHub<EMSHub>("/personalChatHub");
 
 
 //seeding user-roles
@@ -139,6 +140,7 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
     //roles in the application
     var roles = new[] { "vendor", "client", "admin" };
@@ -153,8 +155,8 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "admin",
         LastName = "admin",
-        Email = "admin@gmail.com",
-        UserName = "admin@gmail.com",
+        Email = config["Default:Admin:Email"],
+        UserName =config["Default:Admin:Email"] ,
         Street = "admin street",
         City = "admin city",
         PostalCode = "admin postal code",
@@ -165,59 +167,10 @@ using (var scope = app.Services.CreateScope())
 
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
-        var response = await userManager.CreateAsync(adminUser, "Admin@123");
+        var response = await userManager.CreateAsync(adminUser, config["Default:Admin:Password"]);
         if (response.Succeeded)
         {
             await userManager.AddToRoleAsync(adminUser, "admin");
-        }
-    }
-
-
-    var vendorUser = new ApplicationUser
-    {
-        FirstName = "vendor",
-        LastName = "vendor",
-        UserName = "vendor@gmail.com",
-        Email = "vendor@gmail.com",
-        Street = "vendor street",
-        City = "vendor city",
-        PostalCode = "vendor postal code",
-        Province = "vendor province",
-        Longitude = 0,
-        Latitude = 0
-    };
-
-    if (await userManager.FindByEmailAsync(vendorUser.Email) == null)
-    {
-        var response = await userManager.CreateAsync(vendorUser, "Vendor@123");
-        if (response.Succeeded)
-        {
-            await userManager.AddToRoleAsync(vendorUser, "client");
-        }
-    }
-
-
-    //seeding client user
-    var clientUser = new ApplicationUser
-    {
-        FirstName = "client",
-        LastName = "client",
-        UserName = "client@gmail.com",
-        Email = "client@gmail.com",
-        Street = "client street",
-        City = "client city",
-        PostalCode = "client postal code",
-        Province = "client province",
-        Longitude = 0,
-        Latitude = 0
-    };
-
-    if (await userManager.FindByEmailAsync(clientUser.Email) == null)
-    {
-        var response = await userManager.CreateAsync(clientUser, "Client@123");
-        if (response.Succeeded)
-        {
-            await userManager.AddToRoleAsync(clientUser, "client");
         }
     }
 

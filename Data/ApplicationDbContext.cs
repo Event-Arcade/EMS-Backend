@@ -16,6 +16,7 @@ namespace EMS.BACKEND.API.DbContext
         public DbSet<ShopServiceStaticResources> ShopServiceStaticResources { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<FeedBackStaticResource> FeedBackStaticResources { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
 
@@ -106,6 +107,12 @@ namespace EMS.BACKEND.API.DbContext
                 .HasOne(x => x.Admin)
                 .WithMany(x => x.Categories)
                 .HasForeignKey(x => x.AdminId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.Notifications)
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
         }

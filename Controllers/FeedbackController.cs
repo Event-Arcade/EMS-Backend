@@ -1,8 +1,6 @@
 using Contracts;
 using EMS.BACKEND.API.DTOs;
-using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.Extensions;
-using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -56,6 +54,20 @@ namespace EMS.BACKEND.API.Controllers
             try
             {
                 var result = await _feedbackRepository.FindAllAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("get/{feedBackId}")]
+        public async Task<IActionResult> GetFeedBack(int feedBackId)
+        {
+            try
+            {
+                var result = await _feedbackRepository.FindByIdAsync(feedBackId);
                 return Ok(result);
             }
             catch (Exception ex)

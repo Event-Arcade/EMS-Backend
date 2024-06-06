@@ -2,6 +2,7 @@
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.DTOs.Shop;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -18,8 +19,9 @@ namespace EMS.BACKEND.API.Repositories
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ICloudProviderRepository _cloudProvider;
         private readonly ITokenService _tokenService;
+        private readonly INotificationRepository _notificationRepository;
 
-        public ShopRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration,
+        public ShopRepository(UserManager<ApplicationUser> userManager, IConfiguration configuration, INotificationRepository notificationRepository,
                                 IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, ITokenService tokenService)
         {
             _userManager = userManager;
@@ -27,6 +29,7 @@ namespace EMS.BACKEND.API.Repositories
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
             _tokenService = tokenService;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<string, ShopResponseDTO>> CreateAsync(string userId, ShopCreateDTO entity)
@@ -78,6 +81,12 @@ namespace EMS.BACKEND.API.Repositories
 
                     // convert the background image path to a url
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(newShop.BackgroundImagePath);
+
+                    // notify admins
+                    await _notificationRepository.AddNotification("New Shop Created", $"A new shop {newShop.Name} has been created", DatabaseChangeEventType.Add, "admin", null, EntityType.Shop, newShop.Id, null);
+
+                    // send database change event to all 
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Add, EntityType.Shop, newShop.Id, userId);
 
                     return new BaseResponseDTO<string, ShopResponseDTO>
                     {
@@ -160,6 +169,12 @@ namespace EMS.BACKEND.API.Repositories
                     // Generate a new token for the user
                     var getUserRole = await _userManager.GetRolesAsync(user);
                     var token = _tokenService.CreateToken(user, getUserRole.First());
+
+                    // notify admins
+                    await _notificationRepository.AddNotification("Shop Deleted", $"Shop {shop.Name} has been deleted", DatabaseChangeEventType.Delete, "admin", null, EntityType.Shop, shop.Id, null);
+
+                    // send database change event to all 
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Delete, EntityType.Shop, shop.Id, userId);
 
                     return new BaseResponseDTO<String>
                     {
@@ -329,7 +344,14 @@ namespace EMS.BACKEND.API.Repositories
                     {
                         shop.Description = entity.Description;
                     }
-                    //TODO: calculate the rating automatically
+
+                    //calculate the rating automatically
+                    var services = await dbContext.ShopServices.Where(s => s.ShopId == shop.Id).ToListAsync();
+                    if (services != null && services.Count > 0)
+                    {
+                        shop.Rating = services.Average(s => s.Rating);
+                    }
+
 
                     //upload the background image
                     if (entity.BackGroundImage != null)
@@ -346,6 +368,10 @@ namespace EMS.BACKEND.API.Repositories
                     dbContext.Shops.Update(shop);
                     await dbContext.SaveChangesAsync();
                     string backgroundImageUrl = _cloudProvider.GeneratePreSignedUrlForDownload(shop.BackgroundImagePath);
+
+                    // send database change event to all 
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Shop, shop.Id, userId);
+
                     return new BaseResponseDTO<ShopResponseDTO>
                     {
                         Message = "Shop updated successfully",

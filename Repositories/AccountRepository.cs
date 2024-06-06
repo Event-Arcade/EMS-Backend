@@ -3,6 +3,7 @@ using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.Account;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -20,8 +21,9 @@ namespace EMS.BACKEND.API.Repositories
         private readonly IConfiguration _config;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ITokenService _tokenService;
+        private readonly INotificationRepository _notificationRepository;
 
-        public AccountRepository(ITokenService tokenService, UserManager<ApplicationUser> userManager,
+        public AccountRepository(ITokenService tokenService, UserManager<ApplicationUser> userManager, INotificationRepository notificationRepository,
                                  ICloudProviderRepository cloudProvider, IConfiguration config, IServiceScopeFactory scopeFactory)
         {
             _userManager = userManager;
@@ -29,6 +31,7 @@ namespace EMS.BACKEND.API.Repositories
             _config = config;
             _scopeFactory = scopeFactory;
             _tokenService = tokenService;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<string>> CreateAccountAsync(RegisterUserDTO registerUser)
@@ -91,12 +94,10 @@ namespace EMS.BACKEND.API.Repositories
                     var getUserRole = await _userManager.GetRolesAsync(getUser);
                     var token = _tokenService.CreateToken(getUser, getUserRole.First());
 
-                    // Assign PresignedURL for profilepicture path
-                    if (getUser.ProfilePicturePath != null)
-                    {
-                        var url = _cloudProvider.GeneratePreSignedUrlForDownload(getUser.ProfilePicturePath);
-                        getUser.ProfilePicturePath = url;
-                    }
+                    // send notification to admin
+                    //TODO: fix the string values as parameter for the notification error or remove  the notification
+                    //await _notificationRepository.AddNotification("New User Registered", "A new user has registered", DatabaseChangeEventType.Add, "admin", null, EntityType.User, int.Parse(getUser.Id), getUser.Id);
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Add, EntityType.User, getUser.Id, getUser.Id);
 
                     return new BaseResponseDTO<string>
                     {
@@ -249,6 +250,10 @@ namespace EMS.BACKEND.API.Repositories
                     }
                     // get the role of the user
                     var userRole = await _userManager.GetRolesAsync(user);
+
+                    // send databaseChange to admins, vendors, and clients
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.User, user.Id, user.Id);
+
                     return new BaseResponseDTO<UserAccountResponseDTO>
                     {
                         Flag = true,
@@ -363,6 +368,23 @@ namespace EMS.BACKEND.API.Repositories
                             Message = "User has/have ordered service(s), therefore cannot delete account"
                         };
                     }
+
+                    /*
+                    when a user is deleted, all the messages sent by the user should be update to 
+                    show that the user has been deleted
+                    */
+                    var messages = await context.ChatMessages.Where(x => x.SenderId == userId).ToListAsync();
+                    if (messages.Count > 0)
+                    {
+                        foreach (var message in messages)
+                        {
+                            // update the message
+                            message.Message = "This user has been deleted";
+
+                            context.ChatMessages.Update(message);
+                        }
+                        await context.SaveChangesAsync();
+                    }
                 }
 
                 // Remove user profile picture from storage
@@ -381,6 +403,13 @@ namespace EMS.BACKEND.API.Repositories
                         Message = deletedUser.ToString()
                     };
                 }
+
+                // send notification to admin
+                //TODO: fix the string values as parameter for the notification error or remove  the notification
+                //await _notificationRepository.AddNotification("User Deleted", "A user has been deleted", DatabaseChangeEventType.Delete, "admin", null, EntityType.User, int.Parse(user.Id), user.Id);
+
+                // send database change event to all users
+                await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Delete, EntityType.User, user.Id, user.Id);
 
                 return new BaseResponseDTO
                 {
@@ -592,6 +621,54 @@ namespace EMS.BACKEND.API.Repositories
                     Message = ex.Message
                 };
 
+            }
+        }
+        public async Task UpdateUserRoleAsync(string userId, UpdateUserRoleDTO updateUserRoleDTO)
+        {
+            try
+            {
+                // check if the user is an admin
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new Exception("User not found");
+                }
+
+                if (!await _userManager.IsInRoleAsync(user, "admin"))
+                {
+                    throw new Exception("You are not authorized");
+                }
+
+                // get the user
+                var userToUpdate = await _userManager.FindByIdAsync(updateUserRoleDTO.UserId);
+                if (userToUpdate == null)
+                {
+                    throw new Exception("User not found");
+                }
+
+                // check if the user is an admin, if it is, remove the admin role and assign the client role
+                if (await _userManager.IsInRoleAsync(userToUpdate, "admin"))
+                {
+                    await _userManager.RemoveFromRoleAsync(userToUpdate, "admin");
+                    await _userManager.AddToRoleAsync(userToUpdate, "client");
+                }
+                else
+                {
+                    await _userManager.RemoveFromRoleAsync(userToUpdate, "client");
+                    await _userManager.AddToRoleAsync(userToUpdate, "admin");
+                }
+
+                //TODO: fix the string values as parameter for the notification error or remove  the notification
+                // send notification to the user
+                //await _notificationRepository.AddNotification("Role Updated", "Your role has been updated", DatabaseChangeEventType.Update, userToUpdate.Id, null, EntityType.User, int.Parse(userToUpdate.Id), userToUpdate.Id);
+
+                // send database change event to all users
+                await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.User, userToUpdate.Id, userToUpdate.Id);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
         }
     }

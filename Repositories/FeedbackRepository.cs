@@ -4,6 +4,7 @@ using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs;
 using EMS.BACKEND.API.DTOs.Mappers;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,13 +17,15 @@ namespace EMS.BACKEND.API.Repositories
         private readonly ICloudProviderRepository _cloudProvider;
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRepository _notificationRepository;
 
-        public FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        public FeedbackRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, INotificationRepository notificationRepository, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
             _configuration = configuration;
             _userManager = userManager;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<FeedBackResponseDTO>> CreateAsync(string userId, FeedBackRequestDTO entity)
@@ -32,7 +35,8 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
+                    var shopId = 0;
+                    var shopServiceId = 0;
                     // get the user
                     var user = await _userManager.FindByIdAsync(userId);
                     if (user == null)
@@ -68,8 +72,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     // create the feedback
                     var feedBackEntity = entity.ToFeedBack(userId);
-                    //feedBackEntity.User = user;
-                    //feedBackEntity.Service = service;
+                    shopServiceId = feedBackEntity.ServiceId;
                     var newFeedback = await context.FeedBacks.AddAsync(feedBackEntity);
                     await context.SaveChangesAsync();
 
@@ -86,6 +89,7 @@ namespace EMS.BACKEND.API.Repositories
 
                     // update the shop rating according to the services rating
                     var shop = await context.Shops.FirstOrDefaultAsync(x => x.Id == service.ShopId);
+                    shopId = shop.Id;
                     var services = await context.ShopServices.Where(x => x.ShopId == shop.Id).ToListAsync();
                     double totalShopRating = 0;
                     foreach (var s in services)
@@ -141,6 +145,15 @@ namespace EMS.BACKEND.API.Repositories
                         var url = _cloudProvider.GeneratePreSignedUrlForDownload(feedBackStaticResource.ResourceUrl);
                         feedBackStaticResourcesUrls.Add(url);
                     }
+
+                    // send notification to the shop owner
+                    await _notificationRepository.AddNotification("New feedback", $"You have received a new feedback from {user.FirstName}", DatabaseChangeEventType.Add, null, shop.OwnerId, EntityType.Shop, entity.ServiceId, userId);
+
+                    // send database change event to all clients, vendors and admins
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Add, EntityType.Feedback, newFeedback.Entity.Id, userId);
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Shop, shopId, userId);
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Service, shopServiceId, userId);
+
 
                     return new BaseResponseDTO<FeedBackResponseDTO>
                     {
@@ -213,15 +226,62 @@ namespace EMS.BACKEND.API.Repositories
                         await context.SaveChangesAsync();
                     }
 
+                    var serviceId = feedBack.ServiceId;
+
                     // delete the feedback
                     context.FeedBacks.Remove(feedBack);
                     await context.SaveChangesAsync();
 
-                    return new BaseResponseDTO
+                    // update the service rating according to the feedbacks rating
+                    var service = await context.ShopServices.FirstOrDefaultAsync(x => x.Id == serviceId);
+                    if (service != null)
                     {
-                        Message = "Feedback deleted successfully",
-                        Flag = true
-                    };
+                        var feedbacks = await context.FeedBacks.Where(x => x.ServiceId == serviceId).ToListAsync();
+                        if (feedbacks != null && feedbacks.Count > 0)
+                        {
+                            double totalRating = 0;
+                            foreach (var feedback in feedbacks)
+                            {
+                                totalRating += feedback.Rating;
+                            }
+                            service.Rating = totalRating / feedbacks.Count;
+                            context.ShopServices.Update(service);
+                            await context.SaveChangesAsync();
+                        }
+
+                        // update the shop rating according to the services rating
+                        var shop = await context.Shops.FirstOrDefaultAsync(x => x.Id == service.ShopId);
+                        if (shop != null)
+                        {
+                            var shopId = shop.Id;
+                            var services = await context.ShopServices.Where(x => x.ShopId == shop.Id).ToListAsync();
+                            if (services != null && services.Count > 0)
+                            {
+                                double totalShopRating = 0;
+                                foreach (var s in services)
+                                {
+                                    totalShopRating += s.Rating;
+                                }
+                                shop.Rating = totalShopRating / services.Count;
+                                context.Shops.Update(shop);
+                                await context.SaveChangesAsync();
+                            }
+                            // send notification to the shop owner
+                            await _notificationRepository.AddNotification("Feedback deleted", $"Your feedback has been deleted by {user.FirstName}", DatabaseChangeEventType.Delete, null, shop.OwnerId, EntityType.Shop, feedBack.ServiceId, userId);
+
+                            // send database change event to all clients, vendors and admins
+                            await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Delete, EntityType.Feedback, id, userId);
+                            await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Service, serviceId, userId);
+                            await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Shop, shopId, userId);
+
+                            return new BaseResponseDTO
+                            {
+                                Message = "Feedback deleted successfully",
+                                Flag = true
+                            };
+                        }
+                    }
+                    throw new Exception("Error deleting feedback");
                 }
             }
             catch (Exception ex)
@@ -316,16 +376,6 @@ namespace EMS.BACKEND.API.Repositories
                     Flag = false
                 };
             }
-        }
-
-        public async Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByServiceId(string serviceId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BaseResponseDTO<IEnumerable<FeedBackResponseDTO>>> GetFeedBacksByShopId(string shopId)
-        {
-            throw new NotImplementedException();
         }
 
         public Task<BaseResponseDTO<FeedBackResponseDTO>> UpdateAsync(string userId, int id, FeedBackRequestDTO entity)

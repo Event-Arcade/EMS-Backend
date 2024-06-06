@@ -3,6 +3,7 @@ using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
 using EMS.BACKEND.API.DTOs.ShopService;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -15,16 +16,16 @@ namespace EMS.BACKEND.API.Repositories
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ICloudProviderRepository _cloudProvider;
         private readonly IConfiguration _configuration;
-        private readonly IFeedbackRepository _feedBackRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRepository _notificationRepository;
 
-        public ShopServiceRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, IFeedbackRepository feedBackRepository, UserManager<ApplicationUser> userManager)
+        public ShopServiceRepository(IServiceScopeFactory serviceScopeFactory, INotificationRepository notificationRepository, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
             _configuration = configuration;
-            _feedBackRepository = feedBackRepository;
             _userManager = userManager;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<ShopServiceResponseDTO>> CreateAsync(string userId, ShopServiceRequestDTO entity)
@@ -106,11 +107,18 @@ namespace EMS.BACKEND.API.Repositories
                         staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
                     }
 
+                    // notify all users and admins
+                    await _notificationRepository.AddNotification("New Service", $"New service {newService.Entity.Name} has been added",DatabaseChangeEventType.Add, "client", null, EntityType.Service, newService.Entity.Id, null);
+                    await _notificationRepository.AddNotification("New Service", $"New service {newService.Entity.Name} has been added",DatabaseChangeEventType.Add, "admin", null, EntityType.Service, newService.Entity.Id, null);
+
+                    // send database change event to all 
+                    await _notificationRepository.SendDatabaseChangeNotification( DatabaseChangeEventType.Add, EntityType.Service, newService.Entity.Id, userId);
+
                     return new BaseResponseDTO<ShopServiceResponseDTO>
                     {
                         Message = "Service created successfully",
                         Flag = true,
-                        Data = newService.Entity.ToShopServiceResponseDTO(staticResourcesURLs)
+                        Data = newService.Entity.ToShopServiceResponseDTO(userId, staticResourcesURLs)
                     };
                 }
             }
@@ -188,8 +196,17 @@ namespace EMS.BACKEND.API.Repositories
                         context.FeedBacks.Remove(item);
                     }
 
+                    var shopServiceName = shopService.Name;
+
                     context.ShopServices.Remove(shopService);
                     await context.SaveChangesAsync();
+
+                    // notify all users and admins
+                    await _notificationRepository.AddNotification("Service Deleted", $"Service {shopServiceName} has been deleted",DatabaseChangeEventType.Delete, "admin", null, EntityType.Service, id, null);
+
+                    // send database change event to all admins, clients and vendors
+                    await _notificationRepository.SendDatabaseChangeNotification( DatabaseChangeEventType.Delete, EntityType.Service, id, userId);
+
                     return new BaseResponseDTO
                     {
                         Message = "Service deleted successfully",
@@ -219,13 +236,14 @@ namespace EMS.BACKEND.API.Repositories
                     var response = new List<ShopServiceResponseDTO>();
                     foreach (var service in services)
                     {
+                        var shop = await context.Shops.Where(s=>s.Id== service.ShopId).FirstOrDefaultAsync();
                         var staticResources = await context.ShopServiceStaticResources.Where(x => x.ServiceId == service.Id).ToListAsync();
                         var staticResourcesURLs = new List<string>();
                         foreach (var item in staticResources)
                         {
                             staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
                         }
-                        response.Add(service.ToShopServiceResponseDTO(staticResourcesURLs));
+                        response.Add(service.ToShopServiceResponseDTO(shop.OwnerId, staticResourcesURLs));
                     }
 
                     return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>
@@ -254,7 +272,7 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    var shopService = await context.ShopServices.Include(s => s.Shop).FirstOrDefaultAsync(x => x.Id == id);
+                    var shopService = await context.ShopServices.FirstOrDefaultAsync(x => x.Id == id);
                     if (shopService == null)
                     {
                         throw new Exception("Service not found");
@@ -267,9 +285,12 @@ namespace EMS.BACKEND.API.Repositories
                         staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
                     }
 
+                    // find shop using shopservice's shopid to include ownerid in response DTO
+                    var shop = await context.Shops.Where(s=>s.Id == shopService.ShopId).FirstOrDefaultAsync();
+
                     return new BaseResponseDTO<ShopServiceResponseDTO>
                     {
-                        Data = shopService.ToShopServiceResponseDTO(staticResourcesURLs),
+                        Data = shopService.ToShopServiceResponseDTO(shop.OwnerId , staticResourcesURLs),
                         Message = "Service fetched successfully",
                         Flag = true
                     };
@@ -403,20 +424,26 @@ namespace EMS.BACKEND.API.Repositories
                             staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
                         }
 
+                        // send database change event to all admins, clients and vendors
+                        await _notificationRepository.SendDatabaseChangeNotification( DatabaseChangeEventType.Update, EntityType.Service, shopService.Id, userId);
+
                         return new BaseResponseDTO<ShopServiceResponseDTO>
                         {
                             Message = "Service updated successfully",
                             Flag = true,
-                            Data = shopService.ToShopServiceResponseDTO(staticResourcesURLs)
+                            Data = shopService.ToShopServiceResponseDTO(userId, staticResourcesURLs)
                         };
                     }
                     else
                     {
+                        // send database change event to all admins, clients and vendors
+                        await _notificationRepository.SendDatabaseChangeNotification( DatabaseChangeEventType.Update, EntityType.Service, shopService.Id, userId);
+
                         return new BaseResponseDTO<ShopServiceResponseDTO>
                         {
                             Message = "Service updated successfully",
                             Flag = true,
-                            Data = shopService.ToShopServiceResponseDTO(null)
+                            Data = shopService.ToShopServiceResponseDTO(userId, null)
                         };
                     }
                 }
@@ -431,6 +458,7 @@ namespace EMS.BACKEND.API.Repositories
             }
 
         }
+        
         public async Task<BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>> FindByShopIdAsync(int shopId)
         {
             try
@@ -438,6 +466,14 @@ namespace EMS.BACKEND.API.Repositories
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    var shop = await context.Shops.Where(x => x.Id == shopId).FirstOrDefaultAsync();
+
+                    if(shop == null)
+                    {
+                        throw new Exception("Shop not found");
+                    }
+
                     var services = await context.ShopServices.Where(x => x.ShopId == shopId).ToListAsync();
 
                     var response = new List<ShopServiceResponseDTO>();
@@ -449,7 +485,7 @@ namespace EMS.BACKEND.API.Repositories
                         {
                             staticResourcesURLs.Add(_cloudProvider.GeneratePreSignedUrlForDownload(item.ResourceUrl));
                         }
-                        response.Add(service.ToShopServiceResponseDTO(staticResourcesURLs));
+                        response.Add(service.ToShopServiceResponseDTO(shop.OwnerId, staticResourcesURLs));
                     }
 
                     return new BaseResponseDTO<IEnumerable<ShopServiceResponseDTO>>

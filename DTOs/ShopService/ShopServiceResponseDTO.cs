@@ -11,6 +11,7 @@ namespace EMS.BACKEND.API.DTOs.ResponseDTOs
         public int NoOfGuests { get; set; }
         public bool Indoor { get; set; }
         public bool Outdoor { get; set; }
+        public string? ShopServiceOwner { get; set; }
         public int ShopId { get; set; }
         public int CategoryId { get; set; }
         public double Rating { get; set; }

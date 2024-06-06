@@ -2,6 +2,7 @@
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.Category;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -15,13 +16,15 @@ namespace EMS.BACKEND.API.Repositories
         private readonly ICloudProviderRepository _cloudProvider;
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRepository _notificationRepository;
 
-        public CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        public CategoryRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager, INotificationRepository notificationRepository)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
             _configuration = configuration;
             _userManager = userManager;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<CategoryResponseDTO>> CreateAsync(string userId, CategoryRequestDTO entity)
@@ -67,6 +70,13 @@ namespace EMS.BACKEND.API.Repositories
 
                     // Assign pre signed URL to category
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(newCategory.CategoryImagePath);
+
+                    // send notifications to admins and vendors
+                    await _notificationRepository.AddNotification("New Category", "A new category has been added",DatabaseChangeEventType.Add, "admin", null, EntityType.Category, newCategory.Id, userId);
+                    await _notificationRepository.AddNotification("New Category", "A new category has been added",DatabaseChangeEventType.Add, "vendor", null, EntityType.Category, newCategory.Id, null);
+
+                    // send database change event to all clients, vendors and admins
+                    await _notificationRepository.SendDatabaseChangeNotification( DatabaseChangeEventType.Add, EntityType.Category, newCategory.Id, userId);
 
                     return new BaseResponseDTO<CategoryResponseDTO>
                     {
@@ -121,6 +131,12 @@ namespace EMS.BACKEND.API.Repositories
                     // Delete category
                     context.Categories.Remove(category);
                     await context.SaveChangesAsync();
+
+                    // send notifications to admins 
+                    await _notificationRepository.AddNotification("Category Deleted", "A category has been deleted",DatabaseChangeEventType.Delete, "admin", null, EntityType.Category, category.Id, userId);
+
+                    // send database change event to all clients, vendors and admins
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Delete, EntityType.Category, category.Id, userId);
 
                     return new BaseResponseDTO
                     {
@@ -261,6 +277,12 @@ namespace EMS.BACKEND.API.Repositories
 
                     // Assign pre signed URL to category
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(category.CategoryImagePath);
+
+                    // send notifications to vendors
+                    await _notificationRepository.AddNotification("Category Updated", "A category has been updated",DatabaseChangeEventType.Update, "vendor", null, EntityType.Category, category.Id, null);
+
+                    // send database change event to all clients, vendors and admins
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.Category, category.Id, userId);
 
                     return new BaseResponseDTO<CategoryResponseDTO>
                     {

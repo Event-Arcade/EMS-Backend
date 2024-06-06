@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace EMS.BACKEND.API.Models
 {
@@ -24,6 +23,7 @@ namespace EMS.BACKEND.API.Models
         public virtual ICollection<ChatMessage>? RecievedMessages { get; set; }
         public virtual ICollection<Package>? Packages { get; set; }
         public virtual ICollection<Category>? Categories { get; set; }
+        public virtual ICollection<Notification>? Notifications { get; set; }
 
     }
 }

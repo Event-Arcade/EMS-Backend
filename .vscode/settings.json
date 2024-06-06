@@ -13,6 +13,21 @@
       "name": "aws db connection",
       "database": "master",
       "username": "admin"
+    },
+    {
+      "mssqlOptions": {
+        "appName": "SQLTools",
+        "useUTC": true,
+        "encrypt": true
+      },
+      "previewLimit": 50,
+      "server": "ems-db-prod.crwkiecoggly.eu-north-1.rds.amazonaws.com",
+      "port": 1433,
+      "askForPassword": true,
+      "driver": "MSSQL",
+      "name": "newdb",
+      "database": "emd-db",
+      "username": "admin"
     }
   ]
 }

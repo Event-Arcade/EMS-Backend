@@ -21,5 +21,6 @@ namespace EMS.BACKEND.API.DTOs.ShopService
         [Required]
         public int CategoryId { get; set; }
         public ICollection<IFormFile>? ShopServiceStaticResources { get; set; }
+        public string? ShopServiceOwner { get; set; }
     }
 }

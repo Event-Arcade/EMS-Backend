@@ -21,7 +21,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object,mockNotification.Object, mockCloudProvider.Object, null, null);
             var registerUser = new RegisterUserDTO { Email = "existinguser@gmail.com" };
 
             mockUserManager.Setup(m => m.FindByEmailAsync(registerUser.Email))
@@ -42,7 +43,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object,mockNotification.Object, mockCloudProvider.Object, null, null);
             var loginDTO = new LoginDTO { Email = "nonexistinguser@gmail.com", Password = "password" };
 
             mockUserManager.Setup(m => m.FindByEmailAsync(loginDTO.Email))
@@ -63,7 +65,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockNotification.Object,mockCloudProvider.Object, null, null);
             var updateUserDTO = new UpdateUserDTO();
             var userId = "123";
 
@@ -85,7 +88,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockNotification.Object,mockCloudProvider.Object, null, null);
             var userId = "123";
 
             mockUserManager.Setup(m => m.FindByIdAsync(userId))
@@ -106,7 +110,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockNotification.Object,mockCloudProvider.Object, null, null);
             var userId = "123";
 
             mockUserManager.Setup(m => m.FindByIdAsync(userId))
@@ -127,7 +132,8 @@ namespace EMS.BACKEND.API.Tests.Repositories
             var mockUserManager = MockUserManager<ApplicationUser>();
             var mockCloudProvider = new Mock<ICloudProviderRepository>();
             var mockTokenService = new Mock<ITokenService>();
-            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockCloudProvider.Object, null, null);
+            var mockNotification = new Mock<INotificationRepository>();
+            var accountRepository = new AccountRepository(mockTokenService.Object, mockUserManager.Object, mockNotification.Object,mockCloudProvider.Object, null, null);
             var updatePasswordDTO = new UpdatePasswordDTO();
             var userId = "123";
 
@@ -146,7 +152,7 @@ namespace EMS.BACKEND.API.Tests.Repositories
         private Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
         {
             var store = new Mock<IUserStore<TUser>>();
-            return new Mock<UserManager<TUser>>(store.Object, null, null, null, null, null, null, null, null);
+            return new Mock<UserManager<TUser>>(store.Object, null, null, null, null, null, null, null, null,null);
         }
     }
 }

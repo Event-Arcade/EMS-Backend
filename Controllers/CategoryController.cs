@@ -1,5 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DTOs.Category;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Extensions;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -9,8 +10,17 @@ namespace EMS.BACKEND.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController(ICategoryRepository categoryRepository) : Controller
+    public class CategoryController : Controller
     {
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly INotificationRepository _notificationRepository;
+
+        public CategoryController(ICategoryRepository categoryRepository, INotificationRepository notificationRepository)
+        {
+            _categoryRepository = categoryRepository;
+            _notificationRepository = notificationRepository;
+        }
+
         [HttpPost("create"), Authorize(Roles = "admin")]
         public async Task<IActionResult> AddCategory([FromForm] CategoryRequestDTO categoryRequestDTO)
         {
@@ -23,7 +33,8 @@ namespace EMS.BACKEND.API.Controllers
             try
             {
                 var userId = User.GetUserId();
-                var result = await categoryRepository.CreateAsync(userId, categoryRequestDTO);
+                var result = await _categoryRepository.CreateAsync(userId, categoryRequestDTO);
+
                 return Ok(result);
             }
             catch (Exception ex)
@@ -44,12 +55,12 @@ namespace EMS.BACKEND.API.Controllers
             try
             {
                 var userId = User.GetUserId();
-                var result = await categoryRepository.DeleteAsync(userId, categoryId);
+                var result = await _categoryRepository.DeleteAsync(userId, categoryId);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message );
+                return BadRequest(ex.Message);
             }
         }
 
@@ -58,12 +69,12 @@ namespace EMS.BACKEND.API.Controllers
         {
             try
             {
-                var result = await categoryRepository.FindAllAsync();
+                var result = await _categoryRepository.FindAllAsync();
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message );
+                return BadRequest(ex.Message);
             }
 
         }
@@ -73,12 +84,12 @@ namespace EMS.BACKEND.API.Controllers
         {
             try
             {
-                var result = await categoryRepository.FindByIdAsync(categoryId);
+                var result = await _categoryRepository.FindByIdAsync(categoryId);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message );
+                return BadRequest(ex.Message);
             }
         }
 
@@ -94,12 +105,12 @@ namespace EMS.BACKEND.API.Controllers
             try
             {
                 var userId = User.GetUserId();
-                var result = await categoryRepository.UpdateAsync(userId, categotyId, category);
+                var result = await _categoryRepository.UpdateAsync(userId, categotyId, category);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message );
+                return BadRequest(ex.Message);
             }
         }
     }

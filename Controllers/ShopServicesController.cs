@@ -1,9 +1,6 @@
 ﻿using EMS.BACKEND.API.Contracts;
-using EMS.BACKEND.API.DTOs.ResponseDTOs;
-using EMS.BACKEND.API.DTOs.Shop;
 using EMS.BACKEND.API.DTOs.ShopService;
 using EMS.BACKEND.API.Extensions;
-using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,7 +24,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("getservice/{id}"), Authorize]
+        [HttpGet("get/{id}")]
         public async Task<IActionResult> GetService(int id)
         {
 
@@ -57,7 +54,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPost("create"), Authorize(Roles = "vendor"), RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
+        [HttpPost("create"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> CreateService([FromForm] ShopServiceRequestDTO service)
         {
             try

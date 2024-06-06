@@ -8,5 +8,7 @@ namespace EMS.BACKEND.API.Contracts
     {
         Task<BaseResponseDTO<PackageResponseDTO>> UpdateSubPackage(string userId, int id, SubPackageRequestDTO subPackageRequest);
         Task<BaseResponseDTO<ICollection<SubPackageResponseDTO>>> GetSubPackages(string userId);
+        Task<BaseResponseDTO<SubPackageResponseDTO>> GetSubPackageById(string userId, int id);
+        Task<BaseResponseDTO<ICollection<PackageResponseDTO>>> GetAllPackages(string userId);
     }
 }

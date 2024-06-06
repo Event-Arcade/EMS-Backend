@@ -2,6 +2,7 @@ using EMS.BACKEND.API.Contracts;
 using EMS.BACKEND.API.DbContext;
 using EMS.BACKEND.API.DTOs.AdminStaticResource;
 using EMS.BACKEND.API.DTOs.ResponseDTOs;
+using EMS.BACKEND.API.Enums;
 using EMS.BACKEND.API.Mappers;
 using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Identity;
@@ -15,13 +16,15 @@ namespace EMS.BACKEND.API.Controllers
         private readonly ICloudProviderRepository _cloudProvider;
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRepository _notificationRepository;
 
-        public AdminStaticResourceRepository(IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
+        public AdminStaticResourceRepository(INotificationRepository notificationRepository, IServiceScopeFactory serviceScopeFactory, ICloudProviderRepository cloudProvider, IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _cloudProvider = cloudProvider;
             _configuration = configuration;
             _userManager = userManager;
+            _notificationRepository = notificationRepository;
         }
 
         public async Task<BaseResponseDTO<AdminStaticResourceResponseDTO>> CreateAsync(string userId, AdminStaticResourceRequestDTO entity)
@@ -70,6 +73,9 @@ namespace EMS.BACKEND.API.Controllers
 
                     // generate presigned url
                     var url = _cloudProvider.GeneratePreSignedUrlForDownload(path);
+
+                    // send database change notification
+                    await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Add, EntityType.AdminStaticResource, newStaticResource.Entity.Id, userId);
 
                     return new BaseResponseDTO<AdminStaticResourceResponseDTO>
                     {
@@ -134,6 +140,9 @@ namespace EMS.BACKEND.API.Controllers
                     var flag = await _cloudProvider.RemoveFile(staticResource.ResourceUrl);
                     if (flag)
                     {
+                        // send database change event to all clients, vendors and admins
+                        await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Delete, EntityType.AdminStaticResource, staticResource.Id, userId);
+
                         return new BaseResponseDTO
                         {
                             Message = "Resource deleted successfully",
@@ -307,6 +316,9 @@ namespace EMS.BACKEND.API.Controllers
                             // generate presigned url
                             var url = _cloudProvider.GeneratePreSignedUrlForDownload(path);
 
+                            // sned database change event to all clients, vendors and admins
+                            await _notificationRepository.SendDatabaseChangeNotification(DatabaseChangeEventType.Update, EntityType.AdminStaticResource, staticResource.Id, userId);
+
                             return new BaseResponseDTO<AdminStaticResourceResponseDTO>
                             {
                                 Data = staticResource.ToAdminStaticResourceResponseDTO(url),
@@ -332,5 +344,6 @@ namespace EMS.BACKEND.API.Controllers
                 };
             }
         }
+
     }
 }

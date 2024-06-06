@@ -15,7 +15,6 @@ namespace SharedClassLibrary.Contracts
         Task<BaseResponseDTO<string>> LoginAccountAsync(LoginDTO loginDTO);
         Task<BaseResponseDTO<string>> GoogleLoginAsync(GoogleLoginDTO googleLoginDTO);
         Task<BaseResponseDTO<ICollection<UserAccountResponseDTO>>> GetAllUsersAsync(string userId);
-
-
+        Task UpdateUserRoleAsync(string userId, UpdateUserRoleDTO id );
     }
 }

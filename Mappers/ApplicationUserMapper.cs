@@ -22,7 +22,8 @@ namespace EMS.BACKEND.API.Mappers
                 Latitude = user.Latitude ?? 0,
                 Email = user.Email,
                 Role = role,
-                ProfilePictureURL = user.ProfilePicturePath
+                ProfilePictureURL = user.ProfilePicturePath,
+                IsActive = user.IsActive
             };
         }
 

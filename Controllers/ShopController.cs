@@ -31,7 +31,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPost("createmyshop"), Authorize(Roles = "client")]
+        [HttpPost("create"), Authorize(Roles = "client")]
         public async Task<IActionResult> CreateShop([FromForm] ShopCreateDTO shop)
         {
             // model validation
@@ -51,7 +51,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpPut("updatemyshop/{shopId}"), Authorize(Roles = "vendor")]
+        [HttpPut("update/{shopId}"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> UpdateShop(int shopId, [FromForm] ShopCreateDTO shop)
         {
             // model validation
@@ -71,7 +71,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpDelete("deletemyshop/{shopId}"), Authorize(Roles = "vendor")]
+        [HttpDelete("delete/{shopId}"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> DeleteShop(int shopId)
         {
             // model validation
@@ -90,7 +90,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(response);
             }
         }
-        [HttpGet("allshops")]
+        [HttpGet("getall")]
         public async Task<IActionResult> GetAllShops()
         {
             // model validation
@@ -109,6 +109,24 @@ namespace EMS.BACKEND.API.Controllers
 
             }
 
+        }
+        [HttpGet("get/{shopId}")]
+        public async Task<IActionResult> GetShop(int shopId)
+        {
+            // model validation
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var response = await shopServiceRepository.FindByIdAsync(shopId);
+            if (response.Flag)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
         }
     }
 }

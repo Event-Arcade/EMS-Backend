@@ -16,9 +16,9 @@ namespace EMS.BACKEND.API.Controllers
     {
         private readonly IChatMessageRepository _chatMessageRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IHubContext<PersonalChatHub> _hubContext;
+        private readonly IHubContext<EMSHub> _hubContext;
 
-        public ChatController(IChatMessageRepository chatMessageRepository, UserManager<ApplicationUser> userManager, IHubContext<PersonalChatHub> hubContext)
+        public ChatController(IChatMessageRepository chatMessageRepository, UserManager<ApplicationUser> userManager, IHubContext<Hubs.EMSHub> hubContext)
         {
             _chatMessageRepository = chatMessageRepository;
             _userManager = userManager;
@@ -67,14 +67,14 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    
+
         [HttpGet("get-my-chat/{recieverId}"), Authorize]
         public async Task<IActionResult> GetChatById(string recieverId)
         {
             try
             {
                 var userId = User.GetUserId();
-                var result = await _chatMessageRepository.GetMyChatUser(userId,recieverId);
+                var result = await _chatMessageRepository.GetMyChatUser(userId, recieverId);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -112,6 +112,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        
         [HttpGet("get-my-chats"), Authorize]
         public async Task<IActionResult> GetMyChatUsers()
         {
@@ -126,7 +127,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    
+
         [HttpGet("get-new-chat/{id}"), Authorize]
         public async Task<IActionResult> GetNewChat(string id)
         {

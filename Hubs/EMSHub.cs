@@ -1,15 +1,13 @@
 using Microsoft.AspNetCore.SignalR;
 using EMS.BACKEND.API.Contracts;
-using EMS.BACKEND.API.Models;
-using Microsoft.AspNetCore.Authorization;
 
 namespace EMS.BACKEND.API.Hubs
 {
-    public class PersonalChatHub : Hub
+    public class EMSHub : Hub
     {
         private readonly IChatMessageRepository _chatMessageRepository;
 
-        public PersonalChatHub(IChatMessageRepository chatMessageRepository)
+        public EMSHub(IChatMessageRepository chatMessageRepository)
         {
             _chatMessageRepository = chatMessageRepository;
         }

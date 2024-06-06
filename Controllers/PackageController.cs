@@ -2,7 +2,6 @@
 using EMS.BACKEND.API.DTOs.Package;
 using EMS.BACKEND.API.DTOs.SubPackage;
 using EMS.BACKEND.API.Extensions;
-using EMS.BACKEND.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +23,8 @@ namespace EMS.BACKEND.API.Controllers
         {
             try
             {
-                var response = await _packageRepository.FindAllAsync();
+                var userId = User.GetUserId();
+                var response = await _packageRepository.GetAllPackages(userId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -106,6 +106,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        
         [HttpGet("get-sub-packages"), Authorize(Roles = "vendor")]
         public async Task<IActionResult> GetSubPackages()
         {
@@ -113,6 +114,21 @@ namespace EMS.BACKEND.API.Controllers
             {
                 var userId = User.GetUserId();
                 var response = await _packageRepository.GetSubPackages(userId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
+        [HttpGet("get-sub-package-by-id/{id}")]
+        public async Task<IActionResult> GetSubPackageById(int id)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                var response = await _packageRepository.GetSubPackageById(userId, id);
                 return Ok(response);
             }
             catch (Exception ex)

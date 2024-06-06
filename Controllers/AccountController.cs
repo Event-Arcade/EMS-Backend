@@ -2,6 +2,7 @@
 using EMS.BACKEND.API.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using SharedClassLibrary.Contracts;
 
 namespace EMS.BACKEND.API.Controllers
@@ -23,6 +24,7 @@ namespace EMS.BACKEND.API.Controllers
             try
             {
                 var response = await _userAccount.CreateAccountAsync(registerUserDTO);
+
                 return Ok(response);
             }
             catch (Exception ex)
@@ -120,7 +122,7 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
-        [HttpGet("getaccountbyid/{id}"), Authorize]
+        [HttpGet("get/{id}"), Authorize]
         public async Task<IActionResult> GetAccountById(string id)
         {
             try
@@ -133,7 +135,7 @@ namespace EMS.BACKEND.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("getallusers"), Authorize(Roles = "admin")]
+        [HttpGet("getall")]
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -148,5 +150,19 @@ namespace EMS.BACKEND.API.Controllers
             }
         }
 
+        [HttpPost("update-user-role"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateUserRole([FromForm] UpdateUserRoleDTO updateUserRoleDTO)
+        {
+            try
+            {
+                var userId = User.GetUserId();
+                await _userAccount.UpdateUserRoleAsync(userId, updateUserRoleDTO);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
