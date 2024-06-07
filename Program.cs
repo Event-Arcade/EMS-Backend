@@ -31,7 +31,7 @@ builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         //get connection string from appsettings.json
-        options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDbConnection") ??
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
             throw new InvalidOperationException("Connection string is not found"));
     });
 
@@ -155,8 +155,8 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "admin",
         LastName = "admin",
-        Email = config["Default:Admin:Email"],
-        UserName =config["Default:Admin:Email"] ,
+        Email ="admin@gmail.com" ,
+        UserName = "admin@gmail.com" ,
         Street = "admin street",
         City = "admin city",
         PostalCode = "admin postal code",
@@ -167,7 +167,7 @@ using (var scope = app.Services.CreateScope())
 
     if (await userManager.FindByEmailAsync(adminUser.Email) == null)
     {
-        var response = await userManager.CreateAsync(adminUser, config["Default:Admin:Password"]);
+        var response = await userManager.CreateAsync(adminUser,"Admin@123" );
         if (response.Succeeded)
         {
             await userManager.AddToRoleAsync(adminUser, "admin");
