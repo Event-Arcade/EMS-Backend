@@ -74,8 +74,8 @@ builder.Services.AddAuthentication(options =>
 // Add google authentication
 .AddGoogle(options =>
 {
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    options.ClientId = builder.Configuration["Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Google:ClientSecret"];
 });
 
 //Add authentication to Swagger UI
@@ -155,8 +155,8 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "admin",
         LastName = "admin",
-        Email ="admin@gmail.com" ,
-        UserName = "admin@gmail.com" ,
+        Email = "${config["Admin:Email"]}" ,
+        UserName = "${config["Admin: Email"]}", ,
         Street = "admin street",
         City = "admin city",
         PostalCode = "admin postal code",
@@ -165,51 +165,51 @@ using (var scope = app.Services.CreateScope())
         Latitude = 0
     };
 
-    if (await userManager.FindByEmailAsync(adminUser.Email) == null)
+if (await userManager.FindByEmailAsync(adminUser.Email) == null)
+{
+    var response = await userManager.CreateAsync(adminUser, "${"Admin: Password"}");
+    if (response.Succeeded)
     {
-        var response = await userManager.CreateAsync(adminUser,"Admin@123" );
-        if (response.Succeeded)
+        await userManager.AddToRoleAsync(adminUser, "admin");
+    }
+}
+
+// update the shopservice ratings according to the its feedbacks rating average
+var shopServices = await dbContext.ShopServices.ToListAsync();
+if (shopServices != null)
+{
+    foreach (var shopService in shopServices)
+    {
+        var feedbacks = await dbContext.FeedBacks.Where(f => f.ServiceId == shopService.Id).ToListAsync();
+        if (feedbacks.Count > 0)
         {
-            await userManager.AddToRoleAsync(adminUser, "admin");
+            var rating = feedbacks.Average(f => f.Rating);
+            shopService.Rating = rating;
+            dbContext.ShopServices.Update(shopService);
+            await dbContext.SaveChangesAsync();
         }
     }
+}
 
-    // update the shopservice ratings according to the its feedbacks rating average
-    var shopServices = await dbContext.ShopServices.ToListAsync();
-    if (shopServices != null)
+// update the shop ratings according to the its shopService rating average
+var shops = await dbContext.Shops.ToListAsync();
+if (shops != null)
+{
+    foreach (var shop in shops)
     {
-        foreach (var shopService in shopServices)
+        var tempShopServices = await dbContext.ShopServices.Where(s => s.ShopId == shop.Id).ToListAsync();
+        if (tempShopServices != null)
         {
-            var feedbacks = await dbContext.FeedBacks.Where(f => f.ServiceId == shopService.Id).ToListAsync();
-            if (feedbacks.Count > 0)
+            if (tempShopServices.Count > 0)
             {
-                var rating = feedbacks.Average(f => f.Rating);
-                shopService.Rating = rating;
-                dbContext.ShopServices.Update(shopService);
+                var rating = tempShopServices.Average(s => s.Rating);
+                shop.Rating = rating;
+                dbContext.Shops.Update(shop);
                 await dbContext.SaveChangesAsync();
             }
         }
     }
-
-    // update the shop ratings according to the its shopService rating average
-    var shops = await dbContext.Shops.ToListAsync();
-    if (shops != null)
-    {
-        foreach (var shop in shops)
-        {
-            var tempShopServices = await dbContext.ShopServices.Where(s => s.ShopId == shop.Id).ToListAsync();
-            if (tempShopServices != null)
-            {
-                if (tempShopServices.Count > 0)
-                {
-                    var rating = tempShopServices.Average(s => s.Rating);
-                    shop.Rating = rating;
-                    dbContext.Shops.Update(shop);
-                    await dbContext.SaveChangesAsync();
-                }
-            }
-        }
-    }
+}
 }
 
 
