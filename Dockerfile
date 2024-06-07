@@ -1,5 +1,5 @@
 #Get the base net8.0 SDK from Microsoft
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk AS build-env
 
 # Set the working directory
 WORKDIR /app
