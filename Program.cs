@@ -155,8 +155,8 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "admin",
         LastName = "admin",
-        Email = "${config["Admin:Email"]}" ,
-        UserName = "${config["Admin: Email"]}", ,
+        Email = config["Admin:Email"] ,
+        UserName = config["Admin: Email"] ,
         Street = "admin street",
         City = "admin city",
         PostalCode = "admin postal code",
@@ -167,7 +167,7 @@ using (var scope = app.Services.CreateScope())
 
 if (await userManager.FindByEmailAsync(adminUser.Email) == null)
 {
-    var response = await userManager.CreateAsync(adminUser, "${"Admin: Password"}");
+    var response = await userManager.CreateAsync(adminUser, config["Admin:Password"]);
     if (response.Succeeded)
     {
         await userManager.AddToRoleAsync(adminUser, "admin");
