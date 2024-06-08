@@ -16,6 +16,8 @@ using Contracts;
 using EMS.BACKEND.API.Controllers;
 using EMS.BACKEND.API.Service;
 using EMS.BACKEND.API.Hubs;
+using Amazon.Runtime;
+using Amazon.Extensions.NETCore.Setup;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,11 @@ builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 //aws s3 configuration with credentials
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("AWS"));
+AWSOptions awsOptions = new AWSOptions
+{
+    Credentials = new BasicAWSCredentials( Environment.GetEnvironmentVariable("AWS_ACCESS_KEY") , Environment.GetEnvironmentVariable("AWS_SECRET_KEY")),
+};
+builder.Services.AddDefaultAWSOptions(awsOptions);
 builder.Services.AddAWSService<IAmazonS3>();
 
 //Db configuration

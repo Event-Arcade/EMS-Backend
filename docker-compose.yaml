@@ -10,8 +10,8 @@ services:
       - GOOGLE_CLIENT_SECRET:"ClientSecret=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"
       - ADMIN_EMAIL:"admin@gmail.com"
       - ADMIN_PASSWORD:"Admin@123"
-      - AWS:REGION="eu-north-1"
-      - AWS:ACCESS_KEY="AAKIAZQ3DOLFOKWW44PIG"
-      - AWS:SECRET_KEY="WDP5p3/W4pULcSJZ6KKYtzN9SQTITRtprtgPGPkS"
+      - AWS_REGION="eu-north-1"
+      - AWS_ACCESS_KEY="AAKIAZQ3DOLFOKWW44PIG"
+      - AWS_SECRET_KEY="WDP5p3/W4pULcSJZ6KKYtzN9SQTITRtprtgPGPkS"
     
 
