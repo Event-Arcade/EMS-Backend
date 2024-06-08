@@ -2,17 +2,16 @@ version: "3"
 services:
   app:
     image: bhanuka2500/ems-backend
-    container_name: ems-backend-api-deployement-container
-    restart: always
     ports:
       - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - CONNECTION_STRING=server=ems-test-1.crwkiecoggly.eu-north-1.rds.amazonaws.com,1433;user=admin;password=czPqptzwCuYJSrahRBp9;database=ems-db-1;TrustServerCertificate=True
-      - GOOGLE_CLIENT_ID=1027372001633-q07qp5j681ks2qn447gom6i3luh0pdon.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET:ClientSecret=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
-      - ADMIN_EMAIL:admin@gmail.com
-      - ADMIN_PASSWORD:Admin@123
-    volumes:
-      - $APPDATA/Microsoft/UserSecrets:/home/ubuntu/EMS-Backend/
+      - CONNECTION_STRING="server=ems-test-1.crwkiecoggly.eu-north-1.rds.amazonaws.com,1433;user=admin;password=czPqptzwCuYJSrahRBp9;database=ems-db-1;TrustServerCertificate=True"
+      - GOOGLE_CLIENT_ID="1027372001633-q07qp5j681ks2qn447gom6i3luh0pdon.apps.googleusercontent.com"
+      - GOOGLE_CLIENT_SECRET:"ClientSecret=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"
+      - ADMIN_EMAIL:"admin@gmail.com"
+      - ADMIN_PASSWORD:"Admin@123"
+      - AWS:REGION="eu-north-1"
+      - AWS:ACCESS_KEY="AAKIAZQ3DOLFOKWW44PIG"
+      - AWS:SECRET_KEY="WDP5p3/W4pULcSJZ6KKYtzN9SQTITRtprtgPGPkS"
+    
 

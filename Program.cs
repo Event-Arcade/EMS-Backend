@@ -23,15 +23,15 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
-//aws s3 configuration
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+//aws s3 configuration with credentials
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions("AWS"));
 builder.Services.AddAWSService<IAmazonS3>();
 
 //Db configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         //get connection string from appsettings.json
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
+        options.UseSqlServer(Environment.GetEnvironmentVariable("CONNECTION_STRING")??
             throw new InvalidOperationException("Connection string is not found"));
     });
 
@@ -74,8 +74,8 @@ builder.Services.AddAuthentication(options =>
 // Add google authentication
 .AddGoogle(options =>
 {
-    options.ClientId = builder.Configuration["Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Google:ClientSecret"];
+    options.ClientId = builder.Configuration["GOOGLE_CLIENT_ID"];
+    options.ClientSecret = builder.Configuration["GOOGLE_CLIENT_SECRET"];
 });
 
 //Add authentication to Swagger UI
@@ -155,8 +155,8 @@ using (var scope = app.Services.CreateScope())
     {
         FirstName = "admin",
         LastName = "admin",
-        Email = config["Admin:Email"] ,
-        UserName = config["Admin: Email"] ,
+        Email = config["ADMIN_EMAIL"] ,
+        UserName = config["ADMIN_EMAIL"] ,
         Street = "admin street",
         City = "admin city",
         PostalCode = "admin postal code",
@@ -167,7 +167,7 @@ using (var scope = app.Services.CreateScope())
 
 if (await userManager.FindByEmailAsync(adminUser.Email) == null)
 {
-    var response = await userManager.CreateAsync(adminUser, config["Admin:Password"]);
+    var response = await userManager.CreateAsync(adminUser, config["ADMIN_PASSWORD"]);
     if (response.Succeeded)
     {
         await userManager.AddToRoleAsync(adminUser, "admin");
