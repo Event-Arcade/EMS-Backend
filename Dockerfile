@@ -16,5 +16,7 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 EXPOSE 8080
+EXPOSE 443
+EXPOSE 80
 COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "EMS.BACKEND.API.dll"]
